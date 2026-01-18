@@ -6,14 +6,20 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      primaryColor: AppColors.primaryLight,
+      primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.backgroundLight,
       fontFamily: 'Poppins',
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primaryLight,
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
         surface: AppColors.cardLight,
-        onPrimary: AppColors.textLight,
+        background: AppColors.backgroundLight,
+        error: AppColors.destructive,
+        onPrimary: AppColors.primaryForeground,
+        onSecondary: AppColors.secondaryForeground,
         onSurface: AppColors.textLight,
+        onBackground: AppColors.textLight,
+        onError: AppColors.destructiveForeground,
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardLight,
@@ -25,8 +31,47 @@ class AppTheme {
       ),
       appBarTheme: const AppBarTheme(
         elevation: 0,
-        backgroundColor: Colors.transparent,
-        iconTheme: IconThemeData(color: AppColors.textLight),
+        backgroundColor: AppColors.primary,
+        iconTheme: IconThemeData(color: AppColors.primaryForeground),
+        titleTextStyle: TextStyle(
+          color: AppColors.primaryForeground,
+          fontFamily: 'Poppins',
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.inputBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.inputBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        fillColor: AppColors.backgroundLight,
+        filled: true,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.primaryForeground,
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.textLight,
+          side: const BorderSide(color: AppColors.borderLight),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(fontFamily: 'Poppins'),
@@ -52,14 +97,20 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      primaryColor: AppColors.primaryDark,
+      primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.backgroundDark,
       fontFamily: 'Poppins',
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.primaryDark,
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
         surface: AppColors.cardDark,
-        onPrimary: AppColors.textDark,
+        background: AppColors.backgroundDark,
+        error: AppColors.destructive,
+        onPrimary: AppColors.primaryForeground,
+        onSecondary: AppColors.secondaryForeground,
         onSurface: AppColors.textDark,
+        onBackground: AppColors.textDark,
+        onError: AppColors.destructiveForeground,
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardDark,
@@ -71,8 +122,47 @@ class AppTheme {
       ),
       appBarTheme: const AppBarTheme(
         elevation: 0,
-        backgroundColor: Colors.transparent,
-        iconTheme: IconThemeData(color: AppColors.textDark),
+        backgroundColor: AppColors.primary,
+        iconTheme: IconThemeData(color: AppColors.primaryForeground),
+        titleTextStyle: TextStyle(
+          color: AppColors.primaryForeground,
+          fontFamily: 'Poppins',
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.borderDark),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.borderDark),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        fillColor: AppColors.cardDark,
+        filled: true,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.primaryForeground,
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.textDark,
+          side: const BorderSide(color: AppColors.borderDark),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(fontFamily: 'Poppins'),

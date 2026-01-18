@@ -1,62 +1,43 @@
-import 'user_status_model.dart';
-
 class UserModel {
   final int id;
   final String name;
   final String email;
+  final List<String> roles;
+  final bool emailVerified;
   final String? phone;
-  final int statusId;
-  final DateTime? emailVerifiedAt;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  // Cached status name (from lookup)
-  String? _statusName;
+  final String? address;
+  final String? image;
+  final bool banned;
+  final String? createdAt;
 
   UserModel({
     required this.id,
     required this.name,
     required this.email,
+    required this.roles,
+    required this.emailVerified,
     this.phone,
-    required this.statusId,
-    this.emailVerifiedAt,
-    required this.createdAt,
-    required this.updatedAt,
-    String? statusName,
-  }) : _statusName = statusName;
-
-  String get statusName {
-    if (_statusName != null) return _statusName!;
-    // Fallback to status ID if name not available
-    switch (statusId) {
-      case UserStatusModel.ACTIVE:
-        return 'Active';
-      case UserStatusModel.INACTIVE:
-        return 'Inactive';
-      case UserStatusModel.SUSPENDED:
-        return 'Suspended';
-      default:
-        return 'Unknown';
-    }
-  }
+    this.address,
+    this.image,
+    this.banned = false,
+    this.createdAt,
+  });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: (json['id'] ?? 0) as int,
-      name: (json['name'] ?? '') as String,
-      email: (json['email'] ?? '') as String,
+      id: json['id'] as int,
+      name: json['name'] as String,
+      email: json['email'] as String,
+      roles: (json['roles'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      emailVerified: json['emailVerified'] as bool? ?? false,
       phone: json['phone'] as String?,
-      statusId: (json['status_id'] ?? 1) as int, // Default to ACTIVE if null
-      emailVerifiedAt: json['email_verified_at'] != null
-          ? DateTime.parse(json['email_verified_at'] as String)
-          : null,
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'] as String)
-          : DateTime.now(),
-      statusName: json['status_name'] as String?,
+      address: json['address'] as String?,
+      image: json['image'] as String?,
+      banned: json['banned'] as bool? ?? false,
+      createdAt: json['created_at'] as String?,
     );
   }
 
@@ -65,12 +46,13 @@ class UserModel {
       'id': id,
       'name': name,
       'email': email,
+      'roles': roles,
+      'emailVerified': emailVerified,
       'phone': phone,
-      'status_id': statusId,
-      'email_verified_at': emailVerifiedAt?.toIso8601String(),
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-      'status_name': statusName,
+      'address': address,
+      'image': image,
+      'banned': banned,
+      'created_at': createdAt,
     };
   }
 
@@ -78,23 +60,25 @@ class UserModel {
     int? id,
     String? name,
     String? email,
+    List<String>? roles,
+    bool? emailVerified,
     String? phone,
-    int? statusId,
-    DateTime? emailVerifiedAt,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-    String? statusName,
+    String? address,
+    String? image,
+    bool? banned,
+    String? createdAt,
   }) {
     return UserModel(
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      roles: roles ?? this.roles,
+      emailVerified: emailVerified ?? this.emailVerified,
       phone: phone ?? this.phone,
-      statusId: statusId ?? this.statusId,
-      emailVerifiedAt: emailVerifiedAt ?? this.emailVerifiedAt,
+      address: address ?? this.address,
+      image: image ?? this.image,
+      banned: banned ?? this.banned,
       createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      statusName: statusName ?? _statusName,
     );
   }
 }
