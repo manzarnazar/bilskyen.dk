@@ -21,5 +21,17 @@ class ApiConfig {
   static const String featuredVehicles = 'featured-vehicles';
   static const String vehicles = 'vehicles';
   static String vehicleDetail(int id) => 'vehicles/$id';
+  
+  // Nummerplade API endpoints
+  static const String nummerpladeVehicleByRegistration = 'nummerplade/vehicle-by-registration';
+  static const String nummerpladeReferenceColors = 'nummerplade/reference/colors';
+  static const String nummerpladeReferenceEquipment = 'nummerplade/reference/equipment';
+  
+  // Lookup endpoints
+  static const String variants = 'variants';
+  static const String euronorms = 'euronorms';
+  
+  // Sell Your Car endpoint
+  static const String sellYourCar = 'sell-your-car';
 }
 
