@@ -118,44 +118,90 @@ class HomeView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Featured Vehicle Slider
-                    SizedBox(
-                      height: 280,
-                      child: PageView.builder(
-                        controller: controller.pageController,
-                        onPageChanged: controller.onPageChanged,
-                        itemCount: controller.featuredVehicles.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: FeaturedVehicleCard(
-                              vehicle: controller.featuredVehicles[index],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Page Indicators
-                    Obx(() => Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        controller.featuredVehicles.length,
-                        (index) => Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: controller.currentPage.value == index
-                                ? (isDark ? Colors.white : Colors.black)
-                                : (isDark
-                                    ? AppColors.mutedDark
-                                    : AppColors.mutedLight),
+                    // Featured Vehicle Section with Loading/Error States
+                    Obx(() {
+                      if (controller.isLoading.value) {
+                        return const SizedBox(
+                          height: 280,
+                          child: Center(
+                            child: CircularProgressIndicator(),
                           ),
-                        ),
-                      ),
-                    )),
+                        );
+                      }
+                      
+                      if (controller.errorMessage.value.isNotEmpty) {
+                        return SizedBox(
+                          height: 280,
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(
+                                controller.errorMessage.value,
+                                style: TextStyle(
+                                  color: isDark
+                                      ? AppColors.textDark
+                                      : AppColors.textLight,
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      
+                      if (controller.featuredVehicles.isEmpty) {
+                        return const SizedBox(
+                          height: 280,
+                          child: Center(
+                            child: Text('No featured vehicles available'),
+                          ),
+                        );
+                      }
+                      
+                      return Column(
+                        children: [
+                          // Featured Vehicle Slider
+                          SizedBox(
+                            height: 280,
+                            child: PageView.builder(
+                              controller: controller.pageController,
+                              onPageChanged: controller.onPageChanged,
+                              itemCount: controller.featuredVehicles.length,
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  child: FeaturedVehicleCard(
+                                    vehicle: controller.featuredVehicles[index],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // Page Indicators
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              controller.featuredVehicles.length,
+                              (index) => Container(
+                                width: 8,
+                                height: 8,
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: controller.currentPage.value == index
+                                      ? (isDark ? Colors.white : Colors.black)
+                                      : (isDark
+                                          ? AppColors.mutedDark
+                                          : AppColors.mutedLight),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                     const SizedBox(height: 8),
                     // Sponsored Text
                     Center(

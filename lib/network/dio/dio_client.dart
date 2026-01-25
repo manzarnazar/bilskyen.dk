@@ -50,7 +50,7 @@ class DioClient {
           },
         ),
       ),
-      NetworkInterceptor(),
+      NetworkInterceptor(dioClient: dio),
       PrettyDioLogger(
         requestHeader: true,
         requestBody: true,

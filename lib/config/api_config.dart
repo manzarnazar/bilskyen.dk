@@ -16,5 +16,10 @@ class ApiConfig {
   static const String authUpdateUser = 'auth/update-user';
   static const String authRevokeSession = 'auth/revoke-session';
   static const String authChangePassword = 'auth/change-password';
+  
+  // Vehicle endpoints
+  static const String featuredVehicles = 'featured-vehicles';
+  static const String vehicles = 'vehicles';
+  static String vehicleDetail(int id) => 'vehicles/$id';
 }
 

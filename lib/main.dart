@@ -9,6 +9,8 @@ import 'presentation/auth/login_view.dart';
 import 'presentation/auth/register_view.dart';
 import 'presentation/profile/dark_mode_settings_view.dart';
 import 'presentation/profile/personal_info_view.dart';
+import 'presentation/search/vehicle_result_view.dart';
+import 'presentation/vehicle/vehicle_detail_view.dart';
 
 
 final appStorage = GetStorage();
@@ -46,6 +48,8 @@ class MyApp extends StatelessWidget {
           GetPage(name: '/main', page: () => const MainNavigationView()),
           GetPage(name: '/dark-mode-settings', page: () => const DarkModeSettingsView()),
           GetPage(name: '/personal-info', page: () => const PersonalInfoView()),
+          GetPage(name: '/search-vehicles', page: () => const VehicleResultView()),
+          GetPage(name: '/vehicle-detail/:id', page: () => const VehicleDetailView()),
         ],
       );
     });

@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../main.dart';
-import '../../models/user_model.dart';
+import '../../models/auth_model/user_model.dart';
 import '../../repositories/auth/auth_repository.dart';
 
 class SplashView extends StatefulWidget {

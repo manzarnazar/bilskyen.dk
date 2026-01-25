@@ -6,7 +6,7 @@ import '../../utils/app_colors.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../main.dart';
-import '../../models/user_model.dart';
+import '../../models/auth_model/user_model.dart';
 import 'register_view.dart';
 
 class LoginView extends StatefulWidget {

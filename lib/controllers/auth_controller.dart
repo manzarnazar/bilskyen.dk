@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:car_marketplace/models/register_model.dart';
+import 'package:car_marketplace/models/auth_model/register_model.dart';
 import 'package:car_marketplace/repositories/auth/auth_repository.dart';
 
 class AuthController extends GetxController {
