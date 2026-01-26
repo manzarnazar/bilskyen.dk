@@ -4,6 +4,7 @@ import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../controllers/vehicle_result_controller.dart';
 import '../widgets/vehicle_card.dart';
+import '../widgets/vehicle_card_shimmer.dart';
 
 class VehicleResultView extends StatelessWidget {
   const VehicleResultView({super.key});
@@ -70,10 +71,17 @@ class VehicleResultView extends StatelessWidget {
         ),
         body: SafeArea(
           child: Obx(() {
-            // Loading state
+            // Loading state - Show shimmer cards
             if (controller.isLoading.value) {
-              return const Center(
-                child: CircularProgressIndicator(),
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: 4,
+                itemBuilder: (context, index) {
+                  return Obx(() => VehicleCardShimmer(
+                    isDark: isDark,
+                    isHorizontalLayout: controller.isHorizontalLayout.value,
+                  ));
+                },
               );
             }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
+import '../../controllers/app_controller/main_navigation_controller.dart';
 import '../../controllers/profile_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../models/auth_model/user_model.dart';
@@ -121,11 +122,7 @@ class ProfileView extends StatelessWidget {
                             iconColor: Colors.amber,
                             title: 'Saved Vehicles',
                             onTap: () {
-                              Get.snackbar(
-                                'Info',
-                                'Saved Vehicles coming soon',
-                                snackPosition: SnackPosition.TOP,
-                              );
+                              Get.toNamed('/favorites'); // Navigate to favorites screen
                             },
                           ),
                          

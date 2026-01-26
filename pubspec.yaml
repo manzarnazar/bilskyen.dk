@@ -66,6 +66,9 @@ dependencies:
   # Token Storage
   shared_preferences: ^2.2.2
   get_storage: ^2.1.1
+  
+  # Shimmer Loading Effect
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

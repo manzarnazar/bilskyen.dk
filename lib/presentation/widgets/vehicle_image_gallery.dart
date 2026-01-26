@@ -72,15 +72,6 @@ class _VehicleImageGalleryState extends State<VehicleImageGallery> {
           height: 320,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: widget.isDark 
-                    ? Colors.black.withOpacity(0.5)
-                    : Colors.black.withOpacity(0.15),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(20),

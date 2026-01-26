@@ -7,6 +7,7 @@ import '../../controllers/vehicle_detail_controller.dart';
 import '../../models/vehicle_detail_model/vehicle_detail_model.dart';
 import '../widgets/vehicle_image_gallery.dart';
 import '../widgets/detail_section_card.dart';
+import '../widgets/vehicle_detail_shimmer.dart';
 
 class VehicleDetailView extends StatelessWidget {
   const VehicleDetailView({super.key});
@@ -39,27 +40,9 @@ class VehicleDetailView extends StatelessWidget {
           ),
         ),
         body: Obx(() {
-          // Loading state
+          // Loading state - Show shimmer
           if (controller.isLoading.value) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    strokeWidth: 3,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Loading vehicle details...',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
-                    ),
-                  ),
-                ],
-              ),
-            );
+            return VehicleDetailShimmer(isDark: isDark);
           }
 
           // Error state

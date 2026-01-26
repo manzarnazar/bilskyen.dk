@@ -13,6 +13,7 @@ import 'presentation/profile/personal_info_view.dart';
 import 'presentation/search/vehicle_result_view.dart';
 import 'presentation/vehicle/vehicle_detail_view.dart';
 import 'presentation/sell_vehicle/sell_vehicle_view.dart';
+import 'presentation/favorites/favorites_view.dart';
 
 
 final appStorage = GetStorage();
@@ -56,6 +57,7 @@ class MyApp extends StatelessWidget {
           GetPage(name: '/search-vehicles', page: () => const VehicleResultView()),
           GetPage(name: '/vehicle-detail/:id', page: () => const VehicleDetailView()),
           GetPage(name: '/sell-your-car', page: () => const SellVehicleView()),
+          GetPage(name: '/favorites', page: () => const FavoritesView()),
         ],
       );
     });

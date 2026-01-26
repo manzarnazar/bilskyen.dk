@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:car_marketplace/config/api_config.dart';
+import 'package:car_marketplace/models/vehicle_model/vehicle_model.dart';
 import 'package:car_marketplace/network/network_repository.dart';
 
 class FavoriteRepository {
@@ -97,6 +98,38 @@ class FavoriteRepository {
       return left(response.message.isNotEmpty ? response.message : 'Failed to check batch favorites');
     } catch (e) {
       return left('Error checking batch favorites: ${e.toString()}');
+    }
+  }
+
+  /// Get paginated list of favorite vehicles
+  Future<Either<String, List<VehicleModel>>> getFavorites({
+    int page = 1,
+    int limit = 15,
+  }) async {
+    try {
+      final response = await networkRepository.get(
+        url: ApiConfig.favorites,
+        extraQuery: {
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      if (!response.failed && response.success && response.data != null) {
+        final data = response.data['data'];
+        if (data is Map<String, dynamic>) {
+          final vehiclesList = data['docs'] as List<dynamic>?;
+          if (vehiclesList != null) {
+            final vehicles = vehiclesList
+                .map((vehicleJson) => VehicleModel.fromJson(vehicleJson as Map<String, dynamic>))
+                .toList();
+            return right(vehicles);
+          }
+        }
+      }
+      return left(response.message.isNotEmpty ? response.message : 'Failed to fetch favorites');
+    } catch (e) {
+      return left('Error fetching favorites: ${e.toString()}');
     }
   }
 }

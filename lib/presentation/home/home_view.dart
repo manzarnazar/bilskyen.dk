@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/home_controller.dart';
+import '../../controllers/app_controller/main_navigation_controller.dart';
 import 'featured_vehicle_card.dart';
 import 'sell_your_car_banner.dart';
 
@@ -24,7 +25,7 @@ class HomeView extends StatelessWidget {
               ),
               child: GestureDetector(
                 onTap: () {
-                  // Get.find<MainNavigationController>().changeTab(2); // Switch to search tab
+                  Get.find<MainNavigationController>().changeTab(2, focusSearch: true); // Switch to search tab and focus
                 },
                 child: AbsorbPointer(
                   child: TextField(
@@ -100,20 +101,7 @@ class HomeView extends StatelessWidget {
                                   : AppColors.textLight,
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              // Navigate to featured vehicle details
-                              // Hardcoded vehicles available
-                            },
-                            child: Text(
-                              'View Details',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ),
+                          
                         ],
                       ),
                     ),
@@ -206,7 +194,7 @@ class HomeView extends StatelessWidget {
                     // Sponsored Text
                     Center(
                       child: Text(
-                        'Sponsored by RevoLot Premium',
+                        'Sponsored by Bilskyen Premium',
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark
