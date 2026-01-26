@@ -6,6 +6,7 @@ import '../../controllers/app_controller/app_controller.dart';
 import '../../main.dart';
 import '../../models/auth_model/user_model.dart';
 import '../../repositories/auth/auth_repository.dart';
+import '../../services/constants_service.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -46,13 +47,44 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
 
     _animationController.forward();
 
-    // Check if user is logged in and navigate accordingly
+    // Initialize constants service and fetch constants first
     // Small delay to ensure storage is ready
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
-        _checkAuthAndNavigate();
+        _initializeAndLoadConstants();
       }
     });
+  }
+
+  Future<void> _initializeAndLoadConstants() async {
+    try {
+      // Get constants service (already initialized in main.dart)
+      final constantsService = Get.find<ConstantsService>();
+      
+      // Fetch constants from API
+      debugPrint('Splash: Fetching constants...');
+      final success = await constantsService.fetchConstants();
+      
+      if (!success) {
+        debugPrint('Splash: Failed to fetch constants: ${constantsService.error.value}');
+        // Even if constants fetch fails, try to use cached data and proceed
+        // The app can still function with cached constants
+      } else {
+        debugPrint('Splash: Constants fetched successfully');
+      }
+      
+      // Proceed with auth check and navigation after constants are loaded
+      if (mounted) {
+        _checkAuthAndNavigate();
+      }
+    } catch (e) {
+      debugPrint('Splash: Error initializing constants: $e');
+      // Proceed with navigation even if constants initialization fails
+      // The app can use cached constants if available
+      if (mounted) {
+        _checkAuthAndNavigate();
+      }
+    }
   }
 
   Future<void> _checkAuthAndNavigate() async {

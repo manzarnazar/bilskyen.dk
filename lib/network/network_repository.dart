@@ -224,7 +224,16 @@ class NetworkRepository {
 
   NetworkResponse _handleResponse(Response response) {
     final body = response.data;
-    if (response.statusCode == 200 || response.statusCode == 201) {
+    // Handle success status codes: 200 OK, 201 Created, 204 No Content
+    if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
+      // For 204 No Content, there's no body, so treat it as success
+      if (response.statusCode == 204) {
+        return NetworkResponse(
+          data: null,
+          success: true,
+          message: "",
+        );
+      }
       return NetworkResponse(
         data: body,
         success: body is Map && body["success"] == true,

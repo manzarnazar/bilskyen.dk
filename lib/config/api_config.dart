@@ -30,8 +30,15 @@ class ApiConfig {
   // Lookup endpoints
   static const String variants = 'variants';
   static const String euronorms = 'euronorms';
+  static const String constants = 'constants';
   
   // Sell Your Car endpoint
   static const String sellYourCar = 'sell-your-car';
+  
+  // Favorites endpoints
+  static const String favorites = 'favorites';
+  static String favoritesCheck(int vehicleId) => 'favorites/check/$vehicleId';
+  static String favoritesDelete(int vehicleId) => 'favorites/delete/$vehicleId';
+  static const String favoritesCheckBatch = 'favorites/check-batch';
 }
 

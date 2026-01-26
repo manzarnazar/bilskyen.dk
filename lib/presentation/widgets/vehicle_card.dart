@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../../models/vehicle_model/vehicle_model.dart';
+import '../../controllers/favorite_controller.dart';
+import '../../main.dart';
 import 'cached_image.dart';
 
-class VehicleCard extends StatelessWidget {
+class VehicleCard extends StatefulWidget {
   final VehicleModel vehicle;
   final bool isDark;
   final bool isHorizontalLayout;
@@ -15,6 +17,45 @@ class VehicleCard extends StatelessWidget {
     required this.isDark,
     this.isHorizontalLayout = false,
   });
+
+  @override
+  State<VehicleCard> createState() => _VehicleCardState();
+}
+
+class _VehicleCardState extends State<VehicleCard> {
+  late FavoriteController _favoriteController;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _favoriteController = Get.put(FavoriteController());
+    _checkLoginStatus();
+    // Defer API call until after build phase completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkFavoriteStatus();
+    });
+  }
+
+  void _checkLoginStatus() {
+    final token = appStorage.read('token');
+    setState(() {
+      _isLoggedIn = token != null && token.toString().isNotEmpty;
+    });
+  }
+
+  void _checkFavoriteStatus() {
+    if (_isLoggedIn) {
+      _favoriteController.checkFavoriteStatus(widget.vehicle.id);
+    }
+  }
+
+  void _handleFavoriteToggle() {
+    if (!_isLoggedIn) {
+      return;
+    }
+    _favoriteController.toggleFavorite(widget.vehicle.id);
+  }
 
   /// Format price with commas and "kr." suffix
   String _formatPrice(int price) {
@@ -85,17 +126,17 @@ class VehicleCard extends StatelessWidget {
   String _buildLocationText() {
     // Since we don't have postal code/city in the model, use brand/model as placeholder
     // In a real app, you'd add location fields to the model
-    if (vehicle.brandName != null && vehicle.modelName != null) {
-      return '${vehicle.brandName} ${vehicle.modelName}';
-    } else if (vehicle.brandName != null) {
-      return vehicle.brandName!;
+    if (widget.vehicle.brandName != null && widget.vehicle.modelName != null) {
+      return '${widget.vehicle.brandName} ${widget.vehicle.modelName}';
+    } else if (widget.vehicle.brandName != null) {
+      return widget.vehicle.brandName!;
     }
     return 'Location';
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isHorizontalLayout) {
+    if (widget.isHorizontalLayout) {
       return _buildHorizontalLayout();
     }
     return _buildVerticalLayout();
@@ -105,10 +146,10 @@ class VehicleCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : AppColors.cardLight,
+        color: widget.isDark ? AppColors.cardDark : AppColors.cardLight,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          color: widget.isDark ? AppColors.borderDark : AppColors.borderLight,
           width: 1,
         ),
         boxShadow: [
@@ -142,11 +183,11 @@ class VehicleCard extends StatelessWidget {
                     children: [
                       // Title
                       Text(
-                        vehicle.title,
+                        widget.vehicle.title,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.textDark : AppColors.textLight,
+                          color: widget.isDark ? AppColors.textDark : AppColors.textLight,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -154,7 +195,7 @@ class VehicleCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       // Price
                       Text(
-                        _formatPrice(vehicle.price),
+                        _formatPrice(widget.vehicle.price),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -167,18 +208,18 @@ class VehicleCard extends StatelessWidget {
                         spacing: 4,
                         runSpacing: 4,
                         children: [
-                          if (vehicle.kmDriven != null)
-                            _buildTag('${_formatMileage(vehicle.kmDriven)} km'),
-                          if (vehicle.enginePowerHp != null && vehicle.enginePowerHp! > 0)
-                            _buildTag('${vehicle.enginePowerHp!.toStringAsFixed(0)} HP'),
-                          if (vehicle.firstRegistrationDate.isNotEmpty)
-                            _buildTag(_formatRegistrationDate(vehicle.firstRegistrationDate)),
-                          if (vehicle.gearTypeName != null && vehicle.gearTypeName!.isNotEmpty)
-                            _buildTag(vehicle.gearTypeName!),
-                          if (vehicle.fuelTypeName != null && vehicle.fuelTypeName!.isNotEmpty)
-                            _buildTag(vehicle.fuelTypeName!),
-                          if (vehicle.modelYearName != null && vehicle.modelYearName!.isNotEmpty)
-                            _buildTag(vehicle.modelYearName!),
+                          if (widget.vehicle.kmDriven != null)
+                            _buildTag('${_formatMileage(widget.vehicle.kmDriven)} km'),
+                          if (widget.vehicle.enginePowerHp != null && widget.vehicle.enginePowerHp! > 0)
+                            _buildTag('${widget.vehicle.enginePowerHp!.toStringAsFixed(0)} HP'),
+                          if (widget.vehicle.firstRegistrationDate.isNotEmpty)
+                            _buildTag(_formatRegistrationDate(widget.vehicle.firstRegistrationDate)),
+                          if (widget.vehicle.gearTypeName != null && widget.vehicle.gearTypeName!.isNotEmpty)
+                            _buildTag(widget.vehicle.gearTypeName!),
+                          if (widget.vehicle.fuelTypeName != null && widget.vehicle.fuelTypeName!.isNotEmpty)
+                            _buildTag(widget.vehicle.fuelTypeName!),
+                          if (widget.vehicle.modelYearName != null && widget.vehicle.modelYearName!.isNotEmpty)
+                            _buildTag(widget.vehicle.modelYearName!),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -189,7 +230,7 @@ class VehicleCard extends StatelessWidget {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () {
-                                Get.toNamed('/vehicle-detail/${vehicle.id}');
+                                Get.toNamed('/vehicle-detail/${widget.vehicle.id}');
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
@@ -217,9 +258,9 @@ class VehicleCard extends StatelessWidget {
                                 // TODO: Handle enquire action
                               },
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: isDark ? AppColors.textDark : AppColors.textLight,
+                                foregroundColor: widget.isDark ? AppColors.textDark : AppColors.textLight,
                                 side: BorderSide(
-                                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                                  color: widget.isDark ? AppColors.borderDark : AppColors.borderLight,
                                   width: 1,
                                 ),
                                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -251,33 +292,33 @@ class VehicleCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Location
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on,
-                      size: 12,
-                      color: isDark ? AppColors.textDark : AppColors.textLight,
+                    // Location
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: 12,
+                          color: widget.isDark ? AppColors.textDark : AppColors.textLight,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _buildLocationText(),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: widget.isDark ? AppColors.textDark : AppColors.textLight,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 4),
+                    // Dealer/Seller
                     Text(
-                      _buildLocationText(),
+                      widget.vehicle.sellerType ?? 'Dealer',
                       style: TextStyle(
                         fontSize: 11,
-                        color: isDark ? AppColors.textDark : AppColors.textLight,
+                        fontWeight: FontWeight.w500,
+                        color: widget.isDark ? AppColors.mutedDark : AppColors.mutedLight,
                       ),
                     ),
-                  ],
-                ),
-                // Dealer/Seller
-                Text(
-                  vehicle.sellerType ?? 'Dealer',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
-                  ),
-                ),
               ],
             ),
           ),
@@ -290,10 +331,10 @@ class VehicleCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : AppColors.cardLight,
+        color: widget.isDark ? AppColors.cardDark : AppColors.cardLight,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          color: widget.isDark ? AppColors.borderDark : AppColors.borderLight,
           width: 1,
         ),
       ),
@@ -310,41 +351,53 @@ class VehicleCard extends StatelessWidget {
                 ),
                 child: _buildVehicleImage(),
               ),
-              // Heart icon in top right
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+              // Heart icon in top right (only show if logged in)
+              if (_isLoggedIn)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Obx(() {
+                    final isFavorite = _favoriteController.isFavorite(widget.vehicle.id);
+                    final isLoading = _favoriteController.isLoading(widget.vehicle.id);
+                    return Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.favorite_border,
-                      color: Colors.black,
-                      size: 18,
-                    ),
-                    onPressed: () {
-                      // TODO: Handle favorite action
-                    },
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                  ),
+                      child: IconButton(
+                        icon: isLoading
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                                ),
+                              )
+                            : Icon(
+                                isFavorite ? Icons.favorite : Icons.favorite_border,
+                                color: isFavorite ? Colors.red : Colors.black,
+                                size: 18,
+                              ),
+                        onPressed: isLoading ? null : _handleFavoriteToggle,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                      ),
+                    );
+                  }),
                 ),
-              ),
             ],
           ),
           
@@ -356,11 +409,11 @@ class VehicleCard extends StatelessWidget {
               children: [
                 // Title
                 Text(
-                  vehicle.title,
+                  widget.vehicle.title,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.textDark : AppColors.textLight,
+                    color: widget.isDark ? AppColors.textDark : AppColors.textLight,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -369,7 +422,7 @@ class VehicleCard extends StatelessWidget {
                 
                 // Price
                 Text(
-                  _formatPrice(vehicle.price),
+                  _formatPrice(widget.vehicle.price),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -383,18 +436,18 @@ class VehicleCard extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    if (vehicle.kmDriven != null)
-                      _buildTag('${_formatMileage(vehicle.kmDriven)} km'),
-                    if (vehicle.enginePowerHp != null && vehicle.enginePowerHp! > 0)
-                      _buildTag('${vehicle.enginePowerHp!.toStringAsFixed(0)} HP'),
-                    if (vehicle.firstRegistrationDate.isNotEmpty)
-                      _buildTag(_formatRegistrationDate(vehicle.firstRegistrationDate)),
-                    if (vehicle.gearTypeName != null && vehicle.gearTypeName!.isNotEmpty)
-                      _buildTag(vehicle.gearTypeName!),
-                    if (vehicle.fuelTypeName != null && vehicle.fuelTypeName!.isNotEmpty)
-                      _buildTag(vehicle.fuelTypeName!),
-                    if (vehicle.modelYearName != null && vehicle.modelYearName!.isNotEmpty)
-                      _buildTag(vehicle.modelYearName!),
+                    if (widget.vehicle.kmDriven != null)
+                      _buildTag('${_formatMileage(widget.vehicle.kmDriven)} km'),
+                    if (widget.vehicle.enginePowerHp != null && widget.vehicle.enginePowerHp! > 0)
+                      _buildTag('${widget.vehicle.enginePowerHp!.toStringAsFixed(0)} HP'),
+                    if (widget.vehicle.firstRegistrationDate.isNotEmpty)
+                      _buildTag(_formatRegistrationDate(widget.vehicle.firstRegistrationDate)),
+                    if (widget.vehicle.gearTypeName != null && widget.vehicle.gearTypeName!.isNotEmpty)
+                      _buildTag(widget.vehicle.gearTypeName!),
+                    if (widget.vehicle.fuelTypeName != null && widget.vehicle.fuelTypeName!.isNotEmpty)
+                      _buildTag(widget.vehicle.fuelTypeName!),
+                    if (widget.vehicle.modelYearName != null && widget.vehicle.modelYearName!.isNotEmpty)
+                      _buildTag(widget.vehicle.modelYearName!),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -406,7 +459,7 @@ class VehicleCard extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          Get.toNamed('/vehicle-detail/${vehicle.id}');
+                          Get.toNamed('/vehicle-detail/${widget.vehicle.id}');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -433,9 +486,9 @@ class VehicleCard extends StatelessWidget {
                           // TODO: Handle enquire action
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: isDark ? AppColors.textDark : AppColors.textLight,
+                          foregroundColor: widget.isDark ? AppColors.textDark : AppColors.textLight,
                           side: BorderSide(
-                            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                            color: widget.isDark ? AppColors.borderDark : AppColors.borderLight,
                             width: 1,
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -466,12 +519,12 @@ class VehicleCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isDark 
+        color: widget.isDark 
             ? AppColors.surfaceDark 
             : AppColors.mutedBackground,
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          color: widget.isDark ? AppColors.borderDark : AppColors.borderLight,
           width: 1,
         ),
       ),
@@ -480,14 +533,14 @@ class VehicleCard extends StatelessWidget {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w500,
-          color: isDark ? AppColors.textDark : AppColors.textLight,
+          color: widget.isDark ? AppColors.textDark : AppColors.textLight,
         ),
       ),
     );
   }
 
   Widget _buildHorizontalImage() {
-    final imageUrl = vehicle.imageUrl;
+    final imageUrl = widget.vehicle.imageUrl;
 
     return Stack(
       children: [
@@ -516,51 +569,63 @@ class VehicleCard extends StatelessWidget {
                   ),
                 ),
         ),
-        // Heart icon in bottom right of image
-        Positioned(
-          bottom: 8,
-          right: 8,
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.black.withOpacity(0.2),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 3,
-                  offset: const Offset(0, 1),
+        // Heart icon in bottom right of image (only show if logged in)
+        if (_isLoggedIn)
+          Positioned(
+            bottom: 8,
+            right: 8,
+            child: Obx(() {
+              final isFavorite = _favoriteController.isFavorite(widget.vehicle.id);
+              final isLoading = _favoriteController.isLoading(widget.vehicle.id);
+              return Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.black.withOpacity(0.2),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.favorite_border,
-                color: Colors.black,
-                size: 16,
-              ),
-              onPressed: () {
-                // TODO: Handle favorite action
-              },
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 28,
-                minHeight: 28,
-              ),
-            ),
+                child: IconButton(
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                          ),
+                        )
+                      : Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : Colors.black,
+                          size: 16,
+                        ),
+                  onPressed: isLoading ? null : _handleFavoriteToggle,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 28,
+                    minHeight: 28,
+                  ),
+                ),
+              );
+            }),
           ),
-        ),
       ],
     );
   }
 
   Widget _buildVehicleImage() {
-    final imageUrl = vehicle.imageUrl;
+    final imageUrl = widget.vehicle.imageUrl;
 
     if (imageUrl.isEmpty) {
       return Container(

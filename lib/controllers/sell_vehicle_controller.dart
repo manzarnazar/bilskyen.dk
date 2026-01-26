@@ -7,12 +7,14 @@ import '../models/sell_vehicle_model/reference_data_model.dart';
 import '../models/sell_vehicle_model/sell_vehicle_request_model.dart';
 import '../models/sell_vehicle_model/plan_model.dart';
 import '../repositories/sell_vehicle/sell_vehicle_repository.dart';
+import '../services/constants_service.dart';
 import '../main.dart';
 import 'dart:convert';
 
 class SellVehicleController extends GetxController {
   final SellVehicleRepository _repository = SellVehicleRepository();
   final ImagePicker _imagePicker = ImagePicker();
+  final ConstantsService _constantsService = Get.find<ConstantsService>();
 
   // Form visibility
   final RxBool isFormVisible = false.obs;
@@ -126,9 +128,67 @@ class SellVehicleController extends GetxController {
     }
   }
 
-  /// Load all reference data for dropdowns
+  /// Load all reference data for dropdowns from constants
   Future<void> _loadReferenceData() async {
     isLoadingReferenceData.value = true;
+    try {
+      // Wait for constants to be loaded if not already loaded
+      if (_constantsService.getConstants() == null) {
+        await _constantsService.fetchConstants();
+      }
+
+      final constants = _constantsService.getConstants();
+      if (constants == null) {
+        // Fallback to repository if constants are not available
+        await _loadReferenceDataFromRepository();
+        return;
+      }
+
+      // Map colors from constants
+      colors.value = constants.colors.map((item) => ColorModel(
+        id: item.id,
+        name: item.name,
+      )).toList();
+
+      // Map variants from constants
+      variants.value = constants.variants.map((item) => VariantModel(
+        id: item.id,
+        name: item.name,
+      )).toList();
+
+      // Map equipment from constants
+      final equipmentList = constants.equipments.map((item) => EquipmentModel(
+        id: item.id,
+        name: item.name,
+        equipmentTypeId: item.equipmentTypeId,
+      )).toList();
+      equipment.value = equipmentList;
+
+      // Map equipment types from constants
+      equipmentTypes.value = constants.equipmentTypes.map((item) => EquipmentTypeModel(
+        id: item.id,
+        name: item.name,
+      )).toList();
+
+      // Map euronorms from constants
+      euronorms.value = constants.euronorms.map((item) => EuronomModel(
+        id: item.id,
+        name: item.name,
+      )).toList();
+
+      // Load locations, plans (if available)
+      // These might need to be fetched from internal API
+      // For now, they're empty lists
+    } catch (e) {
+      // Handle error - fallback to repository
+      await _loadReferenceDataFromRepository();
+    } finally {
+      isLoadingReferenceData.value = false;
+    }
+  }
+
+  /// Fallback: Load reference data from repository (if constants are not available)
+  Future<void> _loadReferenceDataFromRepository() async {
     try {
       // Load colors
       final colorsResult = await _repository.getColors();
@@ -143,15 +203,6 @@ class SellVehicleController extends GetxController {
         (error) => null,
         (data) {
           equipment.value = data;
-          // Group equipment by type
-          final typeMap = <int, List<EquipmentModel>>{};
-          for (var item in data) {
-            final typeId = item.equipmentTypeId ?? 0;
-            if (!typeMap.containsKey(typeId)) {
-              typeMap[typeId] = [];
-            }
-            typeMap[typeId]!.add(item);
-          }
           // Extract unique equipment types
           final types = <EquipmentTypeModel>[];
           for (var item in data) {
@@ -177,14 +228,8 @@ class SellVehicleController extends GetxController {
         (error) => null,
         (data) => euronorms.value = data,
       );
-
-      // Load locations, plans (if available)
-      // These might need to be fetched from internal API
-      // For now, they're empty lists
     } catch (e) {
       // Handle error
-    } finally {
-      isLoadingReferenceData.value = false;
     }
   }
 

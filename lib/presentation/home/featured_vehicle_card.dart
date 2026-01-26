@@ -2,13 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../../models/vehicle_model/vehicle_model.dart';
+import '../../controllers/favorite_controller.dart';
+import '../../main.dart';
 import '../widgets/cached_image.dart';
 
 
-class FeaturedVehicleCard extends StatelessWidget {
+class FeaturedVehicleCard extends StatefulWidget {
   final VehicleModel vehicle;
 
   const FeaturedVehicleCard({super.key, required this.vehicle});
+
+  @override
+  State<FeaturedVehicleCard> createState() => _FeaturedVehicleCardState();
+}
+
+class _FeaturedVehicleCardState extends State<FeaturedVehicleCard> {
+  late FavoriteController _favoriteController;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _favoriteController = Get.put(FavoriteController());
+    _checkLoginStatus();
+    // Defer API call until after build phase completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkFavoriteStatus();
+    });
+  }
+
+  void _checkLoginStatus() {
+    final token = appStorage.read('token');
+    setState(() {
+      _isLoggedIn = token != null && token.toString().isNotEmpty;
+    });
+  }
+
+  void _checkFavoriteStatus() {
+    if (_isLoggedIn) {
+      _favoriteController.checkFavoriteStatus(widget.vehicle.id);
+    }
+  }
+
+  void _handleFavoriteToggle() {
+    if (!_isLoggedIn) {
+      return;
+    }
+    _favoriteController.toggleFavorite(widget.vehicle.id);
+  }
 
   String _formatMileage(int? mileage) {
     if (mileage == null) return 'N/A';
@@ -53,7 +94,7 @@ class FeaturedVehicleCard extends StatelessWidget {
   Widget build(BuildContext context) {
       return GestureDetector(
         onTap: () {
-          Get.toNamed('/vehicle-detail/${vehicle.id}');
+          Get.toNamed('/vehicle-detail/${widget.vehicle.id}');
         },
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -110,7 +151,7 @@ class FeaturedVehicleCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      _formatPrice(vehicle.price),
+                      _formatPrice(widget.vehicle.price),
                       style: TextStyle(
                         color: AppColors.primaryForeground,
                         fontSize: 14,
@@ -120,38 +161,50 @@ class FeaturedVehicleCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Heart Icon at Top Right
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.3),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.favorite_border,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      onPressed: () {
-                        // Handle favorite action
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
-                      ),
-                    ),
+                // Heart Icon at Top Right (only show if logged in)
+                if (_isLoggedIn)
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Obx(() {
+                      final isFavorite = _favoriteController.isFavorite(widget.vehicle.id);
+                      final isLoading = _favoriteController.isLoading(widget.vehicle.id);
+                      return Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: IconButton(
+                          icon: isLoading
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : Icon(
+                                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                                  color: isFavorite ? Colors.red : Colors.white,
+                                  size: 18,
+                                ),
+                          onPressed: isLoading ? null : _handleFavoriteToggle,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
+                        ),
+                      );
+                    }),
                   ),
-                ),
                 // Bottom Content
                 Positioned(
                   bottom: 0,
@@ -167,30 +220,30 @@ class FeaturedVehicleCard extends StatelessWidget {
                           spacing: 8,
                           runSpacing: 8,
                           children: [
-                            if (vehicle.kmDriven != null)
+                            if (widget.vehicle.kmDriven != null)
                               _buildTag(
                                 icon: Icons.speed,
-                                text: '${_formatMileage(vehicle.kmDriven)} km',
+                                text: '${_formatMileage(widget.vehicle.kmDriven)} km',
                               ),
-                            if (vehicle.enginePowerHp != null && vehicle.enginePowerHp! > 0)
+                            if (widget.vehicle.enginePowerHp != null && widget.vehicle.enginePowerHp! > 0)
                               _buildTag(
                                 icon: Icons.bolt,
-                                text: '${vehicle.enginePowerHp!.toStringAsFixed(0)} HP',
+                                text: '${widget.vehicle.enginePowerHp!.toStringAsFixed(0)} HP',
                               ),
                             if (_getYearFromRegistrationDate().isNotEmpty)
                               _buildTag(
                                 icon: Icons.calendar_today,
                                 text: _getYearFromRegistrationDate(),
                               ),
-                            if (vehicle.gearTypeName != null && vehicle.gearTypeName!.isNotEmpty)
+                            if (widget.vehicle.gearTypeName != null && widget.vehicle.gearTypeName!.isNotEmpty)
                               _buildTag(
                                 icon: Icons.settings,
-                                text: vehicle.gearTypeName!,
+                                text: widget.vehicle.gearTypeName!,
                               ),
-                            if (vehicle.fuelTypeName != null && vehicle.fuelTypeName!.isNotEmpty)
+                            if (widget.vehicle.fuelTypeName != null && widget.vehicle.fuelTypeName!.isNotEmpty)
                               _buildTag(
                                 icon: Icons.local_gas_station,
-                                text: vehicle.fuelTypeName!,
+                                text: widget.vehicle.fuelTypeName!,
                               ),
                           ],
                         ),
@@ -249,8 +302,8 @@ class FeaturedVehicleCard extends StatelessWidget {
   }
 
   String _getFullTitle() {
-    final title = vehicle.title;
-    final version = vehicle.version;
+    final title = widget.vehicle.title;
+    final version = widget.vehicle.version;
     if (version != null && version.isNotEmpty) {
       return '$title $version';
     }
@@ -258,7 +311,7 @@ class FeaturedVehicleCard extends StatelessWidget {
   }
 
   String _getYearFromRegistrationDate() {
-    final registrationDate = vehicle.firstRegistrationDate;
+    final registrationDate = widget.vehicle.firstRegistrationDate;
     if (registrationDate.isEmpty) {
       return '';
     }
@@ -275,7 +328,7 @@ class FeaturedVehicleCard extends StatelessWidget {
   }
 
   Widget _buildVehicleImage() {
-    final imageUrl = vehicle.imageUrl;
+    final imageUrl = widget.vehicle.imageUrl;
 
     if (imageUrl.isEmpty) {
       return Container(

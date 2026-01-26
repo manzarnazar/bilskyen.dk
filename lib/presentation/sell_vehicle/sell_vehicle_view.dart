@@ -29,7 +29,13 @@ class SellVehicleView extends StatelessWidget {
             ? AppColors.backgroundDark
             : AppColors.backgroundLight,
         appBar: AppBar(
-          title: const Text('Sell Your Car'),
+          title: const Text(
+            'Sell Your Car',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.primaryForeground,
           elevation: 0,
