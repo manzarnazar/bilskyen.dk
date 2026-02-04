@@ -41,6 +41,7 @@ class VehicleDetailModel {
   final List<VehicleImage> images;
   final VehicleDetails? details;
   final List<VehicleEquipment> equipment;
+  final String? contactWhatsapp;
 
   VehicleDetailModel({
     required this.id,
@@ -85,6 +86,7 @@ class VehicleDetailModel {
     required this.images,
     this.details,
     required this.equipment,
+    this.contactWhatsapp,
   });
 
   factory VehicleDetailModel.fromJson(Map<String, dynamic> json) {
@@ -141,6 +143,7 @@ class VehicleDetailModel {
               ?.map((eq) => VehicleEquipment.fromJson(eq as Map<String, dynamic>))
               .toList() ??
           [],
+      contactWhatsapp: json['contact_whatsapp'] as String?,
     );
   }
 }
@@ -150,6 +153,7 @@ class VehicleUser {
   final String name;
   final String email;
   final String? phone;
+  final String? whatsappNumber;
   final String? address;
   final String? postcode;
   final String? emailVerifiedAt;
@@ -161,6 +165,7 @@ class VehicleUser {
     required this.name,
     required this.email,
     this.phone,
+    this.whatsappNumber,
     this.address,
     this.postcode,
     this.emailVerifiedAt,
@@ -174,6 +179,7 @@ class VehicleUser {
       name: json['name'] as String,
       email: json['email'] as String,
       phone: json['phone'] as String?,
+      whatsappNumber: json['whatsapp_number'] as String?,
       address: json['address'] as String?,
       postcode: json['postcode'] as String?,
       emailVerifiedAt: json['email_verified_at'] as String?,

@@ -19,9 +19,15 @@ class DioClient {
       baseUrl: ApiConfig.baseUrl,
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       connectTimeout: const Duration(seconds: 40),
       receiveTimeout: const Duration(seconds: 50),
+      followRedirects: false, // Don't follow redirects for API calls
+      validateStatus: (status) {
+        // Only treat 200-299 as success, don't follow redirects
+        return status != null && status >= 200 && status < 300;
+      },
     ),
   );
 
@@ -68,12 +74,48 @@ class DioClient {
     String message = "";
     dynamic data = "";
     bool success = false;
+    
+    // Handle 302 redirects (authentication issue)
+    if (error.response?.statusCode == 302) {
+      message = "Authentication required. Please login again.";
+      data = {"error": "authentication_required", "status_code": 302};
+      success = false;
+      return NetworkResponse(
+        message: message,
+        data: data,
+        success: success,
+        failed: true,
+      );
+    }
+    
+    // Handle 401 Unauthorized
+    if (error.response?.statusCode == 401) {
+      message = "Unauthorized. Please login again.";
+      data = error.response?.data ?? {"error": "unauthorized", "status_code": 401};
+      success = false;
+      return NetworkResponse(
+        message: message,
+        data: data,
+        success: success,
+        failed: true,
+      );
+    }
+    
     if (error.response?.data != null) {
       final responseData = error.response!.data;
       if (responseData is Map<String, dynamic>) {
         message = responseData["message"] ?? "Unknown error occurred";
         data = responseData;
         success = responseData["success"] ?? false;
+      } else if (responseData is String) {
+        // Handle HTML responses (like redirect pages)
+        if (responseData.contains('<!DOCTYPE html>') || 
+            responseData.contains('Redirecting')) {
+          message = "Authentication required. Please login again.";
+          data = {"error": "authentication_required", "html_response": true};
+        } else {
+          message = responseData;
+        }
       }
     } else {
       switch (error.type) {
@@ -82,17 +124,23 @@ class DioClient {
           break;
         case DioExceptionType.connectionError:
           message = "Failed connection to API server";
+          break;
         case DioExceptionType.connectionTimeout:
           message = "Connection timed out";
+          break;
         case DioExceptionType.unknown:
-          message = "A Server Error Occured!";
+          message = "A Server Error Occurred!";
           break;
         case DioExceptionType.receiveTimeout:
           message = "Receive timeout in connection with API server";
           break;
         case DioExceptionType.badResponse:
-          message =
-              "Received invalid status code: ${error.response?.statusCode}";
+          final statusCode = error.response?.statusCode;
+          if (statusCode == 302) {
+            message = "Authentication required. Please login again.";
+          } else {
+            message = "Received invalid status code: $statusCode";
+          }
           break;
         case DioExceptionType.sendTimeout:
           message = "Send timeout in connection with API server";
@@ -106,6 +154,7 @@ class DioClient {
       message: message,
       data: data,
       success: success,
+      failed: true,
     );
   }
 }

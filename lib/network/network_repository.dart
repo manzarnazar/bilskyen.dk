@@ -55,6 +55,8 @@ class NetworkRepository {
         options: Options(
           method: method,
           headers: headers,
+          receiveTimeout: const Duration(seconds: 120), // Increased timeout for large requests (images + all vehicle data)
+          sendTimeout: const Duration(seconds: 120), // Increased timeout for sending large payloads
         ),
       );
 
@@ -140,7 +142,17 @@ class NetworkRepository {
     // ✅ Add text fields
     if (fields != null) {
       fields.forEach((key, value) {
-        formData.fields.add(MapEntry(key, value.toString()));
+        // Handle arrays - Laravel expects array fields as key[] for each item
+        if (value is List) {
+          for (var item in value) {
+            // Use key[] format for arrays (Laravel convention)
+            formData.fields.add(MapEntry('$key[]', item.toString()));
+          }
+        } else if (value != null) {
+          // Regular field
+          formData.fields.add(MapEntry(key, value.toString()));
+        }
+        // Skip null values
       });
     }
 

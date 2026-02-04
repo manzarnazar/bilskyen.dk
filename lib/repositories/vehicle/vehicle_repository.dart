@@ -54,5 +54,61 @@ class VehicleRepository {
     }
     return left(response.message);
   }
+
+  /// Create lead (e.g. for WhatsApp click) - requires auth
+  Future<Either<String, Map<String, dynamic>>> createLead(int vehicleId, String category) async {
+    final response = await networkRepository.post(
+      url: ApiConfig.vehicleLeads(vehicleId),
+      data: {'category': category},
+    );
+
+    if (!response.failed && response.success) {
+      final data = response.data['data'] as Map<String, dynamic>? ?? {};
+      return right(data);
+    }
+    return left(response.message.isNotEmpty ? response.message : 'Failed to create lead');
+  }
+
+  /// Submit enquiry form - requires auth
+  Future<Either<String, Map<String, dynamic>>> submitEnquiry(int vehicleId, {required String name, required String message}) async {
+    final response = await networkRepository.post(
+      url: ApiConfig.vehicleEnquiries(vehicleId),
+      data: {'name': name, 'message': message},
+    );
+
+    if (!response.failed && response.success) {
+      final data = response.data['data'] as Map<String, dynamic>? ?? {};
+      return right(data);
+    }
+    return left(response.message.isNotEmpty ? response.message : 'Failed to submit enquiry');
+  }
+
+  /// Submit test drive request - requires auth
+  Future<Either<String, Map<String, dynamic>>> submitTestDrive(int vehicleId, {required String name, required String message}) async {
+    final response = await networkRepository.post(
+      url: ApiConfig.vehicleTestDrive(vehicleId),
+      data: {'name': name, 'message': message},
+    );
+
+    if (!response.failed && response.success) {
+      final data = response.data['data'] as Map<String, dynamic>? ?? {};
+      return right(data);
+    }
+    return left(response.message.isNotEmpty ? response.message : 'Failed to submit test drive request');
+  }
+
+  /// Submit price negotiation - requires auth
+  Future<Either<String, Map<String, dynamic>>> submitPriceNegotiation(int vehicleId, {required String name, required String message}) async {
+    final response = await networkRepository.post(
+      url: ApiConfig.vehiclePriceNegotiation(vehicleId),
+      data: {'name': name, 'message': message},
+    );
+
+    if (!response.failed && response.success) {
+      final data = response.data['data'] as Map<String, dynamic>? ?? {};
+      return right(data);
+    }
+    return left(response.message.isNotEmpty ? response.message : 'Failed to submit price negotiation');
+  }
 }
 

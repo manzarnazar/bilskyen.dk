@@ -17,7 +17,7 @@ class VehicleInfoDisplay extends StatelessWidget {
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;
-      final vehicleData = controller.vehicleData;
+      final vehicleData = controller.vehicleData.value;
 
       if (vehicleData == null) {
         return const SizedBox.shrink();

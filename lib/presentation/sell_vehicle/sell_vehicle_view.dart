@@ -41,11 +41,13 @@ class SellVehicleView extends StatelessWidget {
           elevation: 0,
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: controller.formKey,
-              child: Column(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: controller.formKey,
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header
@@ -172,25 +174,50 @@ class SellVehicleView extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Variant Dropdown
-                          DropdownButtonFormField<int>(
-                            value: controller.variantId.value,
-                            decoration: InputDecoration(
-                              labelText: 'Variant',
-                              hintText: 'Select Variant',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            items: controller.variants.map((variant) {
+                          // Variant Dropdown (Disabled - value from lookup API only)
+                          Obx(() {
+                            // Get variant items from the variants list
+                            final variantItems = controller.variants.map((variant) {
                               return DropdownMenuItem<int>(
                                 value: variant.id,
                                 child: Text(variant.name),
                               );
-                            }).toList(),
-                            onChanged: (value) =>
-                                controller.variantId.value = value,
-                          ),
+                            }).toList();
+                            
+                            // If variant from lookup API is not in the list, add it
+                            if (controller.variantId.value != null &&
+                                controller.vehicleData.value?.variant != null) {
+                              final lookupVariant = controller.vehicleData.value!.variant!;
+                              final variantExists = controller.variants
+                                  .any((v) => v.id == lookupVariant.id);
+                              
+                              if (!variantExists) {
+                                variantItems.add(
+                                  DropdownMenuItem<int>(
+                                    value: lookupVariant.id,
+                                    child: Text(lookupVariant.name),
+                                  ),
+                                );
+                              }
+                            }
+                            
+                            return DropdownButtonFormField<int>(
+                              value: controller.variantId.value,
+                              decoration: InputDecoration(
+                                labelText: 'Variant',
+                                hintText: 'Select Variant',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                filled: true,
+                                fillColor: isDark
+                                    ? AppColors.surfaceDark
+                                    : AppColors.mutedBackground,
+                              ),
+                              items: variantItems,
+                              onChanged: null, // Disabled - value is auto-filled from vehicle lookup API
+                            );
+                          }),
                           const SizedBox(height: 16),
                           // Color Dropdown
                           DropdownButtonFormField<int>(
@@ -359,19 +386,46 @@ class SellVehicleView extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // Fuel Efficiency
-                          TextFormField(
-                            controller: controller.fuelEfficiencyController,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(decimal: true),
-                            decoration: InputDecoration(
-                              labelText: 'KM/L',
-                              hintText: '0.00',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
+                          // Fuel Efficiency (label changes based on fuel type)
+                          Obx(() {
+                            // Get fuel type ID from vehicle data
+                            final fuelTypeId = controller.vehicleData.value?.fuelType?.id;
+                            
+                            // Electric fuel types: 3 (Electric), 7 (El)
+                            const electricFuelTypes = [3, 7];
+                            // Hybrid fuel types: 4 (Hybrid), 5 (Plug-in Hybrid)
+                            const hybridFuelTypes = [4, 5];
+                            
+                            String labelText;
+                            String hintText;
+                            
+                            if (fuelTypeId != null && electricFuelTypes.contains(fuelTypeId)) {
+                              // Electric vehicles
+                              labelText = 'Electric Range (km)';
+                              hintText = '0';
+                            } else if (fuelTypeId != null && hybridFuelTypes.contains(fuelTypeId)) {
+                              // Hybrid vehicles
+                              labelText = 'Electric Range / KM/L';
+                              hintText = '0.00';
+                            } else {
+                              // Petrol, Diesel, or other fuel types
+                              labelText = 'KM/L';
+                              hintText = '0.00';
+                            }
+                            
+                            return TextFormField(
+                              controller: controller.fuelEfficiencyController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
+                                labelText: labelText,
+                                hintText: hintText,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          }),
                           const SizedBox(height: 16),
                           // Technical Total Weight
                           TextFormField(
@@ -746,25 +800,13 @@ class SellVehicleView extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: isSubmitting
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                          AppColors.primaryForeground,
-                                        ),
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Publish Vehicle Listing',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                              child: const Text(
+                                'Publish Vehicle Listing',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -774,6 +816,16 @@ class SellVehicleView extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+              // Overlay loading indicator
+              if (isSubmitting)
+                Container(
+                  color: Colors.black.withOpacity(0.5),
+                  child: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+            ],
           ),
         ),
       );

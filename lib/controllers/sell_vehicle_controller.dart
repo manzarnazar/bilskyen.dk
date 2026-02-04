@@ -9,6 +9,7 @@ import '../models/sell_vehicle_model/plan_model.dart';
 import '../repositories/sell_vehicle/sell_vehicle_repository.dart';
 import '../services/constants_service.dart';
 import '../main.dart';
+import '../utils/validation_utils.dart';
 import 'dart:convert';
 
 class SellVehicleController extends GetxController {
@@ -23,7 +24,7 @@ class SellVehicleController extends GetxController {
   final registrationController = TextEditingController();
   final RxBool isLookingUp = false.obs;
   final RxString lookupError = ''.obs;
-  VehicleLookupResponseModel? vehicleData;
+  final Rx<VehicleLookupResponseModel?> vehicleData = Rx<VehicleLookupResponseModel?>(null);
 
   // Expandable sections state
   final RxMap<String, bool> sectionExpanded = {
@@ -248,6 +249,9 @@ class SellVehicleController extends GetxController {
 
     isLookingUp.value = true;
     lookupError.value = '';
+    
+    // Reset form fields before new lookup
+    _resetFormFields();
 
     final result = await _repository.getVehicleByRegistration(registration);
 
@@ -257,13 +261,42 @@ class SellVehicleController extends GetxController {
         isLookingUp.value = false;
       },
       (data) {
-        vehicleData = data;
+        vehicleData.value = data;
         _autoFillForm(data);
         isFormVisible.value = true;
         isLookingUp.value = false;
         lookupError.value = '';
       },
     );
+  }
+
+  /// Reset form fields when performing a new lookup
+  void _resetFormFields() {
+    // Reset vehicle data
+    vehicleData.value = null;
+    
+    // Reset basic info
+    title.value = '';
+    variantId.value = null;
+    colorId.value = null;
+    
+    // Reset specifications
+    kmDrivenController.clear();
+    firstRegistrationMonth.value = null;
+    firstRegistrationYear.value = null;
+    lastInspectionMonth.value = null;
+    lastInspectionYear.value = null;
+    fuelEfficiencyController.clear();
+    technicalTotalWeightController.clear();
+    euronomId.value = null;
+    
+    // Reset equipment
+    selectedEquipmentIds.clear();
+    
+    // Reset description
+    descriptionController.clear();
+    
+    // Note: We don't reset price, seller info, images, or plan as user might want to keep those
   }
 
   /// Auto-fill form fields from API response
@@ -360,9 +393,13 @@ class SellVehicleController extends GetxController {
     if (data.description != null) {
       descriptionController.text = data.description!;
     }
+
+    // Note: All other fields (weights, engine specs, inspection details, etc.)
+    // are stored in vehicleData and will be passed directly to the API in submitForm()
+    // This ensures all data from the lookup response is included in the request
   }
 
-  /// Pick images from gallery
+  /// Pick images from gallery with validation
   Future<void> pickImages() async {
     try {
       final List<XFile> pickedFiles = await _imagePicker.pickMultiImage(
@@ -371,7 +408,48 @@ class SellVehicleController extends GetxController {
 
       if (pickedFiles.isNotEmpty) {
         final files = pickedFiles.map((xFile) => File(xFile.path)).toList();
-        selectedImages.addAll(files);
+        final validationErrors = <String>[];
+
+        // Validate each image before adding
+        for (var i = 0; i < files.length; i++) {
+          final file = files[i];
+          final sizeError = ValidationUtils.validateImageSize(file);
+          if (sizeError != null) {
+            validationErrors.add('Image ${i + 1}: $sizeError');
+            continue;
+          }
+
+          final typeError = ValidationUtils.validateImageType(file);
+          if (typeError != null) {
+            validationErrors.add('Image ${i + 1}: $typeError');
+            continue;
+          }
+
+          // Image is valid, add it
+          selectedImages.add(file);
+        }
+
+        // Show validation errors if any
+        if (validationErrors.isNotEmpty) {
+          Get.snackbar(
+            'Image Validation Error',
+            validationErrors.join('\n'),
+            duration: const Duration(seconds: 5),
+          );
+        }
+
+        // Show success message if some images were added
+        if (selectedImages.length > files.length - validationErrors.length) {
+          final addedCount =
+              selectedImages.length - (selectedImages.length - files.length);
+          if (addedCount > 0) {
+            Get.snackbar(
+              'Success',
+              '$addedCount image(s) added successfully',
+              duration: const Duration(seconds: 2),
+            );
+          }
+        }
       }
     } catch (e) {
       Get.snackbar('Error', 'Failed to pick images: ${e.toString()}');
@@ -435,101 +513,363 @@ class SellVehicleController extends GetxController {
     showLocationSuggestions.value = false;
   }
 
-  /// Validate form
+  /// Validate form according to backend validation rules
   bool validateForm() {
+    // First validate form fields
     if (!formKey.currentState!.validate()) {
       return false;
     }
 
-    // Check required fields
-    if (kmDrivenController.text.isEmpty) {
-      Get.snackbar('Error', 'Kilometer driven is required');
-      return false;
+    final errors = <String>[];
+
+    // Required fields validation
+    // Title - optional (backend auto-generates if not provided), but if provided, max 255 characters
+    if (title.value.isNotEmpty) {
+      final titleError = ValidationUtils.validateStringMaxLength(title.value, 255);
+      if (titleError != null) {
+        errors.add(titleError);
+      }
     }
 
+    // Registration - required, max 20 characters
+    final registrationError = ValidationUtils.validateRegistration(
+      registrationController.text.trim(),
+    );
+    if (registrationError != null) {
+      errors.add(registrationError);
+    }
+
+    // VIN - optional, max 17 characters
+    if (vehicleData.value?.vin != null) {
+      final vinError = ValidationUtils.validateVin(vehicleData.value!.vin);
+      if (vinError != null) {
+        errors.add(vinError);
+      }
+    }
+
+    // Price - required, integer >= 0
     if (priceController.text.isEmpty) {
-      Get.snackbar('Error', 'Price is required');
-      return false;
+      errors.add('Price is required');
+    } else {
+      final priceValue = int.tryParse(priceController.text);
+      if (priceValue == null) {
+        errors.add('Price must be a valid number');
+      } else {
+        final priceError =
+            ValidationUtils.validateNonNegativeInteger(priceValue, 'Price');
+        if (priceError != null) {
+          errors.add(priceError);
+        }
+      }
     }
 
-    if (sellerPhoneController.text.isEmpty) {
-      Get.snackbar('Error', 'Phone number is required');
-      return false;
+    // Fuel Type ID - required (must exist)
+    if (vehicleData.value?.fuelType == null) {
+      errors.add('Fuel type is required');
     }
 
-    if (sellerAddressController.text.isEmpty) {
-      Get.snackbar('Error', 'Address is required');
-      return false;
+    // Kilometer driven - required, must be >= 0
+    if (kmDrivenController.text.isEmpty) {
+      errors.add('Kilometer driven is required');
+    } else {
+      final kmValue = int.tryParse(kmDrivenController.text.trim());
+      if (kmValue == null) {
+        errors.add('Kilometer driven must be a valid number');
+      } else {
+        final kmError = ValidationUtils.validateNonNegativeInteger(
+          kmValue,
+          'Kilometer driven',
+        );
+        if (kmError != null) {
+          errors.add(kmError);
+        }
+      }
     }
 
-    if (sellerPostcodeController.text.isEmpty) {
-      Get.snackbar('Error', 'Postal code is required');
-      return false;
+    // Validate all integer fields that are provided
+    if (fuelEfficiencyController.text.isNotEmpty) {
+      final fuelEffValue = double.tryParse(fuelEfficiencyController.text);
+      if (fuelEffValue == null) {
+        errors.add('Fuel efficiency must be a valid number');
+      } else if (fuelEffValue < 0) {
+        errors.add('Fuel efficiency must be a positive number');
+      }
     }
 
+    if (technicalTotalWeightController.text.isNotEmpty) {
+      final weightValue =
+          int.tryParse(technicalTotalWeightController.text);
+      if (weightValue == null) {
+        errors.add('Technical total weight must be a valid number');
+      } else {
+        final weightError = ValidationUtils.validateNonNegativeInteger(
+          weightValue,
+          'Technical total weight',
+        );
+        if (weightError != null) {
+          errors.add(weightError);
+        }
+      }
+    }
+
+    // Validate images
     if (selectedImages.isEmpty) {
-      Get.snackbar('Error', 'Please upload at least one image');
+      errors.add('Please upload at least one image');
+    } else {
+      final imageErrors = ValidationUtils.validateImages(selectedImages);
+      errors.addAll(imageErrors);
+    }
+
+    // Seller information validation (required for form submission)
+    final phoneError =
+        ValidationUtils.validateRequired(sellerPhoneController.text, 'Phone');
+    if (phoneError != null) {
+      errors.add(phoneError);
+    }
+
+    final addressError =
+        ValidationUtils.validateRequired(sellerAddressController.text, 'Address');
+    if (addressError != null) {
+      errors.add(addressError);
+    }
+
+    final postcodeError = ValidationUtils.validateRequired(
+      sellerPostcodeController.text,
+      'Postal code',
+    );
+    if (postcodeError != null) {
+      errors.add(postcodeError);
+    }
+
+    // Display errors if any
+    if (errors.isNotEmpty) {
+      Get.snackbar(
+        'Validation Error',
+        errors.join('\n'),
+        duration: const Duration(seconds: 5),
+      );
       return false;
     }
 
     return true;
   }
 
-  /// Submit form
+  /// Submit form with proper validation and field mapping
   Future<void> submitForm() async {
     if (!validateForm()) {
+      return;
+    }
+
+    // Check if user is authenticated before submission
+    final token = appStorage.read("token")?.toString();
+    if (token == null || token.isEmpty) {
+      Get.snackbar(
+        'Authentication Required',
+        'Please login to submit your vehicle listing.',
+        duration: const Duration(seconds: 5),
+      );
       return;
     }
 
     isSubmitting.value = true;
 
     try {
-      // Parse fuel type ID from vehicle data or use default
-      int fuelTypeId = 1; // Default
-      if (vehicleData?.fuelType != null) {
-        fuelTypeId = vehicleData!.fuelType!.id;
+      // Title is optional - backend will auto-generate if not provided
+      final vehicleTitle = title.value.trim().isNotEmpty ? title.value.trim() : null;
+
+      // Parse fuel type ID from vehicle data (required field)
+      int? fuelTypeId;
+      if (vehicleData.value?.fuelType != null) {
+        fuelTypeId = vehicleData.value!.fuelType!.id;
+      } else {
+        Get.snackbar('Error', 'Fuel type is required');
+        isSubmitting.value = false;
+        return;
       }
 
-      // Parse vehicle list status (default to draft = 1)
-      int vehicleListStatusId = 1; // Draft
+      // Parse price (required field, already validated)
+      final priceValue = int.parse(priceController.text.trim());
 
+      // Parse km_driven (required field)
+      if (kmDrivenController.text.isEmpty) {
+        Get.snackbar('Error', 'Kilometer driven is required');
+        isSubmitting.value = false;
+        return;
+      }
+      final kmDrivenValue = int.tryParse(kmDrivenController.text.trim());
+      if (kmDrivenValue == null || kmDrivenValue < 0) {
+        Get.snackbar('Error', 'Kilometer driven must be a valid positive number');
+        isSubmitting.value = false;
+        return;
+      }
+
+      // Parse fuel efficiency (optional)
+      double? fuelEffValue;
+      if (fuelEfficiencyController.text.isNotEmpty) {
+        fuelEffValue = double.tryParse(fuelEfficiencyController.text.trim());
+        if (fuelEffValue != null && fuelEffValue < 0) {
+          Get.snackbar('Error', 'Fuel efficiency must be a positive number');
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
+      // Parse technical total weight (optional)
+      int? techWeightValue;
+      if (technicalTotalWeightController.text.isNotEmpty) {
+        techWeightValue =
+            int.tryParse(technicalTotalWeightController.text.trim());
+        if (techWeightValue != null && techWeightValue < 0) {
+          Get.snackbar('Error', 'Technical total weight must be a positive number');
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
+      // Helper function to parse string to int (for wheels, axles, drive_axles)
+      int? _parseIntFromString(dynamic value) {
+        if (value == null) return null;
+        if (value is int) return value;
+        if (value is String) {
+          if (value.isEmpty) return null;
+          return int.tryParse(value);
+        }
+        if (value is num) return value.toInt();
+        return null;
+      }
+
+      // Helper function to convert array to JSON string
+      String? _arrayToJsonString(List<dynamic>? array) {
+        if (array == null || array.isEmpty) return null;
+        try {
+          return jsonEncode(array);
+        } catch (e) {
+          return null;
+        }
+      }
+
+      // Build request model with all fields from vehicle lookup response
+      // Note: The model will handle date conversion from month/year to date strings
+      // Backend will automatically set vehicle_list_status_id to 2 and published_at to now()
       final requestData = SellVehicleRequestModel(
         registration: registrationController.text.trim().toUpperCase(),
-        vin: vehicleData?.vin,
-        title: title.value.isNotEmpty ? title.value : null,
-        price: int.parse(priceController.text),
+        price: priceValue,
         fuelTypeId: fuelTypeId,
-        kmDriven: int.parse(kmDrivenController.text),
-        variantId: variantId.value,
-        colorId: colorId.value,
-        euronomId: euronomId.value,
-        firstRegistrationMonth: firstRegistrationMonth.value,
-        firstRegistrationYear: firstRegistrationYear.value,
-        lastInspectionMonth: lastInspectionMonth.value,
-        lastInspectionYear: lastInspectionYear.value,
-        fuelEfficiency: fuelEfficiencyController.text.isNotEmpty
-            ? double.tryParse(fuelEfficiencyController.text)
-            : null,
-        technicalTotalWeight: technicalTotalWeightController.text.isNotEmpty
-            ? int.tryParse(technicalTotalWeightController.text)
-            : null,
+        kmDriven: kmDrivenValue,
+        title: vehicleTitle,
+        vin: vehicleData.value?.vin,
+        vehicleExternalId: vehicleData.value?.vehicleExternalId ?? vehicleData.value?.vehicleId?.toString(),
+        brandId: vehicleData.value?.brand?.id,
+        modelId: vehicleData.value?.model?.id,
+        modelYearId: vehicleData.value?.modelYear?.id,
+        listingTypeId: null, // Will be set by backend if not provided
+        
+        // Vehicle details
+        vinLocation: vehicleData.value?.vinLocation,
+        typeId: vehicleData.value?.type?.id,
+        typeName: vehicleData.value?.type?.name,
+        version: vehicleData.value?.version,
+        registrationStatus: vehicleData.value?.registrationStatus,
+        registrationStatusUpdatedDate: vehicleData.value?.registrationStatusUpdatedDate,
+        expireDate: vehicleData.value?.expireDate,
+        statusUpdatedDate: vehicleData.value?.statusUpdatedDate,
+        description: descriptionController.text.trim().isNotEmpty
+            ? descriptionController.text.trim()
+            : vehicleData.value?.description,
+        
+        // Vehicle specifications
+        variantId: variantId.value ?? vehicleData.value?.variant?.id,
+        variantName: variantId.value != null
+            ? (variants.where((v) => v.id == variantId.value).isNotEmpty
+                ? variants.where((v) => v.id == variantId.value).first.name
+                : vehicleData.value?.variant?.name)
+            : vehicleData.value?.variant?.name,
+        colorId: colorId.value ?? vehicleData.value?.color?.id,
+        useId: vehicleData.value?.use?.id,
+        bodyTypeId: vehicleData.value?.bodyType?.id,
+        
+        // Dates
+        firstRegistrationMonth: firstRegistrationMonth.value ?? vehicleData.value?.firstRegistrationMonth,
+        firstRegistrationYear: firstRegistrationYear.value ?? vehicleData.value?.firstRegistrationYear,
+        firstRegistrationDate: vehicleData.value?.firstRegistrationDate,
+        lastInspectionMonth: lastInspectionMonth.value ?? vehicleData.value?.lastInspectionMonth,
+        lastInspectionYear: lastInspectionYear.value ?? vehicleData.value?.lastInspectionYear,
+        lastInspectionDate: vehicleData.value?.lastInspectionDate,
+        lastInspectionResult: vehicleData.value?.lastInspectionResult,
+        lastInspectionOdometer: vehicleData.value?.lastInspectionOdometer,
+        // Note: leasingPeriodStart and leasingPeriodEnd are not available in VehicleLookupResponseModel
+        // They are set to null - can be added later if API provides them
+        
+        // Weight and dimensions
+        totalWeight: vehicleData.value?.totalWeight,
+        vehicleWeight: vehicleData.value?.vehicleWeight,
+        technicalTotalWeight: techWeightValue ?? vehicleData.value?.technicalTotalWeight,
+        towingWeight: vehicleData.value?.towingWeight,
+        towingWeightBrakes: vehicleData.value?.towingWeightBrakes,
+        minimumWeight: vehicleData.value?.minimumWeight,
+        grossCombinationWeight: vehicleData.value?.grossCombinationWeight,
+        
+        // Engine specifications
+        enginePower: vehicleData.value?.enginePower,
+        engineDisplacement: vehicleData.value?.engineDisplacement,
+        engineCylinders: vehicleData.value?.engineCylinders,
+        engineCode: vehicleData.value?.engineCode,
+        fuelEfficiency: fuelEffValue ?? vehicleData.value?.fuelEfficiency,
+        euronomId: euronomId.value ?? vehicleData.value?.euronorm?.id,
+        euronomName: euronomId.value != null
+            ? (euronorms.where((e) => e.id == euronomId.value).isNotEmpty
+                ? euronorms.where((e) => e.id == euronomId.value).first.name
+                : vehicleData.value?.euronorm?.name)
+            : vehicleData.value?.euronorm?.name,
+        
+        // Other specifications
+        ownershipTax: vehicleData.value?.ownershipTax,
+        annualTax: vehicleData.value?.annualTax,
+        doors: vehicleData.value?.doors,
+        minimumSeats: vehicleData.value?.minimumSeats,
+        maximumSeats: vehicleData.value?.maximumSeats,
+        topSpeed: vehicleData.value?.topSpeed,
+        wheels: _parseIntFromString(vehicleData.value?.wheels),
+        axles: _parseIntFromString(vehicleData.value?.axles),
+        driveAxles: _parseIntFromString(vehicleData.value?.driveAxles),
+        wheelbase: vehicleData.value?.wheelbase,
+        category: vehicleData.value?.category,
+        typeApprovalCode: vehicleData.value?.typeApprovalCode,
+        extraEquipment: vehicleData.value?.extraEquipment,
+        dispensations: _arrayToJsonString(vehicleData.value?.dispensations),
+        permits: _arrayToJsonString(vehicleData.value?.permits),
+        airbags: vehicleData.value?.airbags,
+        integratedChildSeats: vehicleData.value?.integratedChildSeats,
+        seatBeltAlarms: vehicleData.value?.seatBeltAlarms,
+        ncapFive: vehicleData.value?.ncapFive,
+        coupling: vehicleData.value?.coupling,
+        
+        // Equipment and features
         equipmentIds: selectedEquipmentIds.isNotEmpty
             ? selectedEquipmentIds.toList()
-            : null,
+            : (vehicleData.value?.equipment != null && vehicleData.value!.equipment!.isNotEmpty
+                ? vehicleData.value!.equipment!.map((e) => e.id).toList()
+                : null),
         servicebog: servicebog.value,
-        description: descriptionController.text.isNotEmpty
-            ? descriptionController.text
-            : null,
-        sellerPhone: sellerPhoneController.text,
-        sellerAddress: sellerAddressController.text,
-        sellerPostcode: sellerPostcodeController.text,
+        
+        // Seller information
+        sellerPhone: sellerPhoneController.text.trim(),
+        sellerAddress: sellerAddressController.text.trim(),
+        sellerPostcode: sellerPostcodeController.text.trim(),
         planId: selectedPlanId.value,
-        vehicleExternalId: vehicleData?.vehicleExternalId,
-        brandId: vehicleData?.brand?.id,
-        modelId: vehicleData?.model?.id,
-        modelYearId: vehicleData?.modelYear?.id,
-        vehicleListStatusId: vehicleListStatusId,
       );
+
+      // Validate images one more time before submission
+      final imageErrors = ValidationUtils.validateImages(selectedImages);
+      if (imageErrors.isNotEmpty) {
+        Get.snackbar(
+          'Image Validation Error',
+          imageErrors.join('\n'),
+          duration: const Duration(seconds: 5),
+        );
+        isSubmitting.value = false;
+        return;
+      }
 
       final result = await _repository.submitVehicleListing(
         requestData: requestData,
@@ -538,18 +878,33 @@ class SellVehicleController extends GetxController {
 
       result.fold(
         (error) {
-          Get.snackbar('Error', error);
+          Get.snackbar(
+            'Submission Error',
+            error,
+            duration: const Duration(seconds: 5),
+          );
           isSubmitting.value = false;
         },
-        (data) {
-          Get.snackbar('Success', 'Vehicle listing submitted successfully!');
+        (data) async {
+          Get.snackbar(
+            'Success',
+            'Vehicle listing submitted successfully!',
+            duration: const Duration(seconds: 3),
+            snackPosition: SnackPosition.TOP,
+          );
           isSubmitting.value = false;
+          // Wait for snackbar to display before navigating back
+          await Future.delayed(const Duration(milliseconds: 1500));
           // Navigate back or to success page
           Get.back();
         },
       );
     } catch (e) {
-      Get.snackbar('Error', 'Failed to submit: ${e.toString()}');
+      Get.snackbar(
+        'Error',
+        'Failed to submit: ${e.toString()}',
+        duration: const Duration(seconds: 5),
+      );
       isSubmitting.value = false;
     }
   }

@@ -185,12 +185,12 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
                       // Brand Logo
                       Image.asset(
                         isDark ? 'assets/images/logo_white.png' : 'assets/images/logo.png',
-                        height: 120,
+                        height: 80,
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
-                            width: 120,
-                            height: 120,
+                            width: 80,
+                            height: 80,
                             decoration: BoxDecoration(
                               color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
                               shape: BoxShape.circle,

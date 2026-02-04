@@ -187,6 +187,35 @@ class SellVehicleRepository {
         formData: formData,
       );
 
+      // Handle authentication errors (302 redirect or 401)
+      if (response.failed) {
+        // Check if it's an authentication error
+        if (response.data is Map) {
+          final responseData = response.data as Map<String, dynamic>;
+          if (responseData.containsKey('status_code')) {
+            final statusCode = responseData['status_code'];
+            if (statusCode == 302 || statusCode == 401) {
+              return left(
+                'Authentication required. Please login again to submit your vehicle listing.',
+              );
+            }
+          }
+          if (responseData.containsKey('error') &&
+              responseData['error'] == 'authentication_required') {
+            return left(
+              'Authentication required. Please login again to submit your vehicle listing.',
+            );
+          }
+        }
+        // Check response message for authentication hints
+        if (response.message.contains('Authentication') ||
+            response.message.contains('login')) {
+          return left(
+            'Authentication required. Please login again to submit your vehicle listing.',
+          );
+        }
+      }
+
       if (!response.failed && response.success) {
         dynamic responseData = response.data;
         if (responseData is Map && responseData.containsKey('data')) {
@@ -195,27 +224,69 @@ class SellVehicleRepository {
         return right(responseData as Map<String, dynamic>);
       }
 
-      // Handle validation errors
-      if (response.data is Map &&
-          response.data.containsKey('errors') &&
-          response.data['errors'] is Map) {
-        final errors = response.data['errors'] as Map<String, dynamic>;
-        final errorMessages = <String>[];
-        errors.forEach((key, value) {
-          if (value is List) {
-            errorMessages.addAll(value.map((e) => '$key: $e'));
-          } else {
-            errorMessages.add('$key: $value');
+      // Handle validation errors (422 status code) or failed responses
+      final errorMessages = <String>[];
+      
+      // Check for Laravel validation errors format: { "errors": { "field": ["message1", "message2"] } }
+      if (response.data is Map) {
+        final responseData = response.data as Map<String, dynamic>;
+        
+        if (responseData.containsKey('errors') && responseData['errors'] is Map) {
+          final errors = responseData['errors'] as Map<String, dynamic>;
+          errors.forEach((field, value) {
+            if (value is List) {
+              // Multiple error messages for the same field
+              for (var errorMsg in value) {
+                // Convert snake_case field names to readable format
+                final readableField = _formatFieldName(field);
+                errorMessages.add('$readableField: $errorMsg');
+              }
+            } else if (value is String) {
+              // Single error message
+              final readableField = _formatFieldName(field);
+              errorMessages.add('$readableField: $value');
+            } else {
+              // Fallback for other types
+              final readableField = _formatFieldName(field);
+              errorMessages.add('$readableField: $value');
+            }
+          });
+        }
+        
+        // Also check for 'message' field (Laravel sometimes uses this for general errors)
+        if (responseData.containsKey('message')) {
+          final message = responseData['message'];
+          if (message is String && message.isNotEmpty) {
+            // Only add if we don't have field-specific errors, or as additional context
+            if (errorMessages.isEmpty) {
+              errorMessages.add(message);
+            }
           }
-        });
+        }
+      }
+      
+      // Return formatted error messages if we have any
+      if (errorMessages.isNotEmpty) {
         return left(errorMessages.join('\n'));
       }
 
+      // Fallback to response message
       return left(response.message.isNotEmpty
           ? response.message
           : 'Failed to submit vehicle listing');
     } catch (e) {
       return left('Error submitting listing: ${e.toString()}');
     }
+  }
+
+  /// Formats field names from snake_case to readable format
+  /// Example: 'fuel_type_id' -> 'Fuel Type', 'first_registration_date' -> 'First Registration Date'
+  String _formatFieldName(String fieldName) {
+    return fieldName
+        .split('_')
+        .map((word) => word.isEmpty
+            ? word
+            : word[0].toUpperCase() + word.substring(1))
+        .join(' ');
   }
 }

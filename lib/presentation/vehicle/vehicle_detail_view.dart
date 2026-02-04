@@ -8,6 +8,7 @@ import '../../models/vehicle_detail_model/vehicle_detail_model.dart';
 import '../widgets/vehicle_image_gallery.dart';
 import '../widgets/detail_section_card.dart';
 import '../widgets/vehicle_detail_shimmer.dart';
+import 'widgets/enquiry_form_bottom_sheet.dart';
 
 class VehicleDetailView extends StatelessWidget {
   const VehicleDetailView({super.key});
@@ -505,6 +506,9 @@ class VehicleDetailView extends StatelessWidget {
                   ),
                 ),
 
+                // Contact Actions Card
+                _buildContactActionsSection(vehicle, isDark),
+
                 // Listing Information Card
                 if (vehicle.publishedAt != null)
                   DetailSectionCard(
@@ -528,6 +532,198 @@ class VehicleDetailView extends StatelessWidget {
         }),
       );
     });
+  }
+
+  Widget _buildContactActionsSection(VehicleDetailModel vehicle, bool isDark) {
+    final hasContact = vehicle.user != null || vehicle.dealerId != null;
+    if (!hasContact) return const SizedBox.shrink();
+
+    final contactWhatsapp = vehicle.contactWhatsapp ??
+        vehicle.user?.whatsappNumber ??
+        vehicle.user?.phone ??
+        vehicle.details?.sellerPhone;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.08)
+              : Colors.black.withOpacity(0.06),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.call_to_action_outlined,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Contact Actions',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.textDark : AppColors.textLight,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildActionButton(
+            icon: Icons.chat_bubble_outline,
+            label: 'Send Enquiry',
+            isDark: isDark,
+            onPressed: () => _showEnquiryForm(vehicle, EnquiryFormType.enquiry),
+          ),
+          const SizedBox(height: 12),
+          _buildActionButton(
+            icon: Icons.email_outlined,
+            label: 'Send Email',
+            isDark: isDark,
+            onPressed: () => _launchEmail(vehicle),
+          ),
+          if (contactWhatsapp != null && contactWhatsapp.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildActionButton(
+              icon: Icons.chat_outlined,
+              label: 'Contact via WhatsApp',
+              isDark: isDark,
+              onPressed: () => _handleWhatsAppClick(whatsappNumber: contactWhatsapp),
+            ),
+          ],
+          const SizedBox(height: 12),
+          _buildActionButton(
+            icon: Icons.directions_car_outlined,
+            label: 'Request Test Drive',
+            isDark: isDark,
+            onPressed: () => _showEnquiryForm(vehicle, EnquiryFormType.testDrive),
+          ),
+          const SizedBox(height: 12),
+          _buildActionButton(
+            icon: Icons.attach_money_outlined,
+            label: 'Price Negotiation',
+            isDark: isDark,
+            onPressed: () => _showEnquiryForm(vehicle, EnquiryFormType.priceNegotiation),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchEmail(VehicleDetailModel vehicle) async {
+    final email = vehicle.user?.email;
+    if (email == null || email.trim().isEmpty) {
+      Get.snackbar('Send Email', 'No email address available', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    final subject = Uri.encodeComponent('Enquiry about: ${vehicle.title}');
+    final body = Uri.encodeComponent(
+      'Hello,\n\nI am interested in this vehicle: ${vehicle.title}\n\nPlease contact me with more information.\n\nThank you!',
+    );
+    final uri = Uri.parse('mailto:${email.trim()}?subject=$subject&body=$body');
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        Get.snackbar('Send Email', 'Could not open email app', snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (e) {
+      Get.snackbar('Send Email', 'Could not open email app', snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  void _showEnquiryForm(VehicleDetailModel vehicle, EnquiryFormType type) {
+    Get.bottomSheet(
+      EnquiryFormBottomSheet(
+        vehicleId: vehicle.id,
+        vehicleTitle: vehicle.title,
+        type: type,
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  Future<void> _handleWhatsAppClick({required String whatsappNumber}) async {
+    final formatted = whatsappNumber.replaceAll(RegExp(r'\D'), '');
+    if (formatted.isEmpty) {
+      Get.snackbar('WhatsApp', 'No WhatsApp number available', snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    final uri = Uri.parse('https://wa.me/$formatted');
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      if (!ok) {
+        Get.snackbar('WhatsApp', 'Could not open WhatsApp', snackPosition: SnackPosition.BOTTOM);
+      }
+    } catch (e) {
+      Get.snackbar('WhatsApp', 'Could not open WhatsApp', snackPosition: SnackPosition.BOTTOM);
+    }
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+    required bool isDark,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+          foregroundColor: isDark ? AppColors.textDark : AppColors.textLight,
+          side: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.12)
+                : Colors.black.withOpacity(0.08),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildSellerInfoCard(VehicleDetailModel vehicle, bool isDark) {
