@@ -29,12 +29,18 @@ class _VehicleImageGalleryState extends State<VehicleImageGallery> {
 
   @override
   void dispose() {
-    _pageController.dispose();
+    // Defer disposal to next frame so any in-flight scroll animation can complete
+    final controller = _pageController;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        controller.dispose();
+      } catch (_) {}
+    });
     super.dispose();
   }
 
   void _previousPage() {
-    if (_currentPage > 0) {
+    if (_currentPage > 0 && _pageController.hasClients) {
       _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -43,7 +49,7 @@ class _VehicleImageGalleryState extends State<VehicleImageGallery> {
   }
 
   void _nextPage() {
-    if (_currentPage < widget.images.length - 1) {
+    if (_currentPage < widget.images.length - 1 && _pageController.hasClients) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,

@@ -64,8 +64,10 @@ class SellVehicleController extends GetxController {
   // Photos
   final RxList<File> selectedImages = <File>[].obs;
 
-  // Description
+  // Description (auto-filled from API or generated from form; user can edit)
   final descriptionController = TextEditingController();
+  final RxBool descriptionUserEdited = false.obs;
+  bool _isAutoFilling = false;
 
   // Seller Information
   final sellerPhoneController = TextEditingController();
@@ -96,12 +98,21 @@ class SellVehicleController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    final token = appStorage.read('token');
+    if (token == null || token.toString().isEmpty) {
+      Get.offNamed('/login');
+      return;
+    }
     _loadUserData();
     _loadReferenceData();
+    _setupDescriptionRegenerationListeners();
   }
 
   @override
   void onClose() {
+    kmDrivenController.removeListener(_onSpecChanged);
+    fuelEfficiencyController.removeListener(_onSpecChanged);
+    technicalTotalWeightController.removeListener(_onSpecChanged);
     registrationController.dispose();
     kmDrivenController.dispose();
     fuelEfficiencyController.dispose();
@@ -112,6 +123,19 @@ class SellVehicleController extends GetxController {
     sellerAddressController.dispose();
     sellerPostcodeController.dispose();
     super.onClose();
+  }
+
+  void _setupDescriptionRegenerationListeners() {
+    kmDrivenController.addListener(_onSpecChanged);
+    fuelEfficiencyController.addListener(_onSpecChanged);
+    technicalTotalWeightController.addListener(_onSpecChanged);
+    ever(firstRegistrationMonth, (_) => _onSpecChanged());
+    ever(firstRegistrationYear, (_) => _onSpecChanged());
+    ever(lastInspectionMonth, (_) => _onSpecChanged());
+    ever(lastInspectionYear, (_) => _onSpecChanged());
+    ever(euronomId, (_) => _onSpecChanged());
+    ever(selectedEquipmentIds, (_) => _onSpecChanged());
+    ever(servicebog, (_) => _onSpecChanged());
   }
 
   /// Load user data to pre-fill seller information
@@ -295,12 +319,14 @@ class SellVehicleController extends GetxController {
     
     // Reset description
     descriptionController.clear();
-    
+    descriptionUserEdited.value = false;
+
     // Note: We don't reset price, seller info, images, or plan as user might want to keep those
   }
 
   /// Auto-fill form fields from API response
   void _autoFillForm(VehicleLookupResponseModel data) {
+    _isAutoFilling = true;
     // Title
     if (data.title != null) {
       title.value = data.title!;
@@ -389,14 +415,131 @@ class SellVehicleController extends GetxController {
           data.equipment!.map((e) => e.id).toList();
     }
 
-    // Description
-    if (data.description != null) {
+    // Description: use API value if present, otherwise generate from form fields (like web)
+    if (data.description != null && data.description!.trim().isNotEmpty) {
       descriptionController.text = data.description!;
+    } else {
+      generateDescription();
     }
+    _isAutoFilling = false;
 
     // Note: All other fields (weights, engine specs, inspection details, etc.)
     // are stored in vehicleData and will be passed directly to the API in submitForm()
     // This ensures all data from the lookup response is included in the request
+  }
+
+  /// Mark description as user-edited so we don't overwrite it when spec fields change.
+  void markDescriptionUserEdited() {
+    descriptionUserEdited.value = true;
+  }
+
+  /// Generate description from form fields (matches web sell-your-car-form.js generateDescription).
+  void generateDescription() {
+    if (descriptionUserEdited.value) return;
+
+    final parts = <String>[];
+
+    // Equipment
+    if (selectedEquipmentIds.isNotEmpty) {
+      final names = <String>[];
+      for (final id in selectedEquipmentIds) {
+        for (final e in equipment) {
+          if (e.id == id) {
+            names.add(e.name);
+            break;
+          }
+        }
+      }
+      if (names.isNotEmpty) {
+        parts.add('Equipment: ${names.join(', ')}');
+      }
+    }
+
+    // Servicebog
+    if (servicebog.value != 'Default') {
+      parts.add('Service book: ${servicebog.value}');
+    }
+
+    // Kilometer driven
+    final kmText = kmDrivenController.text.trim();
+    if (kmText.isNotEmpty) {
+      final km = int.tryParse(kmText);
+      if (km != null) {
+        parts.add('Kilometers driven: ${km.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} km');
+      }
+    }
+
+    // First registration
+    final frMonth = firstRegistrationMonth.value;
+    final frYear = firstRegistrationYear.value;
+    if (frMonth != null && frYear != null) {
+      parts.add('First registration: ${_monthName(frMonth)} $frYear');
+    }
+
+    // Last inspection
+    final liMonth = lastInspectionMonth.value;
+    final liYear = lastInspectionYear.value;
+    if (liMonth != null && liYear != null) {
+      parts.add('Last inspection: ${_monthName(liMonth)} $liYear');
+    }
+
+    // Fuel efficiency / electric range (label by fuel type)
+    final fuelEffText = fuelEfficiencyController.text.trim();
+    if (fuelEffText.isNotEmpty) {
+      final fuelTypeId = vehicleData.value?.fuelType?.id;
+      const electricFuelTypes = [3, 7];
+      const hybridFuelTypes = [4, 5];
+      final val = double.tryParse(fuelEffText) ?? int.tryParse(fuelEffText)?.toDouble();
+      if (val != null) {
+        if (fuelTypeId != null && electricFuelTypes.contains(fuelTypeId)) {
+          parts.add('Electric range: ${val.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} km');
+        } else if (fuelTypeId != null && hybridFuelTypes.contains(fuelTypeId)) {
+          parts.add('Range/Efficiency: ${val.toStringAsFixed(2)} km');
+        } else {
+          parts.add('Fuel efficiency: ${val.toStringAsFixed(2)} km/l');
+        }
+      }
+    }
+
+    // Euronom
+    final euronomIdVal = euronomId.value;
+    if (euronomIdVal != null) {
+      String? euronomName;
+      for (final e in euronorms) {
+        if (e.id == euronomIdVal) {
+          euronomName = e.name;
+          break;
+        }
+      }
+      if (euronomName != null && euronomName.isNotEmpty) {
+        parts.add('Euro norm: $euronomName');
+      }
+    }
+
+    // Total technical weight
+    final weightText = technicalTotalWeightController.text.trim();
+    if (weightText.isNotEmpty) {
+      final w = int.tryParse(weightText);
+      if (w != null) {
+        parts.add('Total technical weight: ${w.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} kg');
+      }
+    }
+
+    if (parts.isNotEmpty) {
+      descriptionController.text = '${parts.join('. ')}.';
+    }
+  }
+
+  static const _monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  static String _monthName(int month) =>
+      month >= 1 && month <= 12 ? _monthNames[month - 1] : '$month';
+
+  void _onSpecChanged() {
+    if (_isAutoFilling || descriptionUserEdited.value) return;
+    generateDescription();
   }
 
   /// Pick images from gallery with validation

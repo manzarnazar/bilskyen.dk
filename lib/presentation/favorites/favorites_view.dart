@@ -3,19 +3,59 @@ import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../controllers/favorites_controller.dart';
+import '../../main.dart';
 import '../widgets/vehicle_card.dart';
 import '../widgets/vehicle_card_shimmer.dart';
 
 class FavoritesView extends StatelessWidget {
   const FavoritesView({super.key});
 
+  static bool _isLoggedIn() {
+    try {
+      final token = appStorage.read('token');
+      return token != null && token.toString().isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appController = Get.find<AppController>();
-    final controller = Get.put(FavoritesController());
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;
+
+      // Not logged in: show login CTA in the tab
+      if (!_isLoggedIn()) {
+        return Scaffold(
+          backgroundColor: isDark
+              ? AppColors.backgroundDark
+              : AppColors.backgroundLight,
+          appBar: AppBar(
+            backgroundColor: isDark
+                ? AppColors.backgroundDark
+                : AppColors.backgroundLight,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            foregroundColor: AppColors.primary,
+            elevation: 0,
+            title: Text(
+              'Favorites',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          body: SafeArea(
+            child: _buildLoginRequiredBody(isDark),
+          ),
+        );
+      }
+
+      final controller = Get.put(FavoritesController());
 
       return Scaffold(
         backgroundColor: isDark
@@ -158,6 +198,7 @@ class FavoritesView extends StatelessWidget {
                     vehicle: controller.vehicles[index],
                     isDark: isDark,
                     isHorizontalLayout: controller.isHorizontalLayout.value,
+                    checkFavoriteOnLoad: false,
                   ));
                 },
               ),
@@ -166,6 +207,56 @@ class FavoritesView extends StatelessWidget {
         ),
       );
     });
+  }
+
+  Widget _buildLoginRequiredBody(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.favorite_border,
+              size: 64,
+              color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Sign in to view your favorites',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textDark : AppColors.textLight,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Save vehicles you like and access them here.',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Get.toNamed('/login'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Log in'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

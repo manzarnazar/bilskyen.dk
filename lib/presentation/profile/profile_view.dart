@@ -22,6 +22,7 @@ class ProfileView extends StatelessWidget {
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;
+      final isLoggedIn = _isLoggedIn();
 
       return SafeArea(
         child: Column(
@@ -66,54 +67,57 @@ class ProfileView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 24),
-                      // Profile Card (reactive so it updates after profile edit)
-                      Obx(() {
-                        final authController = Get.find<AuthController>();
-                        final user = authController.currentUser.value ?? _getUserFromStorage();
-                        return _buildProfileCard(isDark, user);
-                      }),
-                      const SizedBox(height: 24),
-                      // Account Settings
-                      _buildSectionTitle('ACCOUNT SETTINGS'),
-                      const SizedBox(height: 12),
-                      _buildSettingsCard(
-                        isDark,
-                        [
-                          _SettingsItem(
-                            icon: Icons.person,
-                            iconColor: Colors.blue,
-                            title: 'Personal Information',
-                            onTap: () {
-                              Get.toNamed('/personal-info');
-                            },
-                          ),
-                          _SettingsItem(
-                            icon: Icons.directions_car,
-                            iconColor: Colors.purple,
-                            title: 'My Listings',
-                            badge: 'Active',
-                            onTap: () {
-                              Get.toNamed('/my-listings');
-                            },
-                          ),
-                          _SettingsItem(
-                            icon: Icons.favorite,
-                            iconColor: Colors.amber,
-                            title: 'Saved Vehicles',
-                            onTap: () {
-                              Get.toNamed('/favorites'); // Navigate to favorites screen
-                            },
-                          ),
-                          _SettingsItem(
-                            icon: Icons.lock_reset,
-                            iconColor: Colors.teal,
-                            title: 'Reset password',
-                            onTap: () => Get.toNamed('/change-password'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      // Preferences
+                      if (!isLoggedIn) ...[
+                        _buildGuestProfile(isDark),
+                      ] else ...[
+                        // Profile Card (reactive so it updates after profile edit)
+                        Obx(() {
+                          final authController = Get.find<AuthController>();
+                          final user = authController.currentUser.value ?? _getUserFromStorage();
+                          return _buildProfileCard(isDark, user);
+                        }),
+                        const SizedBox(height: 24),
+                        // Account Settings
+                        _buildSectionTitle('ACCOUNT SETTINGS'),
+                        const SizedBox(height: 12),
+                        _buildSettingsCard(
+                          isDark,
+                          [
+                            _SettingsItem(
+                              icon: Icons.person,
+                              iconColor: Colors.blue,
+                              title: 'Personal Information',
+                              onTap: () {
+                                Get.toNamed('/personal-info');
+                              },
+                            ),
+                            _SettingsItem(
+                              icon: Icons.directions_car,
+                              iconColor: Colors.purple,
+                              title: 'My Listings',
+                              onTap: () {
+                                Get.toNamed('/my-listings');
+                              },
+                            ),
+                            _SettingsItem(
+                              icon: Icons.favorite,
+                              iconColor: Colors.amber,
+                              title: 'Saved Vehicles',
+                              onTap: () {
+                                Get.toNamed('/favorites'); // Navigate to favorites screen
+                              },
+                            ),
+                            _SettingsItem(
+                              icon: Icons.lock_reset,
+                              iconColor: Colors.teal,
+                              title: 'Reset password',
+                              onTap: () => Get.toNamed('/change-password'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                      // Preferences (shown for both guest and logged-in)
                       _buildSectionTitle('PREFERENCES'),
                       const SizedBox(height: 12),
                       _buildPreferencesCard(isDark),
@@ -167,12 +171,13 @@ class ProfileView extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      // Log Out Button
-                      _buildLogOutButton(isDark),
-                      const SizedBox(height: 12),
-                      // Delete Account
-                      _buildDeleteAccountButton(isDark),
-                      const SizedBox(height: 16),
+                      // Log Out and Delete Account at bottom (logged-in only)
+                      if (isLoggedIn) ...[
+                        _buildLogOutButton(isDark),
+                        const SizedBox(height: 12),
+                        _buildDeleteAccountButton(isDark),
+                        const SizedBox(height: 24),
+                      ],
                       // Version
                       Center(
                         child: Text(
@@ -194,6 +199,86 @@ class ProfileView extends StatelessWidget {
           ),
         );
     });
+  }
+
+  /// Returns true if user has a valid token (logged in).
+  static bool _isLoggedIn() {
+    try {
+      final token = appStorage.read('token');
+      return token != null && token.toString().isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Profile content when user is not logged in: sign-in CTA and register link.
+  Widget _buildGuestProfile(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.person_outline,
+            size: 64,
+            color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Sign in to your account',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Sign in to manage your listings, save favorites, and access your profile.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Get.toNamed('/login'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Sign In'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () => Get.toNamed('/register'),
+            child: Text(
+              'Create an account',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
   }
 
   /// Fallback when currentUser is null (e.g. before AuthController has loaded from storage).

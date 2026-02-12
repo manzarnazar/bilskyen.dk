@@ -7,6 +7,7 @@ import '../../controllers/vehicle_detail_controller.dart';
 import '../../models/vehicle_detail_model/vehicle_detail_model.dart';
 import '../widgets/vehicle_image_gallery.dart';
 import '../widgets/detail_section_card.dart';
+import '../widgets/expandable_section_card.dart';
 import '../widgets/vehicle_detail_shimmer.dart';
 import 'widgets/enquiry_form_bottom_sheet.dart';
 
@@ -196,6 +197,7 @@ class VehicleDetailView extends StatelessWidget {
                   child: DetailSectionCard(
                     title: 'Vehicle Specifications',
                     isDark: isDark,
+                    initiallyExpanded: true,
                     items: [
                     if (vehicle.brandName != null)
                       DetailItem(label: 'Brand', value: vehicle.brandName!),
@@ -216,117 +218,33 @@ class VehicleDetailView extends StatelessWidget {
 
                 // Description Section
                 if (vehicle.details?.description != null &&
-                    vehicle.details!.description!.isNotEmpty) ...[
-                  Container(
+                    vehicle.details!.description!.isNotEmpty)
+                  ExpandableSectionCard(
+                    title: 'Description',
+                    icon: Icons.description,
+                    isDark: isDark,
+                    initiallyExpanded: true,
                     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDark : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark 
-                              ? Colors.black.withOpacity(0.3)
-                              : Colors.black.withOpacity(0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                Icons.description,
-                                size: 20,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Description',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? AppColors.textDark : AppColors.textLight,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          vehicle.details!.description!,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: isDark ? AppColors.textDark : AppColors.textLight,
-                            height: 1.6,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      vehicle.details!.description!,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: isDark ? AppColors.textDark : AppColors.textLight,
+                        height: 1.6,
+                        letterSpacing: 0.2,
+                      ),
                     ),
                   ),
-                ],
 
                 // Detailed Specifications Card
-                if (vehicle.details != null) ...[
-                  Container(
+                if (vehicle.details != null)
+                  ExpandableSectionCard(
+                    title: 'Detailed Specifications',
+                    icon: Icons.info_outline,
+                    isDark: isDark,
+                    initiallyExpanded: false,
                     margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDark : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark 
-                              ? Colors.black.withOpacity(0.3)
-                              : Colors.black.withOpacity(0.05),
-                          blurRadius: 15,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  Icons.info_outline,
-                                  size: 16,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                'Detailed Specifications',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? AppColors.textDark : AppColors.textLight,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          // Grid items with modern styling
-                          Builder(
+                    child: Builder(
                             builder: (context) {
                               // Collect all specification items
                               final specItems = <Map<String, String>>[];
@@ -376,16 +294,14 @@ class VehicleDetailView extends StatelessWidget {
                               );
                             },
                           ),
-                        ],
-                      ),
                   ),
-                ],
 
                 // Registration & Status Card
                 if (vehicle.details != null)
                   DetailSectionCard(
                     title: 'Registration & Status',
                     isDark: isDark,
+                    initiallyExpanded: false,
                     items: [
                       if (vehicle.details!.registrationStatus != null)
                         DetailItem(
@@ -415,6 +331,7 @@ class VehicleDetailView extends StatelessWidget {
                   DetailSectionCard(
                     title: 'Inspection Details',
                     isDark: isDark,
+                    initiallyExpanded: false,
                     items: [
                       if (vehicle.details!.lastInspectionDate != null)
                         DetailItem(
@@ -437,7 +354,7 @@ class VehicleDetailView extends StatelessWidget {
                 // Seller Information Card
                 _buildSellerInfoCard(vehicle, isDark),
 
-                // Pricing Card (Modern Gradient)
+                // Pricing Card (Modern Gradient) - kept non-expandable for prominence
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   padding: const EdgeInsets.all(24),
@@ -514,6 +431,7 @@ class VehicleDetailView extends StatelessWidget {
                   DetailSectionCard(
                     title: 'Listing Information',
                     isDark: isDark,
+                    initiallyExpanded: false,
                     items: [
                       DetailItem(
                         label: 'Added to Listing',
@@ -543,9 +461,12 @@ class VehicleDetailView extends StatelessWidget {
         vehicle.user?.phone ??
         vehicle.details?.sellerPhone;
 
-    return Container(
+    return ExpandableSectionCard(
+      title: 'Contact Actions',
+      icon: Icons.call_to_action_outlined,
+      isDark: isDark,
+      initiallyExpanded: false,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -568,33 +489,6 @@ class VehicleDetailView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.call_to_action_outlined,
-                  size: 20,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Contact Actions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textDark : AppColors.textLight,
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
           _buildActionButton(
             icon: Icons.chat_bubble_outline,
             label: 'Send Enquiry',
@@ -732,15 +626,18 @@ class VehicleDetailView extends StatelessWidget {
     final sellerPostcode = vehicle.details?.sellerPostcode;
     final sellerName = vehicle.user?.name ?? 'Unknown Seller';
 
-    return Container(
+    return ExpandableSectionCard(
+      title: 'Seller Information',
+      icon: Icons.person_outline,
+      isDark: isDark,
+      initiallyExpanded: false,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: isDark 
+            color: isDark
                 ? Colors.black.withOpacity(0.3)
                 : Colors.black.withOpacity(0.05),
             blurRadius: 20,
@@ -751,33 +648,6 @@ class VehicleDetailView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.person_outline,
-                  size: 24,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Seller Information',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textDark : AppColors.textLight,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
           // Seller name
           Container(
             padding: const EdgeInsets.all(16),
@@ -907,9 +777,12 @@ class VehicleDetailView extends StatelessWidget {
   }
 
   Widget _buildInterestedSection(bool isDark, VehicleDetailModel vehicle) {
-    return Container(
+    return ExpandableSectionCard(
+      title: 'Interested?',
+      icon: Icons.favorite_outline,
+      isDark: isDark,
+      initiallyExpanded: false,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -919,7 +792,7 @@ class VehicleDetailView extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark 
+            color: isDark
                 ? Colors.black.withOpacity(0.3)
                 : AppColors.primary.withOpacity(0.1),
             blurRadius: 20,
@@ -930,53 +803,14 @@ class VehicleDetailView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primaryDark,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.favorite_outline,
-                  size: 24,
-                  color: AppColors.primaryForeground,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Interested?',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? AppColors.textDark : AppColors.textLight,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Take the next steps to make this vehicle yours.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Text(
+            'Take the next steps to make this vehicle yours.',
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           // Modern bullet points
           _buildModernBulletPoint(
             Icons.history,
@@ -997,44 +831,6 @@ class VehicleDetailView extends StatelessWidget {
             Icons.directions_car_outlined,
             'Arrange test drive',
             isDark,
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                // TODO: Implement contact seller functionality
-                Get.snackbar(
-                  'Contact Seller',
-                  'Contact seller functionality coming soon',
-                  snackPosition: SnackPosition.TOP,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.primaryForeground,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.message_outlined, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Contact Seller',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),

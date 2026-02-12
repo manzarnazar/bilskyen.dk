@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'utils/app_theme.dart';
 import 'controllers/app_controller/app_controller.dart';
+import 'controllers/auth_controller.dart';
 import 'services/constants_service.dart';
 import 'presentation/splash/splash_view.dart';
 import 'presentation/main_navigation_view.dart';
@@ -30,6 +31,7 @@ void main() async {
   
   // Initialize controllers early
   Get.put(AppController());
+  Get.put(AuthController());
   
   // Initialize constants service early (will load cached data)
   Get.put(ConstantsService());

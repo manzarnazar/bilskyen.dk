@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import '../models/vehicle_model/vehicle_model.dart';
 import '../repositories/vehicle/vehicle_repository.dart';
@@ -24,7 +25,12 @@ class HomeController extends GetxController {
   @override
   void onClose() {
     _timer?.cancel();
-    pageController.dispose();
+    // Defer disposal to next frame so any in-flight scroll animation can complete
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      try {
+        pageController.dispose();
+      } catch (_) {}
+    });
     super.onClose();
   }
 

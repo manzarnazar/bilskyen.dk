@@ -3,11 +3,11 @@ import 'package:get/get.dart';
 import '../utils/app_colors.dart';
 import '../controllers/app_controller/main_navigation_controller.dart';
 import '../controllers/app_controller/app_controller.dart';
-import '../shared/bottom_nav_bar.dart';
+import '../shared/custom_bottom_nav_bar.dart';
 import 'home/home_view.dart';
 import 'favorites/favorites_view.dart';
 import 'search/search_view.dart';
-import 'messages/messages_view.dart';
+import 'seller/my_listings_view.dart';
 import 'profile/profile_view.dart';
 
 class MainNavigationView extends StatelessWidget {
@@ -33,11 +33,11 @@ class MainNavigationView extends StatelessWidget {
             HomeView(),
             FavoritesView(),
             SearchView(),
-            MessagesView(),
+            MyListingsView(),
             ProfileView(),
           ],
         ),
-        bottomNavigationBar: BottomNavBar(
+        bottomNavigationBar: CustomBottomNavBar(
           currentIndex: currentIndex,
           onTap: (index) => navController.changeTab(index),
         ),

@@ -182,6 +182,11 @@ class FavoriteController extends GetxController {
     }
   }
 
+  /// Set cached favorite status without calling API (e.g. when list is from favorites endpoint)
+  void setCachedFavorite(int vehicleId, bool isFavorited) {
+    _favoriteCache[vehicleId] = isFavorited;
+  }
+
   /// Clear favorite cache (useful on logout)
   void clearCache() {
     _favoriteCache.clear();

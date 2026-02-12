@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../controllers/my_listings_controller.dart';
+import '../../main.dart';
 import '../../models/vehicle_model/vehicle_model.dart';
 import '../../models/seller/inquiry_model.dart';
 import '../../repositories/seller/seller_repository.dart';
@@ -11,13 +12,50 @@ import '../widgets/seller_vehicle_card.dart';
 class MyListingsView extends StatelessWidget {
   const MyListingsView({super.key});
 
+  static bool _isLoggedIn() {
+    try {
+      final token = appStorage.read('token');
+      return token != null && token.toString().isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appController = Get.find<AppController>();
-    final controller = Get.put(MyListingsController());
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;
+
+      // Not logged in: show login CTA in the tab
+      if (!_isLoggedIn()) {
+        return Scaffold(
+          backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+          appBar: AppBar(
+            backgroundColor: isDark
+                ? AppColors.backgroundDark
+                : AppColors.backgroundLight,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            foregroundColor: AppColors.primary,
+            elevation: 0,
+            title: Text(
+              'My Listings',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          body: SafeArea(
+            child: _buildLoginRequiredBody(isDark),
+          ),
+        );
+      }
+
+      final controller = Get.put(MyListingsController());
 
       return Scaffold(
         backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
@@ -39,6 +77,13 @@ class MyListingsView extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => Get.toNamed('/sell-your-car'),
+              color: AppColors.primary,
+            ),
+          ],
         ),
         body: RefreshIndicator(
           onRefresh: controller.refresh,
@@ -319,6 +364,56 @@ class MyListingsView extends StatelessWidget {
     if (confirm == true) {
       await controller.deleteVehicle(vehicle.id);
     }
+  }
+
+  Widget _buildLoginRequiredBody(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.directions_car_outlined,
+              size: 64,
+              color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Sign in to manage your listings',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textDark : AppColors.textLight,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Create and manage your vehicle listings here.',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Get.toNamed('/login'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Log in'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

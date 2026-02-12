@@ -1,6 +1,6 @@
 {
-    "name": "car_marketplace",
-    "short_name": "car_marketplace",
+    "name": "Bilskyen",
+    "short_name": "Bilskyen",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#004aad",

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../controllers/vehicle_result_controller.dart';
-import 'search_view.dart';
 import '../widgets/vehicle_card.dart';
 import '../widgets/vehicle_card_shimmer.dart';
 
@@ -48,22 +47,6 @@ class VehicleResultView extends StatelessWidget {
             );
           }),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.filter_list),
-              color: AppColors.primary,
-              onPressed: () {
-                Get.to(() => SearchView(fromResultScreen: true));
-              },
-              tooltip: 'Filters',
-            ),
-            IconButton(
-              icon: const Icon(Icons.sort),
-              color: AppColors.primary,
-              onPressed: () {
-                // TODO: Implement sorting functionality
-              },
-              tooltip: 'Sort',
-            ),
             IconButton(
               icon: Obx(() => Icon(
                 controller.isHorizontalLayout.value 
@@ -167,6 +150,7 @@ class VehicleResultView extends StatelessWidget {
                     vehicle: controller.vehicles[index],
                     isDark: isDark,
                     isHorizontalLayout: controller.isHorizontalLayout.value,
+                    checkFavoriteOnLoad: false,
                   ));
                 },
               ),

@@ -5,17 +5,21 @@ import '../../models/vehicle_model/vehicle_model.dart';
 import '../../controllers/favorite_controller.dart';
 import '../../main.dart';
 import 'cached_image.dart';
+import '../vehicle/widgets/enquiry_form_bottom_sheet.dart';
 
 class VehicleCard extends StatefulWidget {
   final VehicleModel vehicle;
   final bool isDark;
   final bool isHorizontalLayout;
+  /// When false, skips the favorites/check API call (e.g. on search, favorites, messages, profile).
+  final bool checkFavoriteOnLoad;
 
   const VehicleCard({
     super.key,
     required this.vehicle,
     required this.isDark,
     this.isHorizontalLayout = false,
+    this.checkFavoriteOnLoad = true,
   });
 
   @override
@@ -31,10 +35,12 @@ class _VehicleCardState extends State<VehicleCard> {
     super.initState();
     _favoriteController = Get.put(FavoriteController());
     _checkLoginStatus();
-    // Defer API call until after build phase completes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkFavoriteStatus();
-    });
+    // Defer API call until after build phase completes (only when allowed for this screen)
+    if (widget.checkFavoriteOnLoad) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkFavoriteStatus();
+      });
+    }
   }
 
   void _checkLoginStatus() {
@@ -45,7 +51,7 @@ class _VehicleCardState extends State<VehicleCard> {
   }
 
   void _checkFavoriteStatus() {
-    if (_isLoggedIn) {
+    if (_isLoggedIn && widget.checkFavoriteOnLoad) {
       _favoriteController.checkFavoriteStatus(widget.vehicle.id);
     }
   }
@@ -55,6 +61,18 @@ class _VehicleCardState extends State<VehicleCard> {
       return;
     }
     _favoriteController.toggleFavorite(widget.vehicle.id);
+  }
+
+  void _showEnquiryForm() {
+    Get.bottomSheet(
+      EnquiryFormBottomSheet(
+        vehicleId: widget.vehicle.id,
+        vehicleTitle: widget.vehicle.title,
+        type: EnquiryFormType.enquiry,
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
   }
 
   /// Format price with commas and "kr." suffix
@@ -254,9 +272,7 @@ class _VehicleCardState extends State<VehicleCard> {
                           // Enquire button
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () {
-                                // TODO: Handle enquire action
-                              },
+                              onPressed: _showEnquiryForm,
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: widget.isDark ? AppColors.textDark : AppColors.textLight,
                                 side: BorderSide(
@@ -482,9 +498,7 @@ class _VehicleCardState extends State<VehicleCard> {
                     // Enquire button
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {
-                          // TODO: Handle enquire action
-                        },
+                        onPressed: _showEnquiryForm,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: widget.isDark ? AppColors.textDark : AppColors.textLight,
                           side: BorderSide(

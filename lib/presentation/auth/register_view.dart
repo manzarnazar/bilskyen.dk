@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/app_controller/app_controller.dart';
-import 'login_view.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -42,28 +41,54 @@ class _RegisterViewState extends State<RegisterView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Brand name
-                Text(
-                  'BILSKYEN',
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2.0,
-                    color: isDark ? Colors.white : Colors.black,
+                const SizedBox(height: 8),
+                // Skip button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Get.offAllNamed('/main'),
+                    child: Text(
+                      'Skip',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                // Brand Logo
+                Center(
+                  child: Image.asset(
+                    isDark ? 'assets/images/logo_white.png' : 'assets/images/logo.png',
+                    height: 60,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Text(
+                        'BILSKYEN',
+                        style: GoogleFonts.inter(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2.0,
+                          color: AppColors.primary,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 32),
                 // Title
                 Text(
                   'Create Account',
                   style: GoogleFonts.inter(
-                    fontSize: 36,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black,
                     height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 // Subtitle
                 Text(
                   'Sign up to start your journey with the ultimate car marketplace.',
@@ -73,7 +98,7 @@ class _RegisterViewState extends State<RegisterView> {
                     height: 1.5,
                   ),
                 ),
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
               // Form
               Form(
                 key: _formKey,
@@ -210,16 +235,14 @@ class _RegisterViewState extends State<RegisterView> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark ? Colors.white : Colors.black,
-                          foregroundColor: isDark ? Colors.black : Colors.white,
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.primaryForeground,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          elevation: 0,
-                          disabledBackgroundColor: isDark
-                              ? Colors.white.withOpacity(0.5)
-                              : Colors.black.withOpacity(0.5),
+                          elevation: 2,
+                          disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
                         ),
                         child: _authController.isLoading.value
                             ? SizedBox(
@@ -228,7 +251,7 @@ class _RegisterViewState extends State<RegisterView> {
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    isDark ? Colors.black : Colors.white,
+                                    AppColors.primaryForeground,
                                   ),
                                 ),
                               )
@@ -245,45 +268,6 @@ class _RegisterViewState extends State<RegisterView> {
                 ),
               ),
               const SizedBox(height: 32),
-              // Divider with "Or register with"
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.grey.shade200,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Or register with',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(
-                      color: isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.grey.shade200,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              // Social Login Buttons
-              _buildSocialButton(
-                icon: _buildGoogleIcon(isDark),
-                label: 'Continue with Google',
-                isDark: isDark,
-                onPressed: () => _authController.signInWithGoogle(),
-              ),
-              const SizedBox(height: 32),
               // Login Link
               Center(
                 child: RichText(
@@ -296,13 +280,13 @@ class _RegisterViewState extends State<RegisterView> {
                       const TextSpan(text: 'Already have an account? '),
                       WidgetSpan(
                         child: GestureDetector(
-                          onTap: () => Get.to(() => const LoginView()),
+                          onTap: () => Get.back(),
                           child: Text(
                             'Log in',
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black,
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
@@ -364,25 +348,25 @@ class _RegisterViewState extends State<RegisterView> {
             ? Colors.white.withOpacity(0.05)
             : AppColors.surfaceLight,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: isDark
                 ? Colors.white.withOpacity(0.1)
-                : Colors.transparent,
+                : AppColors.borderLight,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: isDark
                 ? Colors.white.withOpacity(0.1)
-                : Colors.transparent,
+                : AppColors.borderLight,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: isDark ? Colors.white : Colors.black,
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: AppColors.primary,
             width: 2,
           ),
         ),
@@ -435,25 +419,25 @@ class _RegisterViewState extends State<RegisterView> {
             ? Colors.white.withOpacity(0.05)
             : AppColors.surfaceLight,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: isDark
                 ? Colors.white.withOpacity(0.1)
-                : Colors.transparent,
+                : AppColors.borderLight,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: isDark
                 ? Colors.white.withOpacity(0.1)
-                : Colors.transparent,
+                : AppColors.borderLight,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: isDark ? Colors.white : Colors.black,
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: AppColors.primary,
             width: 2,
           ),
         ),
@@ -465,68 +449,5 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
-  Widget _buildSocialButton({
-    required Widget icon,
-    required String label,
-    required bool isDark,
-    required VoidCallback onPressed,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: isDark
-              ? Colors.white.withOpacity(0.05)
-              : const Color.fromARGB(255, 204, 206, 213), // Grey background
-          foregroundColor: isDark ? Colors.white : const Color(0xFF3C4043), // Dark gray text
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.transparent,
-            ),
-          ),
-          side: BorderSide(
-            color: isDark
-                ? Colors.white.withOpacity(0.1)
-                : Colors.transparent,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white : const Color(0xFF3C4043),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGoogleIcon(bool isDark) {
-    return Image.asset(
-      'assets/images/google.png',
-      width: 20,
-      height: 20,
-      errorBuilder: (context, error, stackTrace) {
-        return Icon(
-          Icons.g_mobiledata,
-          size: 20,
-          color: isDark ? Colors.white : const Color(0xFF3C4043),
-        );
-      },
-    );
-  }
 }
 

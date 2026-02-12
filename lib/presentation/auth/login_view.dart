@@ -81,7 +81,23 @@ class _LoginViewState extends State<LoginView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 8),
+                // Skip button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Get.offAllNamed('/main'),
+                    child: Text(
+                      'Skip',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 // Brand Logo
                 Center(
                   child: Image.asset(
@@ -233,45 +249,6 @@ class _LoginViewState extends State<LoginView> {
                     )),
                   ],
                 ),
-              ),
-              const SizedBox(height: 32),
-              // Divider with "Or login with"
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.grey.shade200,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Or login with',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(
-                      color: isDark
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.grey.shade200,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              // Social Login Buttons
-              _buildSocialButton(
-                icon: _buildGoogleIcon(isDark),
-                label: 'Continue with Google',
-                isDark: isDark,
-                onPressed: () => _authController.signInWithGoogle(),
               ),
               const SizedBox(height: 32),
               // Register Link
@@ -455,68 +432,5 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  Widget _buildSocialButton({
-    required Widget icon,
-    required String label,
-    required bool isDark,
-    required VoidCallback onPressed,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: isDark
-              ? Colors.white.withOpacity(0.05)
-              : const Color.fromARGB(255, 204, 206, 213), // Grey background
-          foregroundColor: isDark ? Colors.white : const Color(0xFF3C4043), // Dark gray text
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.transparent,
-            ),
-          ),
-          side: BorderSide(
-            color: isDark
-                ? Colors.white.withOpacity(0.1)
-                : Colors.transparent,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white : const Color(0xFF3C4043),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGoogleIcon(bool isDark) {
-    return Image.asset(
-      'assets/images/google.png',
-      width: 20,
-      height: 20,
-      errorBuilder: (context, error, stackTrace) {
-        return Icon(
-          Icons.g_mobiledata,
-          size: 20,
-          color: isDark ? Colors.white : const Color(0xFF3C4043),
-        );
-      },
-    );
-  }
 }
 

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../models/vehicle_model/vehicle_model.dart';
 import '../repositories/favorite/favorite_repository.dart';
+import 'favorite_controller.dart';
 
 class FavoritesController extends GetxController {
   final FavoriteRepository _favoriteRepository = FavoriteRepository();
@@ -30,6 +31,11 @@ class FavoritesController extends GetxController {
       },
       (vehiclesList) {
         vehicles.value = vehiclesList;
+        // Pre-populate favorite cache so cards show filled heart without calling check API
+        final favController = Get.put(FavoriteController());
+        for (final v in vehiclesList) {
+          favController.setCachedFavorite(v.id, true);
+        }
       },
     );
     

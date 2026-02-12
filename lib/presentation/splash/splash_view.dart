@@ -103,10 +103,13 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
           final userMap = jsonDecode(userJson.toString());
           final user = UserModel.fromJson(userMap as Map<String, dynamic>);
           
-          // If user is banned, redirect to login
+          // If user is banned, clear storage and go to home
           if (user.banned) {
-            debugPrint('Splash: User is banned, redirecting to login');
-            Get.offAllNamed('/login');
+            debugPrint('Splash: User is banned, clearing and going to home');
+            appStorage.remove('user');
+            appStorage.remove('token');
+            appStorage.remove('refreshToken');
+            Get.offAllNamed('/main');
             return;
           }
           
@@ -118,12 +121,12 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
             
             result.fold(
               (error) {
-                // Token is invalid or expired, clear storage and go to login
+                // Token is invalid or expired, clear storage and go to home
                 debugPrint('Splash: Token validation failed: $error');
                 appStorage.remove('user');
                 appStorage.remove('token');
                 appStorage.remove('refreshToken');
-                Get.offAllNamed('/login');
+                Get.offAllNamed('/main');
               },
               (validUser) {
                 // Token is valid, user is logged in, go to main
@@ -132,27 +135,27 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
               },
             );
           } catch (e) {
-            // Error validating token, assume it's invalid and go to login
+            // Error validating token, assume it's invalid and go to home
             debugPrint('Splash: Error validating token: $e');
             appStorage.remove('user');
             appStorage.remove('token');
             appStorage.remove('refreshToken');
-            Get.offAllNamed('/login');
+            Get.offAllNamed('/main');
           }
         } catch (e) {
-          // Invalid user data, go to login
+          // Invalid user data, go to home
           debugPrint('Splash: Error parsing user data: $e');
-          Get.offAllNamed('/login');
+          Get.offAllNamed('/main');
         }
       } else {
-        // No user data or token, go to login
-        debugPrint('Splash: No user or token found, redirecting to login');
-        Get.offAllNamed('/login');
+        // No user data or token, go to home
+        debugPrint('Splash: No user or token found, redirecting to home');
+        Get.offAllNamed('/main');
       }
     } catch (e) {
-      // Error checking auth, go to login
+      // Error checking auth, go to home
       debugPrint('Splash: Error checking auth: $e');
-      Get.offAllNamed('/login');
+      Get.offAllNamed('/main');
     }
   }
 

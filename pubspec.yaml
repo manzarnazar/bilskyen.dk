@@ -81,6 +81,9 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
+  # App icon generator (generates Android, iOS, and web launcher icons from a single image)
+  flutter_launcher_icons: ^0.14.3
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -95,6 +98,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+    - assets/icons/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -134,3 +138,14 @@ flutter:
       fonts:
         - asset: assets/fonts/OpenSans-Bold.ttf
           weight: 700
+
+# Generate app launcher icons from assets/images/bilskyen_app_icon.png (full square)
+flutter_launcher_icons:
+  image_path: assets/images/bilskyen_app_icon.png
+  android: true
+  ios: true
+  remove_alpha_ios: true  # Required for App Store (no transparent iOS icons)
+  web:
+    generate: true
+  adaptive_icon_background: "#004aad"
+  adaptive_icon_foreground: assets/images/bilskyen_app_icon.png

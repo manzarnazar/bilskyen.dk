@@ -172,9 +172,12 @@ class _SearchViewState extends State<SearchView> {
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                    child: _actionButtons(isDark),
+                  SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: _actionButtons(isDark),
+                    ),
                   ),
                 ],
               ),

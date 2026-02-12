@@ -190,35 +190,55 @@ class VehicleUser {
 }
 
 class VehicleImage {
+  static const _storageBase = 'https://bilskyen.dk/storage/';
+
   final int id;
-  final int vehicleId;
+  final int? vehicleId;
   final String imagePath;
   final String thumbnailPath;
   final int sortOrder;
 
   VehicleImage({
     required this.id,
-    required this.vehicleId,
+    this.vehicleId,
     required this.imagePath,
     required this.thumbnailPath,
     required this.sortOrder,
   });
 
+  /// Accepts both path (image_path) and full URL (image_url) from API.
+  static String _pathOrUrlFromJson(String? path, String? url) {
+    if (path != null && path.isNotEmpty) return path;
+    if (url == null || url.isEmpty) return '';
+    if (url.startsWith(_storageBase)) return url.substring(_storageBase.length);
+    return url;
+  }
+
   factory VehicleImage.fromJson(Map<String, dynamic> json) {
     return VehicleImage(
       id: json['id'] as int,
-      vehicleId: json['vehicle_id'] as int,
-      imagePath: json['image_path'] as String,
-      thumbnailPath: json['thumbnail_path'] as String,
+      vehicleId: json['vehicle_id'] as int?,
+      imagePath: _pathOrUrlFromJson(
+        json['image_path'] as String?,
+        json['image_url'] as String?,
+      ),
+      thumbnailPath: _pathOrUrlFromJson(
+        json['thumbnail_path'] as String?,
+        json['thumbnail_url'] as String?,
+      ),
       sortOrder: json['sort_order'] as int? ?? 0,
     );
   }
 
-  /// Build full image URL
-  String get imageUrl => 'https://bilskyen.dk/storage/$imagePath';
+  /// Build full image URL (handles both stored path and full URL)
+  String get imageUrl => imagePath.startsWith('http')
+      ? imagePath
+      : 'https://bilskyen.dk/storage/$imagePath';
 
-  /// Build full thumbnail URL
-  String get thumbnailUrl => 'https://bilskyen.dk/storage/$thumbnailPath';
+  /// Build full thumbnail URL (handles both stored path and full URL)
+  String get thumbnailUrl => thumbnailPath.startsWith('http')
+      ? thumbnailPath
+      : 'https://bilskyen.dk/storage/$thumbnailPath';
 }
 
 class VehicleDetails {
@@ -436,19 +456,19 @@ class VehicleDetails {
 class VehicleEquipment {
   final int id;
   final String name;
-  final int equipmentTypeId;
+  final int? equipmentTypeId;
 
   VehicleEquipment({
     required this.id,
     required this.name,
-    required this.equipmentTypeId,
+    this.equipmentTypeId,
   });
 
   factory VehicleEquipment.fromJson(Map<String, dynamic> json) {
     return VehicleEquipment(
       id: json['id'] as int,
       name: json['name'] as String,
-      equipmentTypeId: json['equipment_type_id'] as int,
+      equipmentTypeId: json['equipment_type_id'] as int?,
     );
   }
 }

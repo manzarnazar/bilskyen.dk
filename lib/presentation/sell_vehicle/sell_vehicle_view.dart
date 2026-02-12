@@ -36,9 +36,10 @@ class SellVehicleView extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.primaryForeground,
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.primary,
           elevation: 0,
+          surfaceTintColor: Colors.transparent,
         ),
         body: SafeArea(
           child: Stack(
@@ -601,16 +602,46 @@ class SellVehicleView extends StatelessWidget {
                           controller.sectionExpanded['description'] ?? true,
                       onToggle: () =>
                           controller.toggleSection('description'),
-                      child: TextFormField(
-                        controller: controller.descriptionController,
-                        maxLines: 6,
-                        decoration: InputDecoration(
-                          labelText: 'Description',
-                          hintText: 'Enter vehicle description...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Add a description of your vehicle for potential buyers.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.mutedDark
+                                  : AppColors.mutedLight,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: controller.descriptionController,
+                            maxLines: 6,
+                            minLines: 4,
+                            onChanged: (_) =>
+                                controller.markDescriptionUserEdited(),
+                            decoration: InputDecoration(
+                              labelText: 'Message',
+                              hintText:
+                                  'Enter vehicle description...',
+                              alignLabelWithHint: true,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Describe your vehicle',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? AppColors.mutedDark
+                                  : AppColors.mutedLight,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     // Section 7: Seller Information
