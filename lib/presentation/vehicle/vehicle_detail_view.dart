@@ -639,7 +639,7 @@ class VehicleDetailView extends StatelessWidget {
   Future<void> _launchEmail(VehicleDetailModel vehicle) async {
     final email = vehicle.user?.email;
     if (email == null || email.trim().isEmpty) {
-      Get.snackbar('Send Email', 'No email address available', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Send Email', 'No email address available', snackPosition: SnackPosition.TOP);
       return;
     }
     final subject = Uri.encodeComponent('Enquiry about: ${vehicle.title}');
@@ -649,10 +649,10 @@ class VehicleDetailView extends StatelessWidget {
     final uri = Uri.parse('mailto:${email.trim()}?subject=$subject&body=$body');
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        Get.snackbar('Send Email', 'Could not open email app', snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('Send Email', 'Could not open email app', snackPosition: SnackPosition.TOP);
       }
     } catch (e) {
-      Get.snackbar('Send Email', 'Could not open email app', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Send Email', 'Could not open email app', snackPosition: SnackPosition.TOP);
     }
   }
 
@@ -671,17 +671,17 @@ class VehicleDetailView extends StatelessWidget {
   Future<void> _handleWhatsAppClick({required String whatsappNumber}) async {
     final formatted = whatsappNumber.replaceAll(RegExp(r'\D'), '');
     if (formatted.isEmpty) {
-      Get.snackbar('WhatsApp', 'No WhatsApp number available', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('WhatsApp', 'No WhatsApp number available', snackPosition: SnackPosition.TOP);
       return;
     }
     final uri = Uri.parse('https://wa.me/$formatted');
     try {
       final ok = await launchUrl(uri, mode: LaunchMode.platformDefault);
       if (!ok) {
-        Get.snackbar('WhatsApp', 'Could not open WhatsApp', snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar('WhatsApp', 'Could not open WhatsApp', snackPosition: SnackPosition.TOP);
       }
     } catch (e) {
-      Get.snackbar('WhatsApp', 'Could not open WhatsApp', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('WhatsApp', 'Could not open WhatsApp', snackPosition: SnackPosition.TOP);
     }
   }
 
@@ -1007,7 +1007,7 @@ class VehicleDetailView extends StatelessWidget {
                 Get.snackbar(
                   'Contact Seller',
                   'Contact seller functionality coming soon',
-                  snackPosition: SnackPosition.BOTTOM,
+                  snackPosition: SnackPosition.TOP,
                 );
               },
               style: ElevatedButton.styleFrom(

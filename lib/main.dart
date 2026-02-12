@@ -8,12 +8,17 @@ import 'presentation/splash/splash_view.dart';
 import 'presentation/main_navigation_view.dart';
 import 'presentation/auth/login_view.dart';
 import 'presentation/auth/register_view.dart';
+import 'presentation/auth/forgot_password_view.dart';
+import 'presentation/auth/reset_password_view.dart';
 import 'presentation/profile/dark_mode_settings_view.dart';
 import 'presentation/profile/personal_info_view.dart';
+import 'presentation/profile/change_password_view.dart';
 import 'presentation/search/vehicle_result_view.dart';
 import 'presentation/vehicle/vehicle_detail_view.dart';
 import 'presentation/sell_vehicle/sell_vehicle_view.dart';
 import 'presentation/favorites/favorites_view.dart';
+import 'presentation/seller/my_listings_view.dart';
+import 'presentation/seller/edit_vehicle_view.dart';
 
 
 final appStorage = GetStorage();
@@ -51,13 +56,18 @@ class MyApp extends StatelessWidget {
           GetPage(name: '/splash', page: () => const SplashView()),
           GetPage(name: '/login', page: () => const LoginView()),
           GetPage(name: '/register', page: () => const RegisterView()),
+          GetPage(name: '/forgot-password', page: () => const ForgotPasswordView()),
+          GetPage(name: '/reset-password', page: () => const ResetPasswordView()),
           GetPage(name: '/main', page: () => const MainNavigationView()),
           GetPage(name: '/dark-mode-settings', page: () => const DarkModeSettingsView()),
           GetPage(name: '/personal-info', page: () => const PersonalInfoView()),
+          GetPage(name: '/change-password', page: () => const ChangePasswordView()),
           GetPage(name: '/search-vehicles', page: () => const VehicleResultView()),
           GetPage(name: '/vehicle-detail/:id', page: () => const VehicleDetailView()),
           GetPage(name: '/sell-your-car', page: () => const SellVehicleView()),
           GetPage(name: '/favorites', page: () => const FavoritesView()),
+          GetPage(name: '/my-listings', page: () => const MyListingsView()),
+          GetPage(name: '/edit-vehicle/:id', page: () => const EditVehicleView()),
         ],
       );
     });

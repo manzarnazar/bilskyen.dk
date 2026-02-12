@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import 'package:car_marketplace/config/api_config.dart';
 import 'package:car_marketplace/models/vehicle_model/vehicle_model.dart';
 import 'package:car_marketplace/models/vehicle_detail_model/vehicle_detail_model.dart';
@@ -24,10 +25,21 @@ class VehicleRepository {
     return left(response.message);
   }
 
-  /// Get all vehicles
-  Future<Either<String, List<VehicleModel>>> getAllVehicles() async {
+  /// Get all vehicles, optionally with filter query parameters.
+  /// [queryParameters] keys should match backend VehicleController::index (e.g. search, condition_id, price_from, price_to, brand_id, model_id, category_id, mileage_from, mileage_to, year_from, year_to, fuel_type_id, gear_type_id, body_type_id, sales_type_id, equipment_ids, euronorm). List values are sent as repeated query params for Laravel.
+  Future<Either<String, List<VehicleModel>>> getAllVehicles({
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    Map<String, dynamic>? extraQuery = queryParameters;
+    if (extraQuery != null && extraQuery.isNotEmpty) {
+      extraQuery = Map<String, dynamic>.from(extraQuery);
+      extraQuery.putIfAbsent('page', () => 1);
+      extraQuery.putIfAbsent('limit', () => 15);
+      extraQuery = _buildQueryParams(extraQuery);
+    }
     final response = await networkRepository.get(
       url: ApiConfig.vehicles,
+      extraQuery: extraQuery,
     );
 
     if (!response.failed && response.success) {
@@ -39,6 +51,19 @@ class VehicleRepository {
       return right(vehicles);
     }
     return left(response.message);
+  }
+
+  /// Convert filter map to query map. List values become ListParam for Dio so Laravel receives array params (key=1&key=2).
+  static Map<String, dynamic> _buildQueryParams(Map<String, dynamic> map) {
+    final result = <String, dynamic>{};
+    for (final entry in map.entries) {
+      if (entry.value is List) {
+        result[entry.key] = ListParam(entry.value as List, ListFormat.multi);
+      } else {
+        result[entry.key] = entry.value;
+      }
+    }
+    return result;
   }
 
   /// Get vehicle detail by ID

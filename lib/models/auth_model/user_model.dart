@@ -6,6 +6,7 @@ class UserModel {
   final bool emailVerified;
   final String? phone;
   final String? address;
+  final String? postcode;
   final String? image;
   final bool banned;
   final String? createdAt;
@@ -18,6 +19,7 @@ class UserModel {
     required this.emailVerified,
     this.phone,
     this.address,
+    this.postcode,
     this.image,
     this.banned = false,
     this.createdAt,
@@ -35,6 +37,7 @@ class UserModel {
       emailVerified: json['emailVerified'] as bool? ?? false,
       phone: json['phone'] as String?,
       address: json['address'] as String?,
+      postcode: json['postcode'] as String?,
       image: json['image'] as String?,
       banned: json['banned'] as bool? ?? false,
       createdAt: json['created_at'] as String?,
@@ -50,6 +53,7 @@ class UserModel {
       'emailVerified': emailVerified,
       'phone': phone,
       'address': address,
+      'postcode': postcode,
       'image': image,
       'banned': banned,
       'created_at': createdAt,
@@ -64,6 +68,7 @@ class UserModel {
     bool? emailVerified,
     String? phone,
     String? address,
+    String? postcode,
     String? image,
     bool? banned,
     String? createdAt,
@@ -76,6 +81,7 @@ class UserModel {
       emailVerified: emailVerified ?? this.emailVerified,
       phone: phone ?? this.phone,
       address: address ?? this.address,
+      postcode: postcode ?? this.postcode,
       image: image ?? this.image,
       banned: banned ?? this.banned,
       createdAt: createdAt ?? this.createdAt,

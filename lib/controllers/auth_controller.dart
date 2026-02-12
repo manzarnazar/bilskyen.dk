@@ -1,11 +1,17 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:car_marketplace/main.dart';
 import 'package:car_marketplace/models/auth_model/register_model.dart';
+import 'package:car_marketplace/models/auth_model/user_model.dart';
 import 'package:car_marketplace/repositories/auth/auth_repository.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _authRepository = AuthRepository();
-  
+
+  /// Reactive current user so ProfileView and others update when profile is edited.
+  final Rxn<UserModel> currentUser = Rxn<UserModel>();
+
   final RxBool isDarkMode = false.obs;
   final RxBool isPasswordVisible = false.obs;
   final RxBool isLoginPasswordVisible = false.obs;
@@ -15,8 +21,31 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Check system theme preference
     isDarkMode.value = Get.isDarkMode;
+    _loadUserFromStorage();
+  }
+
+  void _loadUserFromStorage() {
+    try {
+      final userJson = appStorage.read('user');
+      if (userJson != null) {
+        final userMap = jsonDecode(userJson.toString()) as Map<String, dynamic>;
+        currentUser.value = UserModel.fromJson(userMap);
+      }
+    } catch (_) {}
+  }
+
+  /// Fetch current user from API (GET auth/me). Updates currentUser and storage on success.
+  /// Returns the user on success, null on failure.
+  Future<UserModel?> fetchCurrentUser() async {
+    final result = await _authRepository.me();
+    return result.fold(
+      (_) => null,
+      (user) {
+        currentUser.value = user;
+        return user;
+      },
+    );
   }
 
   void toggleTheme() {
@@ -79,6 +108,7 @@ class AuthController extends GetxController {
         );
       },
       (success) {
+        _loadUserFromStorage();
         Get.snackbar(
           'Success',
           'Registration successful!',
@@ -114,6 +144,7 @@ class AuthController extends GetxController {
         );
       },
       (user) {
+        currentUser.value = user;
         Get.snackbar(
           'Success',
           'Welcome back, ${user.name}!',
@@ -141,7 +172,47 @@ class AuthController extends GetxController {
         );
       },
       (success) {
+        currentUser.value = null;
         Get.offAllNamed('/login');
+      },
+    );
+  }
+
+  Future<void> updateProfile({
+    required String name,
+    String? phone,
+    String? address,
+    String? postcode,
+  }) async {
+    isLoading.value = true;
+
+    final result = await _authRepository.updateUser(
+      name: name,
+      phone: phone,
+      address: address,
+      postcode: postcode,
+    );
+
+    isLoading.value = false;
+
+    result.fold(
+      (error) {
+        Get.snackbar(
+          'Update failed',
+          error,
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Get.theme.colorScheme.error,
+          colorText: Get.theme.colorScheme.onError,
+        );
+      },
+      (user) {
+        currentUser.value = user;
+        Get.back();
+        Get.snackbar(
+          'Success',
+          'Changes saved successfully',
+          snackPosition: SnackPosition.TOP,
+        );
       },
     );
   }
@@ -164,6 +235,138 @@ class AuthController extends GetxController {
         );
       },
       (success) {
+        currentUser.value = null;
+        Get.offAllNamed('/login');
+      },
+    );
+  }
+
+  Future<void> deleteAccount({required String password}) async {
+    isLoading.value = true;
+
+    final result = await _authRepository.deleteAccount(password: password);
+
+    isLoading.value = false;
+
+    result.fold(
+      (error) {
+        Get.snackbar(
+          'Delete account failed',
+          error,
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Get.theme.colorScheme.error,
+          colorText: Get.theme.colorScheme.onError,
+        );
+      },
+      (_) {
+        currentUser.value = null;
+        Get.snackbar(
+          'Account deleted',
+          'Your account has been deleted successfully.',
+          snackPosition: SnackPosition.TOP,
+        );
+        Get.offAllNamed('/login');
+      },
+    );
+  }
+
+  Future<void> forgetPassword({required String email}) async {
+    isLoading.value = true;
+
+    final result = await _authRepository.forgetPassword(email: email);
+
+    isLoading.value = false;
+
+    result.fold(
+      (error) {
+        Get.snackbar(
+          'Request failed',
+          error,
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Get.theme.colorScheme.error,
+          colorText: Get.theme.colorScheme.onError,
+        );
+      },
+      (_) {
+        Get.snackbar(
+          'Check your email',
+          'If that email is in our system, we\'ll send you a password reset link.',
+          snackPosition: SnackPosition.TOP,
+        );
+      },
+    );
+  }
+
+  /// Change password (from profile when logged in)
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String passwordConfirmation,
+  }) async {
+    isLoading.value = true;
+
+    final result = await _authRepository.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      passwordConfirmation: passwordConfirmation,
+    );
+
+    isLoading.value = false;
+
+    result.fold(
+      (error) {
+        Get.snackbar(
+          'Change password failed',
+          error,
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Get.theme.colorScheme.error,
+          colorText: Get.theme.colorScheme.onError,
+        );
+      },
+      (_) {
+        Get.back();
+        Get.snackbar(
+          'Success',
+          'Your password has been changed.',
+          snackPosition: SnackPosition.TOP,
+        );
+      },
+    );
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    isLoading.value = true;
+
+    final result = await _authRepository.resetPassword(
+      email: email,
+      token: token,
+      password: password,
+      passwordConfirmation: passwordConfirmation,
+    );
+
+    isLoading.value = false;
+
+    result.fold(
+      (error) {
+        Get.snackbar(
+          'Reset failed',
+          error,
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Get.theme.colorScheme.error,
+          colorText: Get.theme.colorScheme.onError,
+        );
+      },
+      (_) {
+        Get.snackbar(
+          'Password reset',
+          'Your password has been reset. You can now sign in.',
+          snackPosition: SnackPosition.TOP,
+        );
         Get.offAllNamed('/login');
       },
     );

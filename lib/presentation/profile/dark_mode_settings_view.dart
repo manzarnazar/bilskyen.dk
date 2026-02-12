@@ -27,8 +27,11 @@ class DarkModeSettingsView extends StatelessWidget {
               letterSpacing: -0.5,
             ),
           ),
-          backgroundColor: Colors.transparent,
+          backgroundColor: isDark
+              ? AppColors.backgroundDark
+              : AppColors.backgroundLight,
           elevation: 0,
+          scrolledUnderElevation: 0,
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back,

@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
+import '../../controllers/auth_controller.dart';
+import '../../main.dart';
+import '../../models/auth_model/user_model.dart';
 
 class PersonalInfoView extends StatefulWidget {
   const PersonalInfoView({super.key});
@@ -11,18 +15,51 @@ class PersonalInfoView extends StatefulWidget {
 }
 
 class _PersonalInfoViewState extends State<PersonalInfoView> {
-  final _fullNameController = TextEditingController(text: 'Berken Ilkin');
-  final _emailController = TextEditingController(text: 'berkenilkin@example.com');
-  final _phoneController = TextEditingController(text: '+1 (555) 012-3456');
-  final _addressController = TextEditingController(
-    text: '123 Market Street, Suite 400\nSan Francisco, CA 94103',
-  );
-  DateTime? _dateOfBirth;
+  final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
+  bool _isLoadingUser = true;
 
   @override
   void initState() {
     super.initState();
-    _dateOfBirth = DateTime(1990, 5, 15);
+    if (!Get.isRegistered<AuthController>()) {
+      Get.put(AuthController());
+    }
+    _fetchUserFromApi();
+  }
+
+  Future<void> _fetchUserFromApi() async {
+    final authController = Get.find<AuthController>();
+    final user = await authController.fetchCurrentUser();
+    if (!mounted) return;
+    if (user != null) {
+      _fullNameController.text = user.name;
+      _emailController.text = user.email;
+      _phoneController.text = user.phone ?? '';
+      _addressController.text = user.address ?? '';
+    } else {
+      _loadUserFromStorage();
+    }
+    setState(() => _isLoadingUser = false);
+  }
+
+  void _loadUserFromStorage() {
+    final userJson = appStorage.read('user');
+    if (userJson != null) {
+      try {
+        final user = UserModel.fromJson(
+          jsonDecode(userJson.toString()) as Map<String, dynamic>,
+        );
+        _fullNameController.text = user.name;
+        _emailController.text = user.email;
+        _phoneController.text = user.phone ?? '';
+        _addressController.text = user.address ?? '';
+      } catch (_) {
+        // Keep empty if parse fails
+      }
+    }
   }
 
   @override
@@ -32,30 +69,6 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
     _phoneController.dispose();
     _addressController.dispose();
     super.dispose();
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _dateOfBirth ?? DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _dateOfBirth) {
-      setState(() {
-        _dateOfBirth = picked;
-      });
-    }
   }
 
   @override
@@ -78,8 +91,11 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
               letterSpacing: -0.5,
             ),
           ),
-          backgroundColor: Colors.transparent,
+          backgroundColor: isDark
+              ? AppColors.backgroundDark
+              : AppColors.backgroundLight,
           elevation: 0,
+          scrolledUnderElevation: 0,
           leading: IconButton(
             icon: Icon(
               Icons.arrow_back,
@@ -90,7 +106,13 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
           centerTitle: true,
         ),
         body: SafeArea(
-          child: Column(
+          child: _isLoadingUser
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
+                  ),
+                )
+              : Column(
             children: [
               Expanded(
                 child: SingleChildScrollView(
@@ -124,7 +146,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
             ],
           ),
         ),
-        bottomNavigationBar: _buildSaveButton(isDark),
+        bottomNavigationBar: _isLoadingUser ? null : _buildSaveButton(isDark),
       );
     });
   }
@@ -146,20 +168,17 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
                 child: Stack(
                   children: [
                     Center(
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/images/seller_profile.jpg',
-                          fit: BoxFit.cover,
-                          width: 104,
-                          height: 104,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: 104,
-                              height: 104,
-                              color: AppColors.gray300,
-                              child: const Icon(Icons.person, size: 56),
-                            );
-                          },
+                      child: Container(
+                        width: 104,
+                        height: 104,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isDark ? AppColors.gray700 : AppColors.gray300,
+                        ),
+                        child: Icon(
+                          Icons.person,
+                          size: 56,
+                          color: isDark ? AppColors.gray400 : AppColors.gray600,
                         ),
                       ),
                     ),
@@ -173,48 +192,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
                   ],
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                right: 4,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white : Colors.black,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isDark ? AppColors.cardDark : Colors.white,
-                      width: 2,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.camera_alt,
-                    size: 18,
-                    color: isDark ? Colors.black : Colors.white,
-                  ),
-                ),
-              ),
             ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Center(
-          child: GestureDetector(
-            onTap: () {
-              Get.snackbar(
-                'Info',
-                'Edit photo functionality coming soon',
-                snackPosition: SnackPosition.TOP,
-              );
-            },
-            child: Text(
-              'Edit Photo',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.blue.shade600,
-              ),
-            ),
           ),
         ),
       ],
@@ -261,73 +239,6 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
             controller: _fullNameController,
             isDark: isDark,
             showEditIcon: true,
-          ),
-          _buildDivider(isDark),
-          // Date of Birth
-          InkWell(
-            onTap: () => _selectDate(context),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.purple.shade900.withOpacity(0.1)
-                          : Colors.purple.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.cake,
-                      color: isDark
-                          ? Colors.purple.shade400
-                          : Colors.purple.shade500,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'DATE OF BIRTH',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                            color: isDark
-                                ? AppColors.mutedDark
-                                : AppColors.mutedLight,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _dateOfBirth != null
-                              ? '${_dateOfBirth!.month.toString().padLeft(2, '0')}/${_dateOfBirth!.day.toString().padLeft(2, '0')}/${_dateOfBirth!.year}'
-                              : 'Select date',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: isDark
-                                ? AppColors.textDark
-                                : AppColors.textLight,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.calendar_today,
-                    size: 18,
-                    color: isDark
-                        ? AppColors.mutedDark
-                        : AppColors.gray300,
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -378,75 +289,79 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
           color: isDark ? AppColors.borderDark : AppColors.borderLight,
         ),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.red.shade900.withOpacity(0.1)
-                    : Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.location_on,
-                color: isDark
-                    ? Colors.red.shade400
-                    : Colors.red.shade500,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ADDRESS',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                      color: isDark
-                          ? AppColors.mutedDark
-                          : AppColors.mutedLight,
-                    ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.red.shade900.withOpacity(0.1)
+                        : Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(height: 4),
-                  TextField(
-                    controller: _addressController,
-                    maxLines: 2,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: isDark
-                          ? AppColors.textDark
-                          : AppColors.textLight,
-                    ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
+                  child: Icon(
+                    Icons.location_on,
+                    color: isDark
+                        ? Colors.red.shade400
+                        : Colors.red.shade500,
+                    size: 20,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ADDRESS',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                          color: isDark
+                              ? AppColors.mutedDark
+                              : AppColors.mutedLight,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      TextField(
+                        controller: _addressController,
+                        maxLines: 2,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: isDark
+                              ? AppColors.textDark
+                              : AppColors.textLight,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Icon(
+                    Icons.edit,
+                    size: 18,
+                    color: isDark
+                        ? AppColors.mutedDark
+                        : AppColors.gray300,
+                  ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Icon(
-                Icons.edit,
-                size: 18,
-                color: isDark
-                    ? AppColors.mutedDark
-                    : AppColors.gray300,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -541,6 +456,8 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
   }
 
   Widget _buildSaveButton(bool isDark) {
+    final authController = Get.find<AuthController>();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -552,34 +469,49 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
         ),
       ),
       child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              Get.snackbar(
-                'Success',
-                'Changes saved successfully',
-                snackPosition: SnackPosition.TOP,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? Colors.white : Colors.black,
-              foregroundColor: isDark ? Colors.black : Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        child: Obx(() {
+          final loading = authController.isLoading.value;
+          return SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: loading
+                  ? null
+                  : () {
+                      authController.updateProfile(
+                        name: _fullNameController.text.trim(),
+                        phone: _phoneController.text.trim().isEmpty
+                            ? null
+                            : _phoneController.text.trim(),
+                        address: _addressController.text.trim().isEmpty
+                            ? null
+                            : _addressController.text.trim(),
+                      );
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? Colors.white : Colors.black,
+                foregroundColor: isDark ? Colors.black : Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
               ),
-              elevation: 2,
+              child: loading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text(
+                      'Save Changes',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
-            child: const Text(
-              'Save Changes',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
+          );
+        }),
       ),
     );
   }

@@ -105,12 +105,14 @@ class AuthRepository {
     return left(response.message);
   }
 
-  /// Update user profile
+  /// Update user profile (POST auth/profile)
   Future<Either<String, UserModel>> updateUser({
     required String name,
     String? email,
     String? phone,
     String? address,
+    String? postcode,
+    String? image,
   }) async {
     final data = <String, dynamic>{
       'name': name,
@@ -125,19 +127,74 @@ class AuthRepository {
     if (address != null) {
       data['address'] = address;
     }
+    if (postcode != null) {
+      data['postcode'] = postcode;
+    }
+    if (image != null) {
+      data['image'] = image;
+    }
 
     final response = await networkRepository.post(
-      url: ApiConfig.authUpdateUser,
+      url: ApiConfig.authProfile,
       data: data,
     );
 
     if (!response.failed && response.success) {
       final responseData = response.data['data'] as Map<String, dynamic>;
-      // updateUser endpoint returns user nested in 'user' key
       final userJson = responseData['user'] as Map<String, dynamic>? ?? responseData;
       final userData = UserModel.fromJson(userJson);
       appStorage.write('user', jsonEncode(userData.toJson()));
       return right(userData);
+    }
+    return left(response.message);
+  }
+
+  /// Request password reset link (public, no auth)
+  Future<Either<String, bool>> forgetPassword({required String email}) async {
+    final response = await networkRepository.post(
+      url: ApiConfig.authForgetPassword,
+      data: {'email': email},
+    );
+
+    if (!response.failed && response.success) {
+      return right(true);
+    }
+    return left(response.message);
+  }
+
+  /// Reset password with token (public, no auth)
+  Future<Either<String, bool>> resetPassword({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final response = await networkRepository.post(
+      url: ApiConfig.authResetPassword,
+      data: {
+        'email': email,
+        'token': token,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      },
+    );
+
+    if (!response.failed && response.success) {
+      return right(true);
+    }
+    return left(response.message);
+  }
+
+  /// Delete user account (soft delete, requires password)
+  Future<Either<String, bool>> deleteAccount({required String password}) async {
+    final response = await networkRepository.delete(
+      url: ApiConfig.authAccount,
+      data: {'password': password},
+    );
+
+    if (!response.failed && response.success) {
+      await _removeUserData();
+      return right(true);
     }
     return left(response.message);
   }
@@ -156,16 +213,18 @@ class AuthRepository {
     return left(response.message);
   }
 
-  /// Change user password
+  /// Change user password (authenticated)
   Future<Either<String, bool>> changePassword({
     required String currentPassword,
     required String newPassword,
+    required String passwordConfirmation,
   }) async {
     final response = await networkRepository.post(
       url: ApiConfig.authChangePassword,
       data: {
-        'password': currentPassword,
-        'newPassword': newPassword,
+        'current_password': currentPassword,
+        'password': newPassword,
+        'password_confirmation': passwordConfirmation,
       },
     );
 

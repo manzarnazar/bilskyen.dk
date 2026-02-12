@@ -14,6 +14,10 @@ class ApiConfig {
   static const String authMe = 'auth/me';
   static const String authSignOut = 'auth/sign-out';
   static const String authUpdateUser = 'auth/update-user';
+  static const String authProfile = 'auth/profile';
+  static const String authForgetPassword = 'auth/forget-password';
+  static const String authResetPassword = 'auth/reset-password';
+  static const String authAccount = 'auth/account';
   static const String authRevokeSession = 'auth/revoke-session';
   static const String authChangePassword = 'auth/change-password';
   
@@ -44,5 +48,15 @@ class ApiConfig {
   static String favoritesCheck(int vehicleId) => 'favorites/check/$vehicleId';
   static String favoritesDelete(int vehicleId) => 'favorites/delete/$vehicleId';
   static const String favoritesCheckBatch = 'favorites/check-batch';
+
+  // Seller profile endpoints (auth required)
+  static const String sellerVehicles = 'seller/vehicles';
+  static String sellerVehicle(int id) => 'seller/vehicles/$id';
+  static String sellerUpdateVehicle(int id) => 'seller/vehicles/$id';
+  static String sellerVehicleStatus(int id) => 'seller/vehicles/$id/status';
+  static String sellerDeleteVehicle(int id) => 'seller/vehicles/$id';
+  static const String sellerInquiries = 'seller/inquiries';
+  static String sellerInquiry(int id) => 'seller/inquiries/$id';
+  static const String sellerStatistics = 'seller/statistics';
 }
 

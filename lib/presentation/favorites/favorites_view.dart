@@ -25,6 +25,8 @@ class FavoritesView extends StatelessWidget {
           backgroundColor: isDark
               ? AppColors.backgroundDark
               : AppColors.backgroundLight,
+          surfaceTintColor: Colors.transparent,
+          scrolledUnderElevation: 0,
           foregroundColor: AppColors.primary,
           iconTheme: IconThemeData(
             color: AppColors.primary,

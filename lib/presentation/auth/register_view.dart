@@ -42,38 +42,28 @@ class _RegisterViewState extends State<RegisterView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
-                // Brand Logo
-                Center(
-                  child: Image.asset(
-                    isDark ? 'assets/images/logo_white.png' : 'assets/images/logo.png',
-                    height: 60,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Text(
-                        'BILSKYEN',
-                        style: GoogleFonts.inter(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2.0,
-                          color: AppColors.primary,
-                        ),
-                      );
-                    },
+                // Brand name
+                Text(
+                  'BILSKYEN',
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2.0,
+                    color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
                 // Title
                 Text(
                   'Create Account',
                   style: GoogleFonts.inter(
-                    fontSize: 32,
+                    fontSize: 36,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black,
                     height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 // Subtitle
                 Text(
                   'Sign up to start your journey with the ultimate car marketplace.',
@@ -158,8 +148,8 @@ class _RegisterViewState extends State<RegisterView> {
                             value: _authController.agreeToTerms.value,
                             onChanged: (_) =>
                                 _authController.toggleTermsAgreement(),
-                            activeColor: AppColors.primary,
-                            checkColor: AppColors.primaryForeground,
+                            activeColor: isDark ? Colors.white : Colors.black,
+                            checkColor: isDark ? Colors.black : Colors.white,
                             side: BorderSide(
                               color: isDark
                                   ? Colors.white.withOpacity(0.2)
@@ -184,7 +174,7 @@ class _RegisterViewState extends State<RegisterView> {
                                       text: 'Terms',
                                       style: GoogleFonts.inter(
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.primary,
+                                        color: isDark ? Colors.white : Colors.black,
                                       ),
                                     ),
                                     const TextSpan(text: ' and '),
@@ -192,7 +182,7 @@ class _RegisterViewState extends State<RegisterView> {
                                       text: 'Privacy Policy',
                                       style: GoogleFonts.inter(
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.primary,
+                                        color: isDark ? Colors.white : Colors.black,
                                       ),
                                     ),
                                   ],
@@ -220,14 +210,16 @@ class _RegisterViewState extends State<RegisterView> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.primaryForeground,
+                          backgroundColor: isDark ? Colors.white : Colors.black,
+                          foregroundColor: isDark ? Colors.black : Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          elevation: 2,
-                          disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
+                          elevation: 0,
+                          disabledBackgroundColor: isDark
+                              ? Colors.white.withOpacity(0.5)
+                              : Colors.black.withOpacity(0.5),
                         ),
                         child: _authController.isLoading.value
                             ? SizedBox(
@@ -236,7 +228,7 @@ class _RegisterViewState extends State<RegisterView> {
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.primaryForeground,
+                                    isDark ? Colors.black : Colors.white,
                                   ),
                                 ),
                               )
@@ -310,7 +302,7 @@ class _RegisterViewState extends State<RegisterView> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
+                              color: isDark ? Colors.white : Colors.black,
                             ),
                           ),
                         ),
@@ -372,25 +364,25 @@ class _RegisterViewState extends State<RegisterView> {
             ? Colors.white.withOpacity(0.05)
             : AppColors.surfaceLight,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
             color: isDark
                 ? Colors.white.withOpacity(0.1)
-                : AppColors.borderLight,
+                : Colors.transparent,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
             color: isDark
                 ? Colors.white.withOpacity(0.1)
-                : AppColors.borderLight,
+                : Colors.transparent,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: AppColors.primary,
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: isDark ? Colors.white : Colors.black,
             width: 2,
           ),
         ),
@@ -443,25 +435,25 @@ class _RegisterViewState extends State<RegisterView> {
             ? Colors.white.withOpacity(0.05)
             : AppColors.surfaceLight,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
             color: isDark
                 ? Colors.white.withOpacity(0.1)
-                : AppColors.borderLight,
+                : Colors.transparent,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
             color: isDark
                 ? Colors.white.withOpacity(0.1)
-                : AppColors.borderLight,
+                : Colors.transparent,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: AppColors.primary,
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: isDark ? Colors.white : Colors.black,
             width: 2,
           ),
         ),

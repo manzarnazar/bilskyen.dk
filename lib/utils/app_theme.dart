@@ -31,10 +31,11 @@ class AppTheme {
       ),
       appBarTheme: const AppBarTheme(
         elevation: 0,
-        backgroundColor: AppColors.primary,
-        iconTheme: IconThemeData(color: AppColors.primaryForeground),
+        backgroundColor: AppColors.backgroundLight,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: AppColors.textLight),
         titleTextStyle: TextStyle(
-          color: AppColors.primaryForeground,
+          color: AppColors.textLight,
           fontFamily: 'Poppins',
         ),
       ),
@@ -122,10 +123,11 @@ class AppTheme {
       ),
       appBarTheme: const AppBarTheme(
         elevation: 0,
-        backgroundColor: AppColors.primary,
-        iconTheme: IconThemeData(color: AppColors.primaryForeground),
+        backgroundColor: AppColors.backgroundDark,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: AppColors.textDark),
         titleTextStyle: TextStyle(
-          color: AppColors.primaryForeground,
+          color: AppColors.textDark,
           fontFamily: 'Poppins',
         ),
       ),

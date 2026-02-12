@@ -13,6 +13,11 @@ class VehicleModel {
   final String? brandName;
   final String? modelName;
   final String? sellerType;
+  /// Seller list API: status id (1=Draft, 2=Published, 3=Sold, 4=Archived)
+  final int? vehicleListStatusId;
+  final String? vehicleListStatusName;
+  final int? enquiriesCount;
+  final int? viewsCount;
 
   VehicleModel({
     required this.id,
@@ -29,6 +34,10 @@ class VehicleModel {
     this.brandName,
     this.modelName,
     this.sellerType,
+    this.vehicleListStatusId,
+    this.vehicleListStatusName,
+    this.enquiriesCount,
+    this.viewsCount,
   });
 
   /// Getter to maintain compatibility with card which expects imageUrl
@@ -55,6 +64,10 @@ class VehicleModel {
       brandName: json['brand_name'] as String?,
       modelName: json['model_name'] as String?,
       sellerType: json['seller_type'] as String?,
+      vehicleListStatusId: json['vehicle_list_status_id'] as int?,
+      vehicleListStatusName: json['vehicle_list_status_name'] as String?,
+      enquiriesCount: json['enquiries_count'] as int?,
+      viewsCount: json['views_count'] as int?,
     );
   }
 
@@ -74,6 +87,10 @@ class VehicleModel {
       'brand_name': brandName,
       'model_name': modelName,
       'seller_type': sellerType,
+      'vehicle_list_status_id': vehicleListStatusId,
+      'vehicle_list_status_name': vehicleListStatusName,
+      'enquiries_count': enquiriesCount,
+      'views_count': viewsCount,
     };
   }
 
@@ -92,6 +109,10 @@ class VehicleModel {
     String? brandName,
     String? modelName,
     String? sellerType,
+    int? vehicleListStatusId,
+    String? vehicleListStatusName,
+    int? enquiriesCount,
+    int? viewsCount,
   }) {
     return VehicleModel(
       id: id ?? this.id,
@@ -108,6 +129,10 @@ class VehicleModel {
       brandName: brandName ?? this.brandName,
       modelName: modelName ?? this.modelName,
       sellerType: sellerType ?? this.sellerType,
+      vehicleListStatusId: vehicleListStatusId ?? this.vehicleListStatusId,
+      vehicleListStatusName: vehicleListStatusName ?? this.vehicleListStatusName,
+      enquiriesCount: enquiriesCount ?? this.enquiriesCount,
+      viewsCount: viewsCount ?? this.viewsCount,
     );
   }
 }

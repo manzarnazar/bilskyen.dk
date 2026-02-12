@@ -108,7 +108,7 @@ class _EnquiryFormBottomSheetState extends State<EnquiryFormBottomSheet> {
       Get.snackbar(
         'Login Required',
         'Please login to submit an enquiry',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
       );
       Get.back();
       Get.offNamed('/login');
@@ -140,11 +140,11 @@ class _EnquiryFormBottomSheetState extends State<EnquiryFormBottomSheet> {
     result.fold(
       (error) {
         if (error.toLowerCase().contains('unauthorized') || error.toLowerCase().contains('login')) {
-          Get.snackbar('Login Required', 'Please login to continue', snackPosition: SnackPosition.BOTTOM);
+          Get.snackbar('Login Required', 'Please login to continue', snackPosition: SnackPosition.TOP);
           Get.back();
           Get.offNamed('/login');
         } else {
-          Get.snackbar('Error', error, snackPosition: SnackPosition.BOTTOM);
+          Get.snackbar('Error', error, snackPosition: SnackPosition.TOP);
         }
       },
       (_) {
@@ -155,7 +155,7 @@ class _EnquiryFormBottomSheetState extends State<EnquiryFormBottomSheet> {
               : widget.type == EnquiryFormType.testDrive
                   ? 'Your test drive request has been submitted successfully!'
                   : 'Your price negotiation has been submitted successfully!',
-          snackPosition: SnackPosition.BOTTOM,
+          
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );

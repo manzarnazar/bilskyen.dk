@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
-import '../../controllers/app_controller/main_navigation_controller.dart';
 import '../../controllers/profile_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../models/auth_model/user_model.dart';
@@ -47,7 +46,6 @@ class ProfileView extends StatelessWidget {
                   ),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       'Profile',
@@ -55,25 +53,6 @@ class ProfileView extends StatelessWidget {
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
-                      ),
-                    ),
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.gray700
-                            : AppColors.gray300,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'BI',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                       ),
                     ),
                   ],
@@ -87,8 +66,12 @@ class ProfileView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 24),
-                      // Profile Card
-                      _buildProfileCard(isDark),
+                      // Profile Card (reactive so it updates after profile edit)
+                      Obx(() {
+                        final authController = Get.find<AuthController>();
+                        final user = authController.currentUser.value ?? _getUserFromStorage();
+                        return _buildProfileCard(isDark, user);
+                      }),
                       const SizedBox(height: 24),
                       // Account Settings
                       _buildSectionTitle('ACCOUNT SETTINGS'),
@@ -108,13 +91,9 @@ class ProfileView extends StatelessWidget {
                             icon: Icons.directions_car,
                             iconColor: Colors.purple,
                             title: 'My Listings',
-                            badge: '3 Active',
+                            badge: 'Active',
                             onTap: () {
-                              Get.snackbar(
-                                'Info',
-                                'My Listings coming soon',
-                                snackPosition: SnackPosition.TOP,
-                              );
+                              Get.toNamed('/my-listings');
                             },
                           ),
                           _SettingsItem(
@@ -125,7 +104,12 @@ class ProfileView extends StatelessWidget {
                               Get.toNamed('/favorites'); // Navigate to favorites screen
                             },
                           ),
-                         
+                          _SettingsItem(
+                            icon: Icons.lock_reset,
+                            iconColor: Colors.teal,
+                            title: 'Reset password',
+                            onTap: () => Get.toNamed('/change-password'),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -185,6 +169,9 @@ class ProfileView extends StatelessWidget {
                       const SizedBox(height: 24),
                       // Log Out Button
                       _buildLogOutButton(isDark),
+                      const SizedBox(height: 12),
+                      // Delete Account
+                      _buildDeleteAccountButton(isDark),
                       const SizedBox(height: 16),
                       // Version
                       Center(
@@ -209,21 +196,21 @@ class ProfileView extends StatelessWidget {
     });
   }
 
-  Widget _buildProfileCard(bool isDark) {
-    // Get user from storage
-    UserModel? getUser() {
-      try {
-        final userJson = appStorage.read('user');
-        if (userJson != null) {
-          final userMap = jsonDecode(userJson.toString());
-          return UserModel.fromJson(userMap as Map<String, dynamic>);
-        }
-      } catch (e) {
-        // Handle parsing errors
+  /// Fallback when currentUser is null (e.g. before AuthController has loaded from storage).
+  static UserModel? _getUserFromStorage() {
+    try {
+      final userJson = appStorage.read('user');
+      if (userJson != null) {
+        final userMap = jsonDecode(userJson.toString());
+        return UserModel.fromJson(userMap as Map<String, dynamic>);
       }
-      return null;
+    } catch (e) {
+      // Handle parsing errors
     }
+    return null;
+  }
 
+  Widget _buildProfileCard(bool isDark, UserModel? user) {
     // Get user initials for avatar
     String getInitials(UserModel? user) {
       if (user == null || user.name.isEmpty) return 'U';
@@ -249,8 +236,6 @@ class ProfileView extends StatelessWidget {
       return user?.emailVerified ?? false;
     }
 
-    final user = getUser();
-
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -262,63 +247,28 @@ class ProfileView extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Avatar
-          Stack(
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF2C2C2C) : AppColors.gray200,
-                    width: 4,
-                  ),
-                ),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/images/seller_profile.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: isDark ? AppColors.gray700 : AppColors.gray300,
-                        child: Center(
-                          child: Text(
-                            getInitials(user),
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.black,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+          // Avatar (placeholder)
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isDark ? AppColors.gray700 : AppColors.gray300,
+              border: Border.all(
+                color: isDark ? const Color(0xFF2C2C2C) : AppColors.gray200,
+                width: 4,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                getInitials(user),
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black,
                 ),
               ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isDark ? AppColors.cardDark : Colors.white,
-                      width: 2,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.edit,
-                    size: 14,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
           const SizedBox(width: 16),
           // Name and Email
@@ -771,6 +721,111 @@ class ProfileView extends StatelessWidget {
                 color: isDark
                     ? Colors.red.shade400
                     : Colors.red.shade500,
+              ),
+            ),
+          ],
+        ),
+      )),
+    );
+  }
+
+  Widget _buildDeleteAccountButton(bool isDark) {
+    final authController = Get.find<AuthController>();
+
+    return SizedBox(
+      width: double.infinity,
+      child: Obx(() => OutlinedButton(
+        onPressed: authController.isLoading.value
+            ? null
+            : () async {
+                final passwordController = TextEditingController();
+                final password = await Get.dialog<String>(
+                  AlertDialog(
+                    title: const Text('Delete account'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'This will permanently delete your account. This action cannot be undone. Enter your password to confirm.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDark
+                                ? AppColors.mutedDark
+                                : AppColors.mutedLight,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: passwordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Password',
+                            border: OutlineInputBorder(),
+                          ),
+                          onSubmitted: (value) => Get.back(result: value),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Get.back(result: null),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          final pwd = passwordController.text;
+                          if (pwd.isNotEmpty) Get.back(result: pwd);
+                        },
+                        child: Text(
+                          'Delete account',
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                passwordController.dispose();
+                if (password != null && password.isNotEmpty) {
+                  await authController.deleteAccount(password: password);
+                }
+              },
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          side: BorderSide(
+            color: isDark
+                ? Colors.red.shade900.withOpacity(0.5)
+                : Colors.red.shade300,
+          ),
+          backgroundColor: isDark
+              ? AppColors.cardDark
+              : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.delete_forever,
+              color: isDark
+                  ? Colors.red.shade400
+                  : Colors.red.shade600,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Delete account',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? Colors.red.shade400
+                    : Colors.red.shade600,
               ),
             ),
           ],

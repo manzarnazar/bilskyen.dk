@@ -174,11 +174,7 @@ class _LoginViewState extends State<LoginView> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          Get.snackbar(
-                            'Info',
-                            'Forgot password feature coming soon',
-                            snackPosition: SnackPosition.TOP,
-                          );
+                          Get.toNamed('/forgot-password');
                         },
                         child: Text(
                           'Forgot Password?',

@@ -100,7 +100,20 @@ class DioClient {
         failed: true,
       );
     }
-    
+
+    // Handle 429 Too Many Requests (rate limit)
+    if (error.response?.statusCode == 429) {
+      message = "Too many attempts. Please try again in a minute.";
+      data = error.response?.data ?? {"error": "rate_limit", "status_code": 429};
+      success = false;
+      return NetworkResponse(
+        message: message,
+        data: data,
+        success: success,
+        failed: true,
+      );
+    }
+
     if (error.response?.data != null) {
       final responseData = error.response!.data;
       if (responseData is Map<String, dynamic>) {
