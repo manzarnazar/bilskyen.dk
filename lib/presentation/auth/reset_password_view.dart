@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/app_controller/app_controller.dart';
@@ -52,6 +53,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Obx(() {
       final isDark = _appController.isDarkMode.value;
 
@@ -71,7 +73,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
             onPressed: () => Get.back(),
           ),
           title: Text(
-            'Reset Password',
+            l10n.resetPasswordTitle,
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -88,7 +90,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
               children: [
                 const SizedBox(height: 16),
                 Text(
-                  'Set new password',
+                  l10n.setNewPassword,
                   style: GoogleFonts.inter(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -98,7 +100,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter your email, the reset token you received, and your new password.',
+                  l10n.resetPasswordDescription,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -111,75 +113,75 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel('EMAIL ADDRESS', isDark),
+                      _buildLabel(l10n.emailAddress, isDark),
                       const SizedBox(height: 8),
                       _buildTextField(
                         controller: _emailController,
-                        hintText: 'name@example.com',
+                        hintText: l10n.emailHint,
                         icon: Icons.mail,
                         isDark: isDark,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
+                            return l10n.pleaseEnterEmail;
                           }
                           if (!GetUtils.isEmail(value)) {
-                            return 'Please enter a valid email';
+                            return l10n.pleaseEnterValidEmail;
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 20),
-                      _buildLabel('RESET TOKEN', isDark),
+                      _buildLabel(l10n.resetToken, isDark),
                       const SizedBox(height: 8),
                       _buildTextField(
                         controller: _tokenController,
-                        hintText: 'Paste the token from your email',
+                        hintText: l10n.pasteTokenHint,
                         icon: Icons.vpn_key,
                         isDark: isDark,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter the reset token';
+                            return l10n.pleaseEnterResetToken;
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 20),
-                      _buildLabel('NEW PASSWORD', isDark),
+                      _buildLabel(l10n.newPassword, isDark),
                       const SizedBox(height: 8),
                       _buildPasswordField(
                         controller: _passwordController,
-                        hintText: 'At least 8 characters',
+                        hintText: l10n.atLeast8Chars,
                         isDark: isDark,
                         obscure: _obscurePassword,
                         onToggle: () =>
                             setState(() => _obscurePassword = !_obscurePassword),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your new password';
+                            return l10n.pleaseEnterNewPassword;
                           }
                           if (value.length < 8) {
-                            return 'Password must be at least 8 characters';
+                            return l10n.passwordMin8;
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 20),
-                      _buildLabel('CONFIRM PASSWORD', isDark),
+                      _buildLabel(l10n.confirmPassword, isDark),
                       const SizedBox(height: 8),
                       _buildPasswordField(
                         controller: _confirmPasswordController,
-                        hintText: 'Confirm your new password',
+                        hintText: l10n.confirmPasswordHint,
                         isDark: isDark,
                         obscure: _obscureConfirm,
                         onToggle: () =>
                             setState(() => _obscureConfirm = !_obscureConfirm),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please confirm your password';
+                            return l10n.pleaseConfirmPassword;
                           }
                           if (value != _passwordController.text) {
-                            return 'Passwords do not match';
+                            return l10n.passwordsDoNotMatch;
                           }
                           return null;
                         },
@@ -224,7 +226,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                                       ),
                                     )
                                   : Text(
-                                      'Reset password',
+                                      l10n.resetPasswordButton,
                                       style: GoogleFonts.inter(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,

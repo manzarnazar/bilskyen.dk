@@ -248,7 +248,10 @@ class NetworkRepository {
       }
       return NetworkResponse(
         data: body,
-        success: body is Map && body["success"] == true,
+        // Treat both legacy `success: true` and newer `status: "success"` as success.
+        success: body is Map &&
+            (body["success"] == true ||
+                body["status"] == "success"),
         message: body is Map && body.containsKey("message")
             ? body["message"]
             : "",

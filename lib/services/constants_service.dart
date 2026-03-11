@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import 'package:car_marketplace/models/constants_model/constants_model.dart';
-import 'package:car_marketplace/repositories/constants/constants_repository.dart';
+import 'package:bilskyen/models/constants_model/constants_model.dart';
+import 'package:bilskyen/repositories/constants/constants_repository.dart';
 
 class ConstantsService extends GetxService {
   final ConstantsRepository _repository = ConstantsRepository();

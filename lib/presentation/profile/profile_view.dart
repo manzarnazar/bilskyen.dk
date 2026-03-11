@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
+import '../../controllers/app_controller/main_navigation_controller.dart';
 import '../../controllers/profile_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../models/auth_model/user_model.dart';
@@ -14,6 +16,7 @@ class ProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appController = Get.find<AppController>();
+    final l10n = AppLocalizations.of(context)!;
     Get.put(ProfileController()); // Initialize profile controller
     // Initialize AuthController if not already initialized
     if (!Get.isRegistered<AuthController>()) {
@@ -48,8 +51,8 @@ class ProfileView extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Text(
-                      'Profile',
+                    Text(
+                      l10n.profile,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -68,17 +71,17 @@ class ProfileView extends StatelessWidget {
                     children: [
                       const SizedBox(height: 24),
                       if (!isLoggedIn) ...[
-                        _buildGuestProfile(isDark),
+                        _buildGuestProfile(context, isDark),
                       ] else ...[
                         // Profile Card (reactive so it updates after profile edit)
                         Obx(() {
                           final authController = Get.find<AuthController>();
                           final user = authController.currentUser.value ?? _getUserFromStorage();
-                          return _buildProfileCard(isDark, user);
+                          return _buildProfileCard(context, isDark, user);
                         }),
                         const SizedBox(height: 24),
                         // Account Settings
-                        _buildSectionTitle('ACCOUNT SETTINGS'),
+                        _buildSectionTitle(l10n.accountSettings),
                         const SizedBox(height: 12),
                         _buildSettingsCard(
                           isDark,
@@ -86,7 +89,7 @@ class ProfileView extends StatelessWidget {
                             _SettingsItem(
                               icon: Icons.person,
                               iconColor: Colors.blue,
-                              title: 'Personal Information',
+                              title: l10n.personalInformation,
                               onTap: () {
                                 Get.toNamed('/personal-info');
                               },
@@ -94,23 +97,23 @@ class ProfileView extends StatelessWidget {
                             _SettingsItem(
                               icon: Icons.directions_car,
                               iconColor: Colors.purple,
-                              title: 'My Listings',
+                              title: l10n.myListings,
                               onTap: () {
-                                Get.toNamed('/my-listings');
+                                Get.find<MainNavigationController>().changeTab(3);
                               },
                             ),
                             _SettingsItem(
                               icon: Icons.favorite,
                               iconColor: Colors.amber,
-                              title: 'Saved Vehicles',
+                              title: l10n.savedVehicles,
                               onTap: () {
-                                Get.toNamed('/favorites'); // Navigate to favorites screen
+                                Get.find<MainNavigationController>().changeTab(1);
                               },
                             ),
                             _SettingsItem(
                               icon: Icons.lock_reset,
                               iconColor: Colors.teal,
-                              title: 'Reset password',
+                              title: l10n.resetPassword,
                               onTap: () => Get.toNamed('/change-password'),
                             ),
                           ],
@@ -118,38 +121,27 @@ class ProfileView extends StatelessWidget {
                         const SizedBox(height: 24),
                       ],
                       // Preferences (shown for both guest and logged-in)
-                      _buildSectionTitle('PREFERENCES'),
+                      _buildSectionTitle(l10n.preferences),
                       const SizedBox(height: 12),
-                      _buildPreferencesCard(isDark),
+                      _buildPreferencesCard(context, isDark),
                       const SizedBox(height: 24),
                       // Support & Legal
-                      _buildSectionTitle('SUPPORT & LEGAL'),
+                      _buildSectionTitle(l10n.supportAndLegal),
                       const SizedBox(height: 12),
                       _buildSettingsCard(
                         isDark,
                         [
-                          _SettingsItem(
-                            icon: Icons.help,
-                            iconColor: Colors.orange,
-                            title: 'Help & Support',
-                            onTap: () {
-                              Get.snackbar(
-                                'Info',
-                                'Help & Support coming soon',
-                                snackPosition: SnackPosition.TOP,
-                              );
-                            },
-                          ),
+                          // Help & Support hidden for now
                           _SettingsItem(
                             icon: Icons.privacy_tip,
                             iconColor: isDark
                                 ? AppColors.mutedDark
                                 : AppColors.mutedLight,
-                            title: 'Privacy Policy',
+                            title: l10n.privacyPolicyTitle,
                             onTap: () {
                               Get.snackbar(
-                                'Info',
-                                'Privacy Policy coming soon',
+                                l10n.info,
+                                l10n.privacyPolicyComingSoon,
                                 snackPosition: SnackPosition.TOP,
                               );
                             },
@@ -159,11 +151,11 @@ class ProfileView extends StatelessWidget {
                             iconColor: isDark
                                 ? AppColors.mutedDark
                                 : AppColors.mutedLight,
-                            title: 'Terms of Service',
+                            title: l10n.termsOfService,
                             onTap: () {
                               Get.snackbar(
-                                'Info',
-                                'Terms of Service coming soon',
+                                l10n.info,
+                                l10n.termsComingSoon,
                                 snackPosition: SnackPosition.TOP,
                               );
                             },
@@ -173,15 +165,15 @@ class ProfileView extends StatelessWidget {
                       const SizedBox(height: 24),
                       // Log Out and Delete Account at bottom (logged-in only)
                       if (isLoggedIn) ...[
-                        _buildLogOutButton(isDark),
+                        _buildLogOutButton(context, isDark),
                         const SizedBox(height: 12),
-                        _buildDeleteAccountButton(isDark),
+                        _buildDeleteAccountButton(context, isDark),
                         const SizedBox(height: 24),
                       ],
                       // Version
                       Center(
                         child: Text(
-                          'Version 0.1.0',
+                          l10n.version,
                           style: TextStyle(
                             fontSize: 12,
                             color: isDark
@@ -212,7 +204,8 @@ class ProfileView extends StatelessWidget {
   }
 
   /// Profile content when user is not logged in: sign-in CTA and register link.
-  Widget _buildGuestProfile(bool isDark) {
+  Widget _buildGuestProfile(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -231,7 +224,7 @@ class ProfileView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Sign in to your account',
+            l10n.signInToAccount,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -240,7 +233,7 @@ class ProfileView extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Sign in to manage your listings, save favorites, and access your profile.',
+            l10n.signInToManage,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -260,14 +253,14 @@ class ProfileView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Sign In'),
+              child: Text(l10n.signIn),
             ),
           ),
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => Get.toNamed('/register'),
             child: Text(
-              'Create an account',
+              l10n.createAnAccount,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -295,7 +288,8 @@ class ProfileView extends StatelessWidget {
     return null;
   }
 
-  Widget _buildProfileCard(bool isDark, UserModel? user) {
+  Widget _buildProfileCard(BuildContext context, bool isDark, UserModel? user) {
+    final l10n = AppLocalizations.of(context)!;
     // Get user initials for avatar
     String getInitials(UserModel? user) {
       if (user == null || user.name.isEmpty) return 'U';
@@ -308,12 +302,12 @@ class ProfileView extends StatelessWidget {
 
     // Get user name
     String getUserName(UserModel? user) {
-      return user?.name ?? 'Guest User';
+      return user?.name ?? l10n.guestUser;
     }
 
     // Get user email
     String getUserEmail(UserModel? user) {
-      return user?.email ?? 'No email';
+      return user?.email ?? l10n.noEmail;
     }
 
     // Check if email is verified
@@ -398,7 +392,7 @@ class ProfileView extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Verified User',
+                      l10n.verifiedUser,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -532,8 +526,9 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildPreferencesCard(bool isDark) {
-    // final pushNotificationsEnabled = false.obs; // Reserved for future use
+  Widget _buildPreferencesCard(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
+    final appController = Get.find<AppController>();
 
     return Container(
       decoration: BoxDecoration(
@@ -631,27 +626,26 @@ class ProfileView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Dark Mode',
-                      style: TextStyle(
+                      l10n.darkMode,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                   Obx(() {
-                    final appController = Get.find<AppController>();
                     String modeText;
                     switch (appController.themeMode.value) {
                       case ThemeMode.system:
-                        modeText = 'System';
+                        modeText = l10n.system;
                         break;
                       case ThemeMode.dark:
-                        modeText = 'Dark';
+                        modeText = l10n.dark;
                         break;
                       case ThemeMode.light:
-                        modeText = 'Light';
+                        modeText = l10n.light;
                         break;
                     }
                     return Row(
@@ -682,10 +676,105 @@ class ProfileView extends StatelessWidget {
           // Language
           InkWell(
             onTap: () {
-              Get.snackbar(
-                'Info',
-                'Language selection coming soon',
-                snackPosition: SnackPosition.TOP,
+              showDialog<void>(
+                context: context,
+                builder: (ctx) {
+                  final dialogL10n = AppLocalizations.of(ctx)!;
+                  return AlertDialog(
+                    backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    title: Text(
+                      dialogL10n.language,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? AppColors.textDark : AppColors.textLight,
+                      ),
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            appController.setLocale(const Locale('en'));
+                            Navigator.of(ctx).pop();
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.asset(
+                                    'assets/images/english_flag.png',
+                                    width: 40,
+                                    height: 28,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Icon(
+                                      Icons.language,
+                                      size: 28,
+                                      color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Text(
+                                  dialogL10n.english,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? AppColors.textDark : AppColors.textLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        InkWell(
+                          onTap: () {
+                            appController.setLocale(const Locale('da'));
+                            Navigator.of(ctx).pop();
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.asset(
+                                    'assets/images/danish-flag.png',
+                                    width: 40,
+                                    height: 28,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Icon(
+                                      Icons.language,
+                                      size: 28,
+                                      color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Text(
+                                  dialogL10n.danish,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: isDark ? AppColors.textDark : AppColors.textLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               );
             },
             child: Container(
@@ -709,24 +798,27 @@ class ProfileView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Language',
-                      style: TextStyle(
+                      l10n.language,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                  Text(
-                    'English',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark
-                          ? AppColors.mutedDark
-                          : AppColors.mutedLight,
-                    ),
-                  ),
+                  Obx(() {
+                    final currentLang = appController.locale.value.languageCode == 'da' ? l10n.danish : l10n.english;
+                    return Text(
+                      currentLang,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark
+                            ? AppColors.mutedDark
+                            : AppColors.mutedLight,
+                      ),
+                    );
+                  }),
                   const SizedBox(width: 8),
                   Icon(
                     Icons.chevron_right,
@@ -743,9 +835,9 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildLogOutButton(bool isDark) {
+  Widget _buildLogOutButton(BuildContext context, bool isDark) {
     final authController = Get.find<AuthController>();
-    
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       child: Obx(() => OutlinedButton(
@@ -755,16 +847,16 @@ class ProfileView extends StatelessWidget {
                 // Show confirmation dialog
                 final confirmed = await Get.dialog<bool>(
                   AlertDialog(
-                    title: const Text('Sign Out'),
-                    content: const Text('Are you sure you want to sign out?'),
+                    title: Text(l10n.signOut),
+                    content: Text(l10n.signOutConfirm),
                     actions: [
                       TextButton(
                         onPressed: () => Get.back(result: false),
-                        child: const Text('Cancel'),
+                        child: Text(l10n.cancel),
                       ),
                       TextButton(
                         onPressed: () => Get.back(result: true),
-                        child: const Text('Sign Out'),
+                        child: Text(l10n.signOut),
                       ),
                     ],
                   ),
@@ -799,7 +891,7 @@ class ProfileView extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'Log Out',
+              l10n.logOut,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -814,9 +906,9 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildDeleteAccountButton(bool isDark) {
+  Widget _buildDeleteAccountButton(BuildContext context, bool isDark) {
     final authController = Get.find<AuthController>();
-
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       child: Obx(() => OutlinedButton(
@@ -826,13 +918,13 @@ class ProfileView extends StatelessWidget {
                 final passwordController = TextEditingController();
                 final password = await Get.dialog<String>(
                   AlertDialog(
-                    title: const Text('Delete account'),
+                    title: Text(l10n.deleteAccount),
                     content: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'This will permanently delete your account. This action cannot be undone. Enter your password to confirm.',
+                          l10n.deleteAccountConfirm,
                           style: TextStyle(
                             fontSize: 14,
                             color: isDark
@@ -844,9 +936,9 @@ class ProfileView extends StatelessWidget {
                         TextField(
                           controller: passwordController,
                           obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: l10n.passwordLabel,
+                            border: const OutlineInputBorder(),
                           ),
                           onSubmitted: (value) => Get.back(result: value),
                         ),
@@ -855,7 +947,7 @@ class ProfileView extends StatelessWidget {
                     actions: [
                       TextButton(
                         onPressed: () => Get.back(result: null),
-                        child: const Text('Cancel'),
+                        child: Text(l10n.cancel),
                       ),
                       TextButton(
                         onPressed: () {
@@ -863,7 +955,7 @@ class ProfileView extends StatelessWidget {
                           if (pwd.isNotEmpty) Get.back(result: pwd);
                         },
                         child: Text(
-                          'Delete account',
+                          l10n.deleteAccount,
                           style: TextStyle(
                             color: Colors.red.shade700,
                             fontWeight: FontWeight.w600,
@@ -904,7 +996,7 @@ class ProfileView extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'Delete account',
+              l10n.deleteAccount,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

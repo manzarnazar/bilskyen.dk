@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:car_marketplace/main.dart';
-import 'package:car_marketplace/models/auth_model/register_model.dart';
-import 'package:car_marketplace/models/auth_model/user_model.dart';
-import 'package:car_marketplace/repositories/auth/auth_repository.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
+import 'package:bilskyen/main.dart';
+import 'package:bilskyen/models/auth_model/register_model.dart';
+import 'package:bilskyen/models/auth_model/user_model.dart';
+import 'package:bilskyen/repositories/auth/auth_repository.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _authRepository = AuthRepository();
@@ -75,11 +76,10 @@ class AuthController extends GetxController {
     String? address,
   }) async {
     if (!agreeToTerms.value) {
-      Get.snackbar(
-        'Error',
-        'Please agree to the Terms and Privacy Policy',
-        snackPosition: SnackPosition.TOP,
-      );
+      final ctx = Get.context;
+      final title = ctx != null ? AppLocalizations.of(ctx)!.error : 'Error';
+      final msg = ctx != null ? AppLocalizations.of(ctx)!.pleaseAgreeTerms : 'Please agree to the Terms and Privacy Policy';
+      Get.snackbar(title, msg, snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -99,8 +99,10 @@ class AuthController extends GetxController {
 
     result.fold(
       (error) {
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.registrationFailed : 'Registration Failed';
         Get.snackbar(
-          'Registration Failed',
+          title,
           error,
           snackPosition: SnackPosition.TOP,
           backgroundColor: Get.theme.colorScheme.error,
@@ -109,12 +111,10 @@ class AuthController extends GetxController {
       },
       (success) {
         _loadUserFromStorage();
-        Get.snackbar(
-          'Success',
-          'Registration successful!',
-          snackPosition: SnackPosition.TOP,
-        );
-        // Navigate to home after registration
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.success : 'Success';
+        final msg = ctx != null ? AppLocalizations.of(ctx)!.registrationSuccess : 'Registration successful!';
+        Get.snackbar(title, msg, snackPosition: SnackPosition.TOP);
         Get.offAllNamed('/main');
       },
     );
@@ -135,8 +135,10 @@ class AuthController extends GetxController {
 
     result.fold(
       (error) {
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.loginFailed : 'Login Failed';
         Get.snackbar(
-          'Login Failed',
+          title,
           error,
           snackPosition: SnackPosition.TOP,
           backgroundColor: Get.theme.colorScheme.error,
@@ -145,12 +147,10 @@ class AuthController extends GetxController {
       },
       (user) {
         currentUser.value = user;
-        Get.snackbar(
-          'Success',
-          'Welcome back, ${user.name}!',
-          snackPosition: SnackPosition.TOP,
-        );
-        // Navigate to home after login
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.success : 'Success';
+        final msg = ctx != null ? AppLocalizations.of(ctx)!.welcomeBackWithName(user.name) : 'Welcome back, ${user.name}!';
+        Get.snackbar(title, msg, snackPosition: SnackPosition.TOP);
         Get.offAllNamed('/main');
       },
     );
@@ -165,11 +165,9 @@ class AuthController extends GetxController {
 
     result.fold(
       (error) {
-        Get.snackbar(
-          'Logout Failed',
-          error,
-          snackPosition: SnackPosition.TOP,
-        );
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.logoutFailed : 'Logout Failed';
+        Get.snackbar(title, error, snackPosition: SnackPosition.TOP);
       },
       (success) {
         currentUser.value = null;
@@ -197,8 +195,10 @@ class AuthController extends GetxController {
 
     result.fold(
       (error) {
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.updateFailed : 'Update failed';
         Get.snackbar(
-          'Update failed',
+          title,
           error,
           snackPosition: SnackPosition.TOP,
           backgroundColor: Get.theme.colorScheme.error,
@@ -208,11 +208,10 @@ class AuthController extends GetxController {
       (user) {
         currentUser.value = user;
         Get.back();
-        Get.snackbar(
-          'Success',
-          'Changes saved successfully',
-          snackPosition: SnackPosition.TOP,
-        );
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.success : 'Success';
+        final msg = ctx != null ? AppLocalizations.of(ctx)!.changesSavedSuccess : 'Changes saved successfully';
+        Get.snackbar(title, msg, snackPosition: SnackPosition.TOP);
       },
     );
   }
@@ -226,8 +225,10 @@ class AuthController extends GetxController {
 
     result.fold(
       (error) {
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.logoutFailed : 'Sign Out Failed';
         Get.snackbar(
-          'Sign Out Failed',
+          title,
           error,
           snackPosition: SnackPosition.TOP,
           backgroundColor: Get.theme.colorScheme.error,
@@ -288,11 +289,10 @@ class AuthController extends GetxController {
         );
       },
       (_) {
-        Get.snackbar(
-          'Check your email',
-          'If that email is in our system, we\'ll send you a password reset link.',
-          snackPosition: SnackPosition.TOP,
-        );
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.resetLinkSent : 'Check your email';
+        final msg = ctx != null ? AppLocalizations.of(ctx)!.checkEmail : 'If that email is in our system, we\'ll send you a password reset link.';
+        Get.snackbar(title, msg, snackPosition: SnackPosition.TOP);
       },
     );
   }
@@ -325,11 +325,10 @@ class AuthController extends GetxController {
       },
       (_) {
         Get.back();
-        Get.snackbar(
-          'Success',
-          'Your password has been changed.',
-          snackPosition: SnackPosition.TOP,
-        );
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.success : 'Success';
+        final msg = ctx != null ? AppLocalizations.of(ctx)!.passwordResetSuccessMessage : 'Your password has been changed.';
+        Get.snackbar(title, msg, snackPosition: SnackPosition.TOP);
       },
     );
   }
@@ -362,11 +361,10 @@ class AuthController extends GetxController {
         );
       },
       (_) {
-        Get.snackbar(
-          'Password reset',
-          'Your password has been reset. You can now sign in.',
-          snackPosition: SnackPosition.TOP,
-        );
+        final ctx = Get.context;
+        final title = ctx != null ? AppLocalizations.of(ctx)!.passwordResetSuccess : 'Password reset';
+        final msg = ctx != null ? AppLocalizations.of(ctx)!.passwordResetSuccessMessage : 'Your password has been reset. You can now sign in.';
+        Get.snackbar(title, msg, snackPosition: SnackPosition.TOP);
         Get.offAllNamed('/login');
       },
     );

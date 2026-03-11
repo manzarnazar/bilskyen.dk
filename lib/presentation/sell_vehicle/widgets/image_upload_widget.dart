@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../controllers/app_controller/app_controller.dart';
 import '../../../controllers/sell_vehicle_controller.dart';
@@ -10,6 +11,7 @@ class ImageUploadWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // Controller should be initialized by parent view
     final controller = Get.isRegistered<SellVehicleController>()
         ? Get.find<SellVehicleController>()
@@ -48,7 +50,7 @@ class ImageUploadWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Click to upload or drag and drop',
+                    l10n.uploadText,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -57,7 +59,7 @@ class ImageUploadWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'PNG, JPG, GIF up to 20MB each',
+                    l10n.uploadHint,
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -74,7 +76,7 @@ class ImageUploadWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Selected Images (${images.length})',
+                  l10n.selectedImagesCount(images.length),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -84,7 +86,7 @@ class ImageUploadWidget extends StatelessWidget {
                 TextButton(
                   onPressed: () => controller.selectedImages.clear(),
                   child: Text(
-                    'Clear All',
+                    l10n.clearAll,
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.destructive,

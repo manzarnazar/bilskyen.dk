@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../controllers/app_controller/app_controller.dart';
 import '../../../controllers/sell_vehicle_controller.dart';
@@ -10,6 +11,7 @@ class LicensePlateLookup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // Controller should be initialized by parent view
     final controller = Get.isRegistered<SellVehicleController>()
         ? Get.find<SellVehicleController>()
@@ -54,7 +56,7 @@ class LicensePlateLookup extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Find Your Vehicle',
+                        l10n.findVehicleTitle,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -63,7 +65,7 @@ class LicensePlateLookup extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Enter your license plate to auto-fill vehicle information',
+                        l10n.findVehicleDescription,
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -95,7 +97,7 @@ class LicensePlateLookup extends StatelessWidget {
                     : AppColors.textLight,
               ),
               decoration: InputDecoration(
-                hintText: 'Enter license plate (e.g., AB12345)',
+                hintText: l10n.licensePlatePlaceholder,
                 hintStyle: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.normal,
@@ -166,10 +168,11 @@ class LicensePlateLookup extends StatelessWidget {
               onSubmitted: (_) => controller.lookupVehicle(),
             ),
             const SizedBox(height: 12),
-            // Full-width button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
+            // Find Vehicle and Enter manually buttons
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
                 onPressed: isLookingUp ? null : controller.lookupVehicle,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -199,8 +202,8 @@ class LicensePlateLookup extends StatelessWidget {
                         children: [
                           const Icon(Icons.search, size: 18),
                           const SizedBox(width: 8),
-                          const Text(
-                            'Find Vehicle',
+                          Text(
+                            l10n.findVehicleButton,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -208,7 +211,23 @@ class LicensePlateLookup extends StatelessWidget {
                           ),
                         ],
                       ),
-              ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: isLookingUp
+                      ? null
+                      : () => controller.enterManualMode(),
+                  child: Text(
+                    l10n.enterManually,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
             if (lookupError.isNotEmpty) ...[
               const SizedBox(height: 12),

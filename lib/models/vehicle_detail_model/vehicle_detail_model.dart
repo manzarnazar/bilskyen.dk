@@ -42,6 +42,8 @@ class VehicleDetailModel {
   final VehicleDetails? details;
   final List<VehicleEquipment> equipment;
   final String? contactWhatsapp;
+  final String? sellerAddress;
+  final String? sellerPostcode;
 
   VehicleDetailModel({
     required this.id,
@@ -87,6 +89,8 @@ class VehicleDetailModel {
     this.details,
     required this.equipment,
     this.contactWhatsapp,
+    this.sellerAddress,
+    this.sellerPostcode,
   });
 
   factory VehicleDetailModel.fromJson(Map<String, dynamic> json) {
@@ -144,6 +148,8 @@ class VehicleDetailModel {
               .toList() ??
           [],
       contactWhatsapp: json['contact_whatsapp'] as String?,
+      sellerAddress: json['seller_address'] as String?,
+      sellerPostcode: json['seller_postcode'] as String?,
     );
   }
 }
@@ -309,6 +315,9 @@ class VehicleDetails {
   final String? priceTypeName;
   final String? conditionName;
   final String? salesTypeName;
+  final String? transmissionName;
+  final String? variantName;
+  final String? euronomName;
 
   VehicleDetails({
     required this.id,
@@ -378,6 +387,9 @@ class VehicleDetails {
     this.priceTypeName,
     this.conditionName,
     this.salesTypeName,
+    this.transmissionName,
+    this.variantName,
+    this.euronomName,
   });
 
   factory VehicleDetails.fromJson(Map<String, dynamic> json) {
@@ -449,7 +461,24 @@ class VehicleDetails {
       priceTypeName: json['price_type_name'] as String?,
       conditionName: json['condition_name'] as String?,
       salesTypeName: json['sales_type_name'] as String?,
+      transmissionName: json['transmission_name'] as String?,
+      variantName: _variantNameFromJson(json['variant']),
+      euronomName: _euronomNameFromJson(json['euronom']),
     );
+  }
+
+  static String? _variantNameFromJson(dynamic variant) {
+    if (variant is Map<String, dynamic> && variant['name'] != null) {
+      return variant['name'] as String;
+    }
+    return null;
+  }
+
+  static String? _euronomNameFromJson(dynamic euronom) {
+    if (euronom is Map<String, dynamic> && euronom['name'] != null) {
+      return euronom['name'] as String;
+    }
+    return null;
   }
 }
 

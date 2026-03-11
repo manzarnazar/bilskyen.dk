@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/app_controller/app_controller.dart';
@@ -42,6 +43,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Obx(() {
       final isDark = _appController.isDarkMode.value;
 
@@ -61,7 +63,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
             onPressed: () => Get.back(),
           ),
           title: Text(
-            'Reset password',
+            l10n.resetPasswordTitle,
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w600,

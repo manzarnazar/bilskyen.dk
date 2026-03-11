@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../controllers/app_controller/app_controller.dart';
 import '../../../controllers/sell_vehicle_controller.dart';
@@ -10,6 +11,7 @@ class EquipmentSelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final controller = Get.put(SellVehicleController());
     final appController = Get.find<AppController>();
 
@@ -20,7 +22,7 @@ class EquipmentSelection extends StatelessWidget {
 
       if (equipmentTypes.isEmpty && controller.equipment.isEmpty) {
         return Text(
-          'No equipment available',
+          l10n.noEquipmentAvailable,
           style: TextStyle(
             color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
           ),
@@ -30,6 +32,16 @@ class EquipmentSelection extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Description paragraph
+          Text(
+            l10n.sellSectionEquipmentDescription,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
           // Equipment by type
           ...equipmentTypes.map((type) {
             final equipmentList = controller.getEquipmentByType(type.id);
@@ -40,6 +52,7 @@ class EquipmentSelection extends StatelessWidget {
               equipment: equipmentList,
               selectedIds: selectedIds,
               onToggle: controller.toggleEquipment,
+              otherLabel: l10n.equipmentOther,
             );
           }),
           // Equipment without type
@@ -49,11 +62,12 @@ class EquipmentSelection extends StatelessWidget {
               equipment: controller.getEquipmentByType(null),
               selectedIds: selectedIds,
               onToggle: controller.toggleEquipment,
+              otherLabel: l10n.equipmentOther,
             ),
           const SizedBox(height: 16),
           // Servicebog Radio Buttons
           Text(
-            'Servicebog',
+            l10n.servicebog,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -65,18 +79,21 @@ class EquipmentSelection extends StatelessWidget {
             children: [
               _ServicebogRadio(
                 value: 'Yes',
+                label: l10n.yes,
                 selectedValue: controller.servicebog.value,
                 onChanged: (value) => controller.servicebog.value = value,
               ),
               const SizedBox(width: 12),
               _ServicebogRadio(
                 value: 'No',
+                label: l10n.no,
                 selectedValue: controller.servicebog.value,
                 onChanged: (value) => controller.servicebog.value = value,
               ),
               const SizedBox(width: 12),
               _ServicebogRadio(
                 value: 'Default',
+                label: l10n.sellDefault,
                 selectedValue: controller.servicebog.value,
                 onChanged: (value) => controller.servicebog.value = value,
               ),
@@ -93,12 +110,14 @@ class _EquipmentTypeGroup extends StatelessWidget {
   final List<EquipmentModel> equipment;
   final RxList<int> selectedIds;
   final Function(int) onToggle;
+  final String otherLabel;
 
   const _EquipmentTypeGroup({
     required this.type,
     required this.equipment,
     required this.selectedIds,
     required this.onToggle,
+    required this.otherLabel,
   });
 
   @override
@@ -112,74 +131,97 @@ class _EquipmentTypeGroup extends StatelessWidget {
     return Obx(() {
       final isDark = appController.isDarkMode.value;
       final typeKey = type != null ? 'equipment_type_${type!.id}' : 'equipment_type_none';
-      final isTypeExpanded = controller.sectionExpanded[typeKey] ?? true;
+      final isTypeExpanded = controller.sectionExpanded[typeKey] ?? false;
 
       return Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.backgroundLight,
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (type != null)
-              InkWell(
-                onTap: () {
-                  controller.sectionExpanded[typeKey] = !isTypeExpanded;
-                },
+            InkWell(
+              onTap: () {
+                controller.sectionExpanded[typeKey] = !isTypeExpanded;
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 child: Row(
                   children: [
-                    Text(
-                      type!.name.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.5,
-                        color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                    Expanded(
+                      child: Text(
+                        (type?.name ?? otherLabel).toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                          color: isDark ? AppColors.textDark : AppColors.textLight,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
                     AnimatedRotation(
                       turns: isTypeExpanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 200),
                       child: Icon(
                         Icons.keyboard_arrow_down,
-                        size: 16,
+                        size: 20,
                         color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
                       ),
                     ),
                   ],
                 ),
               ),
-            if (type == null || isTypeExpanded) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: equipment.map((item) {
-                  final isSelected = selectedIds.contains(item.id);
-                  return InkWell(
-                    onTap: () => onToggle(item.id),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
+            ),
+            if (isTypeExpanded) ...[
+              Divider(
+                  height: 1,
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: equipment.map((item) {
+                    final isSelected = selectedIds.contains(item.id);
+                    return InkWell(
+                      onTap: () => onToggle(item.id),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
                             ? AppColors.primary
                             : (isDark
                                 ? AppColors.backgroundDark
                                 : AppColors.backgroundLight),
-                        border: Border.all(
+                          border: Border.all(
                           color: isSelected
                               ? AppColors.primary
                               : (isDark
                                   ? AppColors.borderDark
                                   : AppColors.borderLight),
+                          ),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
                           Icon(
                             isSelected ? Icons.check_circle : Icons.circle_outlined,
                             size: 16,
@@ -201,11 +243,12 @@ class _EquipmentTypeGroup extends StatelessWidget {
                                       : AppColors.textLight),
                             ),
                           ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }).toList(),
+                    );
+                  }).toList(),
+                ),
               ),
             ],
           ],
@@ -217,11 +260,13 @@ class _EquipmentTypeGroup extends StatelessWidget {
 
 class _ServicebogRadio extends StatelessWidget {
   final String value;
+  final String label;
   final String selectedValue;
   final Function(String) onChanged;
 
   const _ServicebogRadio({
     required this.value,
+    required this.label,
     required this.selectedValue,
     required this.onChanged,
   });
@@ -261,7 +306,7 @@ class _ServicebogRadio extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                value,
+                label,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,

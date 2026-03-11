@@ -118,10 +118,22 @@ class EditVehicleController extends GetxController {
       try {
         final parts = firstReg.split('-');
         if (parts.isNotEmpty) firstRegistrationYear.value = int.tryParse(parts[0]);
-        if (parts.length >= 2) firstRegistrationMonth.value = int.tryParse(parts[1]);
+        if (parts.length >= 2) {
+          final month = int.tryParse(parts[1]);
+          firstRegistrationMonth.value = (month != null && month >= 1 && month <= 12) ? month : null;
+        }
       } catch (_) {}
     }
 
+    // Fuel efficiency: vehicle table has fuel_efficiency (root); API may return num or String
+    final fuelEff = data['fuel_efficiency'];
+    if (fuelEff != null) {
+      if (fuelEff is num) {
+        fuelEfficiencyController.text = fuelEff.toString();
+      } else if (fuelEff is String && fuelEff.isNotEmpty) {
+        fuelEfficiencyController.text = fuelEff;
+      }
+    }
     final details = data['details'] as Map<String, dynamic>?;
     if (details != null) {
       descriptionController.text = details['description'] as String? ?? '';
@@ -132,7 +144,8 @@ class EditVehicleController extends GetxController {
       if (details['technical_total_weight'] != null) {
         technicalTotalWeightController.text = details['technical_total_weight'].toString();
       }
-      if (details['fuel_consumption_wltp'] != null || details['fuel_efficiency'] != null) {
+      if (fuelEfficiencyController.text.isEmpty &&
+          (details['fuel_consumption_wltp'] != null || details['fuel_efficiency'] != null)) {
         fuelEfficiencyController.text = (details['fuel_consumption_wltp'] ?? details['fuel_efficiency']).toString();
       }
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../controllers/app_controller/app_controller.dart';
 import '../../../controllers/sell_vehicle_controller.dart';
@@ -10,6 +11,7 @@ class PlanSelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // Controller should be initialized by parent view
     final controller = Get.isRegistered<SellVehicleController>()
         ? Get.find<SellVehicleController>()
@@ -23,7 +25,7 @@ class PlanSelection extends StatelessWidget {
 
       if (plans.isEmpty) {
         return Text(
-          'No plans available',
+          l10n.noPlansAvailable,
           style: TextStyle(
             color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
           ),
@@ -112,7 +114,7 @@ class PlanSelection extends StatelessWidget {
                       plan.planFeatures!.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Text(
-                      'Features:',
+                      '${l10n.features}:',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,

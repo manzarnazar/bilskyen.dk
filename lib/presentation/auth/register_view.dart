@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/app_controller/app_controller.dart';
@@ -30,6 +31,7 @@ class _RegisterViewState extends State<RegisterView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Obx(() {
       final isDark = _appController.isDarkMode.value;
 
@@ -48,7 +50,7 @@ class _RegisterViewState extends State<RegisterView> {
                   child: TextButton(
                     onPressed: () => Get.offAllNamed('/main'),
                     child: Text(
-                      'Skip',
+                      l10n.skip,
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -66,7 +68,7 @@ class _RegisterViewState extends State<RegisterView> {
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
                       return Text(
-                        'BILSKYEN',
+                        l10n.brandName,
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -80,7 +82,7 @@ class _RegisterViewState extends State<RegisterView> {
                 const SizedBox(height: 32),
                 // Title
                 Text(
-                  'Create Account',
+                  l10n.createAccount,
                   style: GoogleFonts.inter(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -91,7 +93,7 @@ class _RegisterViewState extends State<RegisterView> {
                 const SizedBox(height: 8),
                 // Subtitle
                 Text(
-                  'Sign up to start your journey with the ultimate car marketplace.',
+                  l10n.signUpSubtitle,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -106,58 +108,58 @@ class _RegisterViewState extends State<RegisterView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Full Name Field
-                    _buildLabel('FULL NAME', isDark),
+                    _buildLabel(l10n.fullName, isDark),
                     const SizedBox(height: 8),
                     _buildTextField(
                       controller: _fullNameController,
-                      hintText: 'Enter your full name',
+                      hintText: l10n.enterFullNameHint,
                       icon: Icons.person,
                       isDark: isDark,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your full name';
+                          return l10n.pleaseEnterFullName;
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 20),
                     // Email Field
-                    _buildLabel('EMAIL ADDRESS', isDark),
+                    _buildLabel(l10n.emailAddress, isDark),
                     const SizedBox(height: 8),
                     _buildTextField(
                       controller: _emailController,
-                      hintText: 'name@example.com',
+                      hintText: l10n.emailHint,
                       icon: Icons.mail,
                       isDark: isDark,
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return l10n.pleaseEnterEmail;
                         }
                         if (!GetUtils.isEmail(value)) {
-                          return 'Please enter a valid email';
+                          return l10n.pleaseEnterValidEmail;
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 20),
                     // Password Field
-                    _buildLabel('PASSWORD', isDark),
+                    _buildLabel(l10n.password, isDark),
                     const SizedBox(height: 8),
                     Obx(
                       () => _buildPasswordField(
                         controller: _passwordController,
-                        hintText: 'Create a password',
+                        hintText: l10n.createPasswordHint,
                         isDark: isDark,
                         isVisible: _authController.isPasswordVisible.value,
                         onToggleVisibility: () =>
                             _authController.togglePasswordVisibility(),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter a password';
+                            return l10n.pleaseEnterPasswordRegister;
                           }
                           if (value.length < 6) {
-                            return 'Password must be at least 6 characters';
+                            return l10n.passwordMinLength;
                           }
                           return null;
                         },
@@ -194,17 +196,17 @@ class _RegisterViewState extends State<RegisterView> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                   children: [
-                                    const TextSpan(text: 'I agree to the '),
+                                    TextSpan(text: l10n.agreeToTerms),
                                     TextSpan(
-                                      text: 'Terms',
+                                      text: l10n.terms,
                                       style: GoogleFonts.inter(
                                         fontWeight: FontWeight.bold,
                                         color: isDark ? Colors.white : Colors.black,
                                       ),
                                     ),
-                                    const TextSpan(text: ' and '),
+                                    TextSpan(text: l10n.and),
                                     TextSpan(
-                                      text: 'Privacy Policy',
+                                      text: l10n.privacyPolicy,
                                       style: GoogleFonts.inter(
                                         fontWeight: FontWeight.bold,
                                         color: isDark ? Colors.white : Colors.black,
@@ -256,7 +258,7 @@ class _RegisterViewState extends State<RegisterView> {
                                 ),
                               )
                             : Text(
-                                'Register',
+                                l10n.register,
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -277,12 +279,12 @@ class _RegisterViewState extends State<RegisterView> {
                       color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
                     ),
                     children: [
-                      const TextSpan(text: 'Already have an account? '),
+                      TextSpan(text: l10n.alreadyHaveAccount),
                       WidgetSpan(
                         child: GestureDetector(
                           onTap: () => Get.back(),
                           child: Text(
-                            'Log in',
+                            l10n.logInLink,
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,

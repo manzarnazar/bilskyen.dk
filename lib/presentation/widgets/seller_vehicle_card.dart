@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../models/vehicle_model/vehicle_model.dart';
 import 'cached_image.dart';
@@ -83,8 +84,23 @@ class SellerVehicleCard extends StatelessWidget {
     }
   }
 
+  bool get _hasLocation {
+    final addr = vehicle.sellerAddress?.trim() ?? '';
+    final post = vehicle.sellerPostcode?.trim() ?? '';
+    return addr.isNotEmpty || post.isNotEmpty;
+  }
+
+  String get _locationText {
+    final addr = vehicle.sellerAddress?.trim() ?? '';
+    final post = vehicle.sellerPostcode?.trim() ?? '';
+    if (addr.isNotEmpty && post.isNotEmpty) return '$addr, $post';
+    if (addr.isNotEmpty) return addr;
+    return post;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : AppColors.cardLight,
@@ -131,7 +147,7 @@ class SellerVehicleCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    vehicle.vehicleListStatusName ?? 'Draft',
+                    vehicle.vehicleListStatusName ?? l10n.draft,
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -189,14 +205,14 @@ class SellerVehicleCard extends StatelessWidget {
                     Icon(Icons.visibility_outlined, size: 14, color: isDark ? AppColors.mutedDark : AppColors.mutedLight),
                     const SizedBox(width: 4),
                     Text(
-                      '${vehicle.viewsCount ?? 0} views',
+                      l10n.viewsCount(vehicle.viewsCount ?? 0),
                       style: TextStyle(fontSize: 12, color: isDark ? AppColors.mutedDark : AppColors.mutedLight),
                     ),
                     const SizedBox(width: 16),
                     Icon(Icons.chat_bubble_outline, size: 14, color: isDark ? AppColors.mutedDark : AppColors.mutedLight),
                     const SizedBox(width: 4),
                     Text(
-                      '${vehicle.enquiriesCount ?? 0} inquiries',
+                      l10n.inquiriesCount(vehicle.enquiriesCount ?? 0),
                       style: TextStyle(fontSize: 12, color: isDark ? AppColors.mutedDark : AppColors.mutedLight),
                     ),
                   ],
@@ -208,7 +224,7 @@ class SellerVehicleCard extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: onEdit,
                         icon: const Icon(Icons.edit, size: 18),
-                        label: const Text('Edit'),
+                        label: Text(l10n.edit),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: AppColors.primaryForeground,
@@ -221,7 +237,7 @@ class SellerVehicleCard extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: onInquiries,
                         icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                        label: Text('Inquiries (${vehicle.enquiriesCount ?? 0})'),
+                        label: Text(l10n.inquiriesWithCount(vehicle.enquiriesCount ?? 0)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: isDark ? AppColors.textDark : AppColors.textLight,
                           side: BorderSide(color: isDark ? AppColors.borderDark : AppColors.borderLight),
@@ -239,7 +255,7 @@ class SellerVehicleCard extends StatelessWidget {
                           ? OutlinedButton.icon(
                               onPressed: onUnpublish,
                               icon: const Icon(Icons.visibility_off, size: 18),
-                              label: const Text('Unpublish'),
+                              label: Text(l10n.unpublish),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.orange,
                                 side: const BorderSide(color: Colors.orange),
@@ -249,7 +265,7 @@ class SellerVehicleCard extends StatelessWidget {
                           : OutlinedButton.icon(
                               onPressed: onPublish,
                               icon: const Icon(Icons.publish, size: 18),
-                              label: const Text('Publish'),
+                              label: Text(l10n.publish),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.green,
                                 side: const BorderSide(color: Colors.green),
@@ -262,7 +278,7 @@ class SellerVehicleCard extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: onDelete,
                         icon: const Icon(Icons.delete_outline, size: 18),
-                        label: const Text('Delete'),
+                        label: Text(l10n.delete),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.destructive,
                           side: const BorderSide(color: AppColors.destructive),
@@ -275,6 +291,37 @@ class SellerVehicleCard extends StatelessWidget {
               ],
             ),
           ),
+          if (_hasLocation) ...[
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _locationText,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

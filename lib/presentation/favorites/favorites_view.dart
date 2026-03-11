@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../controllers/favorites_controller.dart';
@@ -22,6 +23,7 @@ class FavoritesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appController = Get.find<AppController>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;
@@ -41,7 +43,7 @@ class FavoritesView extends StatelessWidget {
             foregroundColor: AppColors.primary,
             elevation: 0,
             title: Text(
-              'Favorites',
+              l10n.navFavorites,
               style: TextStyle(
                 color: AppColors.primary,
                 fontSize: 16,
@@ -50,7 +52,7 @@ class FavoritesView extends StatelessWidget {
             ),
           ),
           body: SafeArea(
-            child: _buildLoginRequiredBody(isDark),
+            child: _buildLoginRequiredBody(context, isDark),
           ),
         );
       }
@@ -78,7 +80,7 @@ class FavoritesView extends StatelessWidget {
               return const SizedBox.shrink();
             }
             return Text(
-              '${controller.vehicles.length} Favorites',
+              l10n.favoritesCount(controller.vehicles.length),
               style: TextStyle(
                 color: AppColors.primary,
                 fontSize: 16,
@@ -97,7 +99,7 @@ class FavoritesView extends StatelessWidget {
               onPressed: () {
                 controller.toggleLayout();
               },
-              tooltip: 'Arrange',
+              tooltip: l10n.arrangeTooltip,
             ),
           ],
         ),
@@ -146,7 +148,7 @@ class FavoritesView extends StatelessWidget {
                           backgroundColor: AppColors.primary,
                           foregroundColor: AppColors.primaryForeground,
                         ),
-                        child: const Text('Retry'),
+                        child: Text(l10n.retry),
                       ),
                     ],
                   ),
@@ -167,7 +169,7 @@ class FavoritesView extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No favorites yet',
+                      l10n.noFavoritesYet,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
@@ -176,7 +178,7 @@ class FavoritesView extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Start adding vehicles to your favorites',
+                      l10n.startAddingFavorites,
                       style: TextStyle(
                         fontSize: 14,
                         color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -209,21 +211,22 @@ class FavoritesView extends StatelessWidget {
     });
   }
 
-  Widget _buildLoginRequiredBody(bool isDark) {
+  Widget _buildLoginRequiredBody(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.favorite_border,
-              size: 64,
-              color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+            Image.asset(
+              isDark ? 'assets/images/logo_white.png' : 'assets/images/logo.png',
+              height: 64,
+              fit: BoxFit.contain,
             ),
             const SizedBox(height: 24),
             Text(
-              'Sign in to view your favorites',
+              l10n.signInToViewFavorites,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -233,7 +236,7 @@ class FavoritesView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Save vehicles you like and access them here.',
+              l10n.signInToViewFavoritesSubtitle,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -251,7 +254,7 @@ class FavoritesView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Log in'),
+              child: Text(l10n.logIn),
             ),
           ],
         ),

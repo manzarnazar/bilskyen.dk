@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/home_controller.dart';
 import '../../controllers/app_controller/main_navigation_controller.dart';
@@ -12,6 +13,7 @@ class HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(HomeController());
+    final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
       return SafeArea(
@@ -30,7 +32,7 @@ class HomeView extends StatelessWidget {
                 child: AbsorbPointer(
                   child: TextField(
                     decoration: InputDecoration(
-                      hintText: 'What are you looking for?',
+                      hintText: l10n.whatAreYouLookingFor,
                       hintStyle: TextStyle(
                         color: isDark
                             ? AppColors.mutedDark
@@ -92,7 +94,7 @@ class HomeView extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Featured Vehicle',
+                            l10n.featuredVehicle,
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -139,10 +141,10 @@ class HomeView extends StatelessWidget {
                       }
                       
                       if (controller.featuredVehicles.isEmpty) {
-                        return const SizedBox(
+                        return SizedBox(
                           height: 280,
                           child: Center(
-                            child: Text('No featured vehicles available'),
+                            child: Text(l10n.noFeaturedVehicles),
                           ),
                         );
                       }
@@ -194,7 +196,7 @@ class HomeView extends StatelessWidget {
                     // Sponsored Text
                     Center(
                       child: Text(
-                        'Sponsored by Bilskyen Premium',
+                        l10n.sponsoredByBilskyenPremium,
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark

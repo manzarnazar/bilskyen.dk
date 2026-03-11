@@ -50,9 +50,38 @@ class SearchViewController extends GetxController {
   // Charging type (dropdown: AC, DC, AC/DC)
   final Rx<String?> chargingType = Rx<String?>(null);
 
-  // Doors (min), Seats (min)
+  // Doors (min), Seats (min/max)
   final RxInt doorsMin = 0.obs;
   final RxInt seatsMin = 0.obs;
+  final RxInt seatsMax = 0.obs;
+
+  // Towing weight (kg)
+  final RxInt towingWeight = 0.obs;
+
+  // Fuel efficiency (vehicle_details / vehicles)
+  final RxDouble fuelEfficiencyFrom = 0.0.obs;
+  final RxDouble fuelEfficiencyTo = 100.0.obs;
+
+  // Top speed (vehicle_details), weight (vehicle_details)
+  final RxDouble topSpeedFrom = 0.0.obs;
+  final RxDouble topSpeedTo = 300.0.obs;
+  final RxDouble weightFrom = 0.0.obs;
+  final RxDouble weightTo = 5000.0.obs;
+
+  // Engine displacement (vehicle_details), cylinders
+  final RxDouble engineDisplacementFrom = 0.0.obs;
+  final RxDouble engineDisplacementTo = 10000.0.obs;
+  final RxInt engineCylinders = 0.obs;
+
+  // Wheels, axles, airbags (vehicle_details)
+  final RxInt wheels = 0.obs;
+  final RxInt axles = 0.obs;
+  final RxInt airbags = 0.obs;
+
+  // Boolean filters
+  final RxBool ncapFive = false.obs;
+  final RxBool isImport = false.obs;
+  final RxBool isFactoryNew = false.obs;
 
   // Drive wheels (multi: fwd, rwd, awd)
   final RxList<String> driveAxles = <String>[].obs;
@@ -60,9 +89,15 @@ class SearchViewController extends GetxController {
   // Vehicle details (dropdowns)
   final Rx<int?> brandId = Rx<int?>(null);
   final Rx<int?> modelId = Rx<int?>(null);
+  final Rx<int?> modelYearId = Rx<int?>(null);
   final Rx<int?> categoryId = Rx<int?>(null);
 
   // Multi-select (checkbox groups)
+  final RxList<int> colorIds = <int>[].obs;
+  final RxList<int> variantIds = <int>[].obs;
+  final RxList<int> typeIds = <int>[].obs;
+  final RxList<int> useIds = <int>[].obs;
+  final RxList<int> transmissionIds = <int>[].obs;
   final RxList<int> conditionIds = <int>[].obs;
   final RxList<int> fuelTypeIds = <int>[].obs;
   final RxList<int> gearTypeIds = <int>[].obs;
@@ -102,8 +137,15 @@ class SearchViewController extends GetxController {
     if (bid != null) map['brand_id'] = bid;
     final mid = modelId.value;
     if (mid != null) map['model_id'] = mid;
+    final myid = modelYearId.value;
+    if (myid != null) map['model_year_id'] = myid;
     final cid2 = categoryId.value;
     if (cid2 != null) map['category_id'] = cid2;
+    if (colorIds.isNotEmpty) map['color_id'] = colorIds.length == 1 ? colorIds.first : colorIds.toList();
+    if (variantIds.isNotEmpty) map['variant_id'] = variantIds.length == 1 ? variantIds.first : variantIds.toList();
+    if (typeIds.isNotEmpty) map['type_id'] = typeIds.length == 1 ? typeIds.first : typeIds.toList();
+    if (useIds.isNotEmpty) map['use_id'] = useIds.length == 1 ? useIds.first : useIds.toList();
+    if (transmissionIds.isNotEmpty) map['transmission_id'] = transmissionIds.length == 1 ? transmissionIds.first : transmissionIds.toList();
     if (mileageFrom.value > 0) map['mileage_from'] = mileageFrom.value.toInt();
     if (mileageTo.value < 500000) map['mileage_to'] = mileageTo.value.toInt();
     if (yearFrom.value > 1975) map['year_from'] = yearFrom.value;
@@ -124,6 +166,23 @@ class SearchViewController extends GetxController {
     if (ct != null && ct.isNotEmpty) map['charging_type'] = ct;
     if (doorsMin.value > 0) map['doors'] = doorsMin.value;
     if (seatsMin.value > 0) map['seats_min'] = seatsMin.value;
+    if (seatsMax.value > 0) map['seats_max'] = seatsMax.value;
+    if (towingWeight.value > 0) map['towing_weight'] = towingWeight.value;
+    if (fuelEfficiencyFrom.value > 0) map['fuel_efficiency_from'] = fuelEfficiencyFrom.value.toInt();
+    if (fuelEfficiencyTo.value < 100) map['fuel_efficiency_to'] = fuelEfficiencyTo.value.toInt();
+    if (topSpeedFrom.value > 0) map['top_speed_from'] = topSpeedFrom.value.toInt();
+    if (topSpeedTo.value < 300) map['top_speed_to'] = topSpeedTo.value.toInt();
+    if (weightFrom.value > 0) map['weight_from'] = weightFrom.value.toInt();
+    if (weightTo.value < 5000) map['weight_to'] = weightTo.value.toInt();
+    if (engineDisplacementFrom.value > 0) map['engine_displacement_from'] = engineDisplacementFrom.value.toInt();
+    if (engineDisplacementTo.value < 10000) map['engine_displacement_to'] = engineDisplacementTo.value.toInt();
+    if (engineCylinders.value > 0) map['engine_cylinders'] = engineCylinders.value;
+    if (wheels.value > 0) map['wheels'] = wheels.value;
+    if (axles.value > 0) map['axles'] = axles.value;
+    if (airbags.value > 0) map['airbags'] = airbags.value;
+    if (ncapFive.value) map['ncap_five'] = true;
+    if (isImport.value) map['is_import'] = true;
+    if (isFactoryNew.value) map['is_factory_new'] = true;
     if (driveAxles.isNotEmpty) map['drive_axles'] = driveAxles.toList();
 
     if (fuelTypeIds.isNotEmpty) map['fuel_type_id'] = fuelTypeIds.toList();
@@ -149,6 +208,11 @@ class SearchViewController extends GetxController {
   void clearFilters() {
     conditionId.value = null;
     conditionIds.clear();
+    colorIds.clear();
+    variantIds.clear();
+    typeIds.clear();
+    useIds.clear();
+    transmissionIds.clear();
     listingTypeIds.clear();
     priceFrom.value = 0;
     priceTo.value = 1000000;
@@ -170,9 +234,27 @@ class SearchViewController extends GetxController {
     chargingType.value = null;
     doorsMin.value = 0;
     seatsMin.value = 0;
+    seatsMax.value = 0;
+    towingWeight.value = 0;
+    fuelEfficiencyFrom.value = 0;
+    fuelEfficiencyTo.value = 100;
+    topSpeedFrom.value = 0;
+    topSpeedTo.value = 300;
+    weightFrom.value = 0;
+    weightTo.value = 5000;
+    engineDisplacementFrom.value = 0;
+    engineDisplacementTo.value = 10000;
+    engineCylinders.value = 0;
+    wheels.value = 0;
+    axles.value = 0;
+    airbags.value = 0;
+    ncapFive.value = false;
+    isImport.value = false;
+    isFactoryNew.value = false;
     driveAxles.clear();
     brandId.value = null;
     modelId.value = null;
+    modelYearId.value = null;
     categoryId.value = null;
     fuelTypeIds.clear();
     gearTypeIds.clear();

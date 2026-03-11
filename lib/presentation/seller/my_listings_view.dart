@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../controllers/my_listings_controller.dart';
@@ -24,6 +25,7 @@ class MyListingsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appController = Get.find<AppController>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;
@@ -41,7 +43,7 @@ class MyListingsView extends StatelessWidget {
             foregroundColor: AppColors.primary,
             elevation: 0,
             title: Text(
-              'My Listings',
+              l10n.navMyListings,
               style: TextStyle(
                 color: AppColors.primary,
                 fontSize: 16,
@@ -50,7 +52,7 @@ class MyListingsView extends StatelessWidget {
             ),
           ),
           body: SafeArea(
-            child: _buildLoginRequiredBody(isDark),
+            child: _buildLoginRequiredBody(context, isDark),
           ),
         );
       }
@@ -70,7 +72,7 @@ class MyListingsView extends StatelessWidget {
           elevation: 0,
           automaticallyImplyLeading: Navigator.canPop(context),
           title: Text(
-            'My Listings',
+            l10n.navMyListings,
             style: TextStyle(
               color: AppColors.primary,
               fontSize: 16,
@@ -95,15 +97,15 @@ class MyListingsView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildStatistics(controller, isDark),
+                      _buildStatistics(context, controller, isDark),
                       const SizedBox(height: 24),
-                      _buildStatusTabs(controller, isDark),
+                      _buildStatusTabs(context, controller, isDark),
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'My Vehicles',
+                            l10n.myVehicles,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -113,7 +115,7 @@ class MyListingsView extends StatelessWidget {
                           Obx(() {
                             final total = controller.totalDocs.value;
                             return Text(
-                              '$total vehicles',
+                              l10n.vehiclesCount(total),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -148,7 +150,7 @@ class MyListingsView extends StatelessWidget {
                 }
                 if (controller.vehicles.isEmpty) {
                   return SliverToBoxAdapter(
-                    child: _buildEmptyState(isDark),
+                    child: _buildEmptyState(context, isDark),
                   );
                 }
                 return SliverPadding(
@@ -169,15 +171,19 @@ class MyListingsView extends StatelessWidget {
                         final vehicle = controller.vehicles[index];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: SellerVehicleCard(
-                            vehicle: vehicle,
-                            isDark: isDark,
-                            onEdit: () => Get.toNamed('/edit-vehicle/${vehicle.id}'),
-                            onInquiries: () => _showInquiriesSheet(context, controller, vehicle.id, isDark),
-                            onPublish: () => controller.updateVehicleStatus(vehicle.id, VehicleListStatus.published),
-                            onUnpublish: () => controller.updateVehicleStatus(vehicle.id, VehicleListStatus.draft),
-                            onDelete: () => _confirmDelete(context, controller, vehicle),
-                            isPublished: vehicle.vehicleListStatusId == VehicleListStatus.published,
+                          child: InkWell(
+                            onTap: () => Get.toNamed('/vehicle-detail/${vehicle.id}'),
+                            borderRadius: BorderRadius.circular(12),
+                            child: SellerVehicleCard(
+                              vehicle: vehicle,
+                              isDark: isDark,
+                              onEdit: () => Get.toNamed('/edit-vehicle/${vehicle.id}'),
+                              onInquiries: () => _showInquiriesSheet(context, controller, vehicle.id, isDark),
+                              onPublish: () => controller.updateVehicleStatus(vehicle.id, VehicleListStatus.published),
+                              onUnpublish: () => controller.updateVehicleStatus(vehicle.id, VehicleListStatus.draft),
+                              onDelete: () => _confirmDelete(context, controller, vehicle),
+                              isPublished: vehicle.vehicleListStatusId == VehicleListStatus.published,
+                            ),
                           ),
                         );
                       },
@@ -193,7 +199,8 @@ class MyListingsView extends StatelessWidget {
     });
   }
 
-  Widget _buildStatistics(MyListingsController controller, bool isDark) {
+  Widget _buildStatistics(BuildContext context, MyListingsController controller, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return Obx(() {
       if (controller.isLoadingStats.value) {
         return Container(
@@ -230,10 +237,10 @@ class MyListingsView extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Expanded(child: _statTile('Vehicles', '${stats.totalVehicles}', Icons.directions_car, isDark)),
-            Expanded(child: _statTile('Worth', _formatWorth(stats.totalWorth), Icons.attach_money, isDark)),
-            Expanded(child: _statTile('Inquiries', '${stats.totalInquiries}', Icons.chat_bubble_outline, isDark)),
-            Expanded(child: _statTile('Views', '${stats.totalViews}', Icons.visibility_outlined, isDark)),
+            Expanded(child: _statTile(l10n.vehicles, '${stats.totalVehicles}', Icons.directions_car, isDark)),
+            Expanded(child: _statTile(l10n.worth, _formatWorth(stats.totalWorth), Icons.attach_money, isDark)),
+            Expanded(child: _statTile(l10n.inquiries, '${stats.totalInquiries}', Icons.chat_bubble_outline, isDark)),
+            Expanded(child: _statTile(l10n.views, '${stats.totalViews}', Icons.visibility_outlined, isDark)),
           ],
         ),
       );
@@ -269,13 +276,14 @@ class MyListingsView extends StatelessWidget {
     return worth.toString();
   }
 
-  Widget _buildStatusTabs(MyListingsController controller, bool isDark) {
+  Widget _buildStatusTabs(BuildContext context, MyListingsController controller, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     final filters = [
-      (null, 'All'),
-      (VehicleListStatus.published, 'Published'),
-      (VehicleListStatus.draft, 'Draft'),
-      (VehicleListStatus.sold, 'Sold'),
-      (VehicleListStatus.archived, 'Archived'),
+      (null, l10n.all),
+      (VehicleListStatus.published, l10n.published),
+      (VehicleListStatus.draft, l10n.draft),
+      (VehicleListStatus.sold, l10n.sold),
+      (VehicleListStatus.archived, l10n.archived),
     ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -299,7 +307,8 @@ class MyListingsView extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
+  Widget _buildEmptyState(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
@@ -307,7 +316,7 @@ class MyListingsView extends StatelessWidget {
           Icon(Icons.directions_car_outlined, size: 64, color: isDark ? AppColors.mutedDark : AppColors.mutedLight),
           const SizedBox(height: 16),
           Text(
-            'No vehicles yet',
+            l10n.noVehiclesYet,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -316,7 +325,7 @@ class MyListingsView extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'List your first vehicle to get started.',
+            l10n.listYourFirstVehicleSubtitle,
             style: TextStyle(fontSize: 14, color: isDark ? AppColors.mutedDark : AppColors.mutedLight),
             textAlign: TextAlign.center,
           ),
@@ -328,7 +337,7 @@ class MyListingsView extends StatelessWidget {
               foregroundColor: AppColors.primaryForeground,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            child: const Text('List your first vehicle'),
+            child: Text(l10n.listYourFirstVehicle),
           ),
         ],
       ),
@@ -347,16 +356,17 @@ class MyListingsView extends StatelessWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, MyListingsController controller, VehicleModel vehicle) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Delete vehicle'),
-        content: Text('Delete "${vehicle.title}"? This cannot be undone.'),
+        title: Text(l10n.deleteVehicle),
+        content: Text(l10n.deleteVehicleConfirm(vehicle.title)),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Get.back(result: false), child: Text(l10n.cancel)),
           TextButton(
             onPressed: () => Get.back(result: true),
             style: TextButton.styleFrom(foregroundColor: AppColors.destructive),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -366,21 +376,22 @@ class MyListingsView extends StatelessWidget {
     }
   }
 
-  Widget _buildLoginRequiredBody(bool isDark) {
+  Widget _buildLoginRequiredBody(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.directions_car_outlined,
-              size: 64,
-              color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+            Image.asset(
+              isDark ? 'assets/images/logo_white.png' : 'assets/images/logo.png',
+              height: 64,
+              fit: BoxFit.contain,
             ),
             const SizedBox(height: 24),
             Text(
-              'Sign in to manage your listings',
+              l10n.signInToManageListings,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -390,7 +401,7 @@ class MyListingsView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Create and manage your vehicle listings here.',
+              l10n.signInToManageListingsSubtitle,
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -408,7 +419,7 @@ class MyListingsView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Log in'),
+              child: Text(l10n.logIn),
             ),
           ],
         ),
@@ -442,14 +453,16 @@ class _InquiriesBottomSheet extends StatelessWidget {
               );
             }
             if (snapshot.hasError) {
+              final l10n = AppLocalizations.of(context)!;
               return Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'Failed to load inquiries: ${snapshot.error}',
+                  l10n.failedToLoadInquiries(snapshot.error.toString()),
                   style: TextStyle(color: isDark ? AppColors.mutedDark : AppColors.mutedLight),
                 ),
               );
             }
+            final l10n = AppLocalizations.of(context)!;
             final list = snapshot.data ?? <InquiryModel>[];
             final count = list.length;
             return Column(
@@ -466,7 +479,7 @@ class _InquiriesBottomSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Vehicle Inquiries',
+                              l10n.vehicleInquiries,
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -476,8 +489,8 @@ class _InquiriesBottomSheet extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               count == 1
-                                  ? '1 inquiry for this vehicle'
-                                  : '$count inquiries for this vehicle',
+                                  ? l10n.inquiryCountSingular
+                                  : l10n.inquiryCountPlural(count),
                               style: TextStyle(
                                 fontSize: 14,
                                 color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -505,7 +518,7 @@ class _InquiriesBottomSheet extends StatelessWidget {
                   child: list.isEmpty
                       ? Center(
                           child: Text(
-                            'No inquiries yet',
+                            l10n.noInquiriesYet,
                             style: TextStyle(
                               fontSize: 16,
                               color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -522,7 +535,7 @@ class _InquiriesBottomSheet extends StatelessWidget {
                               child: _InquiryCard(
                                 inquiry: list[i],
                                 isDark: isDark,
-                                onTap: () => _showInquiryDetail(context, list[i].id, isDark),
+                                l10n: l10n,
                               ),
                             );
                           },
@@ -541,79 +554,18 @@ class _InquiriesBottomSheet extends StatelessWidget {
     final result = await repo.getInquiries(vehicleId: vehicleId, limit: 50);
     return result.fold((_) => <InquiryModel>[], (r) => r.inquiries);
   }
-
-  Future<void> _showInquiryDetail(BuildContext context, int inquiryId, bool isDark) async {
-    final repo = SellerRepository();
-    final result = await repo.getInquiry(inquiryId);
-    result.fold(
-      (err) => Get.snackbar('Error', err),
-      (inquiry) {
-        final dateStr = _InquiryCard._formatDate(inquiry.createdAt);
-        Get.dialog(
-          AlertDialog(
-            title: Text(inquiry.displayName),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (inquiry.vehicleTitle != null && inquiry.vehicleTitle!.trim().isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        inquiry.vehicleTitle!,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.textDark : AppColors.textLight,
-                        ),
-                      ),
-                    ),
-                  if (inquiry.subject != null && inquiry.subject!.trim().isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        inquiry.subject!,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? AppColors.textDark : AppColors.textLight,
-                        ),
-                      ),
-                    ),
-                  Text(inquiry.message ?? ''),
-                  const SizedBox(height: 12),
-                  Text(
-                    dateStr.isNotEmpty ? dateStr : inquiry.createdAt,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 }
 
 /// Single inquiry card: sender, date, type, subject, message preview
 class _InquiryCard extends StatelessWidget {
   final InquiryModel inquiry;
   final bool isDark;
-  final VoidCallback onTap;
+  final AppLocalizations l10n;
 
   const _InquiryCard({
     required this.inquiry,
     required this.isDark,
-    required this.onTap,
+    required this.l10n,
   });
 
   static String _formatDate(String? dateStr) {
@@ -640,13 +592,13 @@ class _InquiryCard extends StatelessWidget {
     final subjectLine = inquiry.subject != null && inquiry.subject!.trim().isNotEmpty
         ? inquiry.subject!.trim()
         : (inquiry.vehicleTitle != null && inquiry.vehicleTitle!.trim().isNotEmpty
-            ? 'Inquiry for ${inquiry.vehicleTitle!.trim()}'
-            : 'Inquiry');
+            ? l10n.inquiryForVehicle(inquiry.vehicleTitle!.trim())
+            : l10n.inquiry);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: null,
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -692,19 +644,6 @@ class _InquiryCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           color: textColor,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      GestureDetector(
-                        onTap: onTap,
-                        child: Text(
-                          inquiry.displayType,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.primary,
-                            decoration: TextDecoration.underline,
-                            decorationColor: AppColors.primary,
-                          ),
                         ),
                       ),
                     ],

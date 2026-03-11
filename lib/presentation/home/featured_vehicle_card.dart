@@ -74,7 +74,7 @@ class _FeaturedVehicleCardState extends State<FeaturedVehicleCard> {
   String _formatPrice(int price) {
     final priceString = price.toString();
     if (priceString.length <= 3) {
-      return '$priceString €';
+      return '$priceString kr.';
     }
 
     final reversed = priceString.split('').reversed.toList();
@@ -87,7 +87,7 @@ class _FeaturedVehicleCardState extends State<FeaturedVehicleCard> {
       buffer.write(reversed[i]);
     }
 
-    return '${buffer.toString().split('').reversed.join()} €';
+    return '${buffer.toString().split('').reversed.join()} kr.';
   }
 
   @override

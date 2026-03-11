@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:bilskyen/models/constants_model/constants_model.dart';
 import '../models/sell_vehicle_model/vehicle_lookup_response_model.dart';
 import '../models/sell_vehicle_model/reference_data_model.dart';
 import '../models/sell_vehicle_model/sell_vehicle_request_model.dart';
@@ -19,6 +20,13 @@ class SellVehicleController extends GetxController {
 
   // Form visibility
   final RxBool isFormVisible = false.obs;
+
+  // Manual entry mode (no registration number)
+  final RxBool isManualEntryMode = false.obs;
+  final Rx<int?> manualBrandId = Rx<int?>(null);
+  final Rx<int?> manualModelId = Rx<int?>(null);
+  final Rx<int?> manualModelYearId = Rx<int?>(null);
+  final Rx<int?> manualFuelTypeId = Rx<int?>(null);
 
   // License plate lookup
   final registrationController = TextEditingController();
@@ -45,6 +53,7 @@ class SellVehicleController extends GetxController {
 
   // Vehicle Specifications
   final kmDrivenController = TextEditingController();
+  final Rx<int?> gearTypeId = Rx<int?>(null);
   final Rx<int?> firstRegistrationMonth = Rx<int?>(null);
   final Rx<int?> firstRegistrationYear = Rx<int?>(null);
   final Rx<int?> lastInspectionMonth = Rx<int?>(null);
@@ -80,6 +89,11 @@ class SellVehicleController extends GetxController {
   final Rx<int?> selectedPlanId = Rx<int?>(null);
 
   // Reference data
+  final RxList<LookupItem> gearTypes = <LookupItem>[].obs;
+  final RxList<LookupItem> brands = <LookupItem>[].obs;
+  final RxList<ModelItem> models = <ModelItem>[].obs;
+  final RxList<LookupItem> modelYears = <LookupItem>[].obs;
+  final RxList<LookupItem> fuelTypes = <LookupItem>[].obs;
   final RxList<ColorModel> colors = <ColorModel>[].obs;
   final RxList<EquipmentModel> equipment = <EquipmentModel>[].obs;
   final RxList<EquipmentTypeModel> equipmentTypes = <EquipmentTypeModel>[].obs;
@@ -94,6 +108,24 @@ class SellVehicleController extends GetxController {
 
   // Form validation
   final formKey = GlobalKey<FormState>();
+
+  /// Keys for scrolling to sections when validation fails. Initialized once.
+  final Map<String, GlobalKey> sectionScrollKeys = {
+    'license': GlobalKey(),
+    'basic-info': GlobalKey(),
+    'specifications': GlobalKey(),
+    'equipment': GlobalKey(),
+    'pricing': GlobalKey(),
+    'photos': GlobalKey(),
+    'description': GlobalKey(),
+    'seller-info': GlobalKey(),
+    'packages': GlobalKey(),
+  };
+
+  /// Keys for form fields with validators, in tree order. Used to find first invalid field when form.validate() fails.
+  final List<GlobalKey<FormFieldState<dynamic>>> formFieldKeys = List.generate(5, (_) => GlobalKey<FormFieldState<dynamic>>());
+  static const List<String> _formFieldSectionIds = ['specifications', 'pricing', 'seller-info', 'seller-info', 'seller-info'];
+  static const List<String> _formFieldLabels = ['Kilometer driven', 'Price', 'Phone', 'Address', 'Postal code'];
 
   @override
   void onInit() {
@@ -168,6 +200,15 @@ class SellVehicleController extends GetxController {
         await _loadReferenceDataFromRepository();
         return;
       }
+
+      // Map gear types from constants
+      gearTypes.assignAll(constants.gearTypes);
+
+      // Map brands, model years, fuel types for manual entry
+      brands.assignAll(constants.brands);
+      modelYears.assignAll(constants.modelYears);
+      fuelTypes.assignAll(constants.fuelTypes);
+      models.assignAll(constants.models);
 
       // Map colors from constants
       colors.value = constants.colors.map((item) => ColorModel(
@@ -263,6 +304,31 @@ class SellVehicleController extends GetxController {
     sectionExpanded[sectionId] = !(sectionExpanded[sectionId] ?? false);
   }
 
+  /// Enter manual mode when user does not have a registration number
+  void enterManualMode() {
+    isManualEntryMode.value = true;
+    registrationController.text = 'N/A';
+    vehicleData.value = null;
+    _resetFormFields();
+    isFormVisible.value = true;
+    lookupError.value = '';
+    // Variant will be user-selectable in manual mode
+  }
+
+  /// Return to license plate lookup mode
+  void startOver() {
+    isManualEntryMode.value = false;
+    registrationController.text = '';
+    vehicleData.value = null;
+    _resetFormFields();
+    isFormVisible.value = false;
+    manualBrandId.value = null;
+    manualModelId.value = null;
+    manualModelYearId.value = null;
+    manualFuelTypeId.value = null;
+    lookupError.value = '';
+  }
+
   /// Perform license plate lookup
   Future<void> lookupVehicle() async {
     final registration = registrationController.text.trim().toUpperCase();
@@ -296,8 +362,10 @@ class SellVehicleController extends GetxController {
 
   /// Reset form fields when performing a new lookup
   void _resetFormFields() {
-    // Reset vehicle data
-    vehicleData.value = null;
+    // Reset vehicle data (only if not in manual mode - manual mode keeps form visible)
+    if (!isManualEntryMode.value) {
+      vehicleData.value = null;
+    }
     
     // Reset basic info
     title.value = '';
@@ -306,6 +374,7 @@ class SellVehicleController extends GetxController {
     
     // Reset specifications
     kmDrivenController.clear();
+    gearTypeId.value = null;
     firstRegistrationMonth.value = null;
     firstRegistrationYear.value = null;
     lastInspectionMonth.value = null;
@@ -316,6 +385,10 @@ class SellVehicleController extends GetxController {
     
     // Reset equipment
     selectedEquipmentIds.clear();
+    manualBrandId.value = null;
+    manualModelId.value = null;
+    manualModelYearId.value = null;
+    manualFuelTypeId.value = null;
     
     // Reset description
     descriptionController.clear();
@@ -407,6 +480,20 @@ class SellVehicleController extends GetxController {
     // Euronom
     if (data.euronorm != null) {
       euronomId.value = data.euronorm!.id;
+    }
+
+    // Gear type (from API or DMR; default to Automatic when available)
+    if (data.gearTypeId != null) {
+      gearTypeId.value = data.gearTypeId;
+    } else if (gearTypes.isNotEmpty) {
+      LookupItem? automatic;
+      for (final g in gearTypes) {
+        if (g.name.toLowerCase() == 'automatic') {
+          automatic = g;
+          break;
+        }
+      }
+      gearTypeId.value = automatic?.id ?? gearTypes.first.id;
     }
 
     // Equipment
@@ -624,6 +711,26 @@ class SellVehicleController extends GetxController {
     }
   }
 
+  static String? _findNameById(List<LookupItem> list, int id) {
+    for (final item in list) {
+      if (item.id == id) return item.name;
+    }
+    return null;
+  }
+
+  String? _findModelNameById(int brandId, int modelId) {
+    for (final m in getModelsByBrand(brandId)) {
+      if (m.id == modelId) return m.name;
+    }
+    return null;
+  }
+
+  /// Get models filtered by brand (for manual entry)
+  List<ModelItem> getModelsByBrand(int? brandId) {
+    if (brandId == null) return [];
+    return models.where((m) => m.brandId == brandId).toList();
+  }
+
   /// Filter equipment by type
   List<EquipmentModel> getEquipmentByType(int? typeId) {
     if (typeId == null) {
@@ -656,30 +763,50 @@ class SellVehicleController extends GetxController {
     showLocationSuggestions.value = false;
   }
 
-  /// Validate form according to backend validation rules
-  bool validateForm() {
+  /// Validate form according to backend validation rules.
+  /// Returns (isValid, scrollToSectionId). When invalid, scrollToSectionId is the section to scroll to (null = use fallback 'basic-info').
+  (bool, String?) validateForm() {
     // First validate form fields
     if (!formKey.currentState!.validate()) {
-      return false;
+      // Find first form field with error (in tree order) for scroll target and snackbar message
+      String? firstInvalidMessage;
+      String? scrollSectionId;
+      for (var i = 0; i < formFieldKeys.length && i < _formFieldSectionIds.length; i++) {
+        final state = formFieldKeys[i].currentState;
+        if (state?.hasError == true) {
+          scrollSectionId ??= _formFieldSectionIds[i];
+          firstInvalidMessage ??= state!.errorText ?? (i < _formFieldLabels.length ? _formFieldLabels[i] : 'Field');
+          break;
+        }
+      }
+      Get.snackbar(
+        'Validation Error',
+        firstInvalidMessage ?? 'Please fix the highlighted fields.',
+        duration: const Duration(seconds: 5),
+      );
+      return (false, scrollSectionId ?? 'basic-info');
     }
 
     final errors = <String>[];
+    String? firstSectionId;
 
-    // Required fields validation
-    // Title - optional (backend auto-generates if not provided), but if provided, max 255 characters
+    // Title - optional, but if provided max 255 characters
     if (title.value.isNotEmpty) {
       final titleError = ValidationUtils.validateStringMaxLength(title.value, 255);
       if (titleError != null) {
         errors.add(titleError);
+        firstSectionId ??= 'basic-info';
       }
     }
 
-    // Registration - required, max 20 characters
-    final registrationError = ValidationUtils.validateRegistration(
-      registrationController.text.trim(),
-    );
-    if (registrationError != null) {
-      errors.add(registrationError);
+    // Registration - required, max 20 characters (or "N/A" in manual mode)
+    final registration = registrationController.text.trim();
+    if (registration.isEmpty) {
+      errors.add('Registration number is required');
+      firstSectionId ??= 'license';
+    } else if (registration.length > 20) {
+      errors.add('Registration number must be maximum 20 characters');
+      firstSectionId ??= 'license';
     }
 
     // VIN - optional, max 17 characters
@@ -687,37 +814,61 @@ class SellVehicleController extends GetxController {
       final vinError = ValidationUtils.validateVin(vehicleData.value!.vin);
       if (vinError != null) {
         errors.add(vinError);
+        firstSectionId ??= 'basic-info';
       }
     }
 
     // Price - required, integer >= 0
     if (priceController.text.isEmpty) {
       errors.add('Price is required');
+      firstSectionId ??= 'pricing';
     } else {
       final priceValue = int.tryParse(priceController.text);
       if (priceValue == null) {
         errors.add('Price must be a valid number');
+        firstSectionId ??= 'pricing';
       } else {
         final priceError =
             ValidationUtils.validateNonNegativeInteger(priceValue, 'Price');
         if (priceError != null) {
           errors.add(priceError);
+          firstSectionId ??= 'pricing';
         }
       }
     }
 
-    // Fuel Type ID - required (must exist)
-    if (vehicleData.value?.fuelType == null) {
+    // Fuel Type ID - required (from lookup or manual selection)
+    if (isManualEntryMode.value) {
+      if (manualFuelTypeId.value == null) {
+        errors.add('Fuel type is required');
+        firstSectionId ??= 'basic-info';
+      }
+      if (manualBrandId.value == null) {
+        errors.add('Brand is required');
+        firstSectionId ??= 'basic-info';
+      }
+      if (manualModelId.value == null) {
+        errors.add('Model is required');
+        firstSectionId ??= 'basic-info';
+      }
+      if (manualModelYearId.value == null) {
+        errors.add('Year is required');
+        firstSectionId ??= 'basic-info';
+      }
+    } else if (vehicleData.value?.fuelType == null) {
       errors.add('Fuel type is required');
+      firstSectionId ??= 'specifications';
     }
 
     // Kilometer driven - required, must be >= 0
     if (kmDrivenController.text.isEmpty) {
       errors.add('Kilometer driven is required');
+      firstSectionId ??= 'specifications';
     } else {
       final kmValue = int.tryParse(kmDrivenController.text.trim());
       if (kmValue == null) {
         errors.add('Kilometer driven must be a valid number');
+        firstSectionId ??= 'specifications';
       } else {
         final kmError = ValidationUtils.validateNonNegativeInteger(
           kmValue,
@@ -725,25 +876,30 @@ class SellVehicleController extends GetxController {
         );
         if (kmError != null) {
           errors.add(kmError);
+          firstSectionId ??= 'specifications';
         }
       }
     }
 
-    // Validate all integer fields that are provided
+    // Fuel efficiency
     if (fuelEfficiencyController.text.isNotEmpty) {
       final fuelEffValue = double.tryParse(fuelEfficiencyController.text);
       if (fuelEffValue == null) {
         errors.add('Fuel efficiency must be a valid number');
+        firstSectionId ??= 'specifications';
       } else if (fuelEffValue < 0) {
         errors.add('Fuel efficiency must be a positive number');
+        firstSectionId ??= 'specifications';
       }
     }
 
+    // Technical total weight
     if (technicalTotalWeightController.text.isNotEmpty) {
       final weightValue =
           int.tryParse(technicalTotalWeightController.text);
       if (weightValue == null) {
         errors.add('Technical total weight must be a valid number');
+        firstSectionId ??= 'specifications';
       } else {
         final weightError = ValidationUtils.validateNonNegativeInteger(
           weightValue,
@@ -751,6 +907,7 @@ class SellVehicleController extends GetxController {
         );
         if (weightError != null) {
           errors.add(weightError);
+          firstSectionId ??= 'specifications';
         }
       }
     }
@@ -758,22 +915,28 @@ class SellVehicleController extends GetxController {
     // Validate images
     if (selectedImages.isEmpty) {
       errors.add('Please upload at least one image');
+      firstSectionId ??= 'photos';
     } else {
       final imageErrors = ValidationUtils.validateImages(selectedImages);
-      errors.addAll(imageErrors);
+      if (imageErrors.isNotEmpty) {
+        errors.addAll(imageErrors);
+        firstSectionId ??= 'photos';
+      }
     }
 
-    // Seller information validation (required for form submission)
+    // Seller information
     final phoneError =
         ValidationUtils.validateRequired(sellerPhoneController.text, 'Phone');
     if (phoneError != null) {
       errors.add(phoneError);
+      firstSectionId ??= 'seller-info';
     }
 
     final addressError =
         ValidationUtils.validateRequired(sellerAddressController.text, 'Address');
     if (addressError != null) {
       errors.add(addressError);
+      firstSectionId ??= 'seller-info';
     }
 
     final postcodeError = ValidationUtils.validateRequired(
@@ -782,24 +945,47 @@ class SellVehicleController extends GetxController {
     );
     if (postcodeError != null) {
       errors.add(postcodeError);
+      firstSectionId ??= 'seller-info';
     }
 
-    // Display errors if any
     if (errors.isNotEmpty) {
       Get.snackbar(
         'Validation Error',
         errors.join('\n'),
         duration: const Duration(seconds: 5),
       );
-      return false;
+      return (false, firstSectionId ?? 'basic-info');
     }
 
-    return true;
+    return (true, null);
+  }
+
+  /// Scroll to a section so the user sees the invalid field. Expands the section first; call after layout (e.g. in addPostFrameCallback).
+  void scrollToSection(String sectionId) {
+    final key = sectionScrollKeys[sectionId];
+    final ctx = key?.currentContext;
+    if (ctx == null) return;
+    try {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        alignment: 0.1,
+      );
+    } catch (_) {
+      // Context may be inactive/disposed if user navigated away; ignore.
+    }
   }
 
   /// Submit form with proper validation and field mapping
   Future<void> submitForm() async {
-    if (!validateForm()) {
+    final (bool isValid, String? scrollToSectionId) = validateForm();
+    if (!isValid) {
+      final targetSectionId = scrollToSectionId ?? 'basic-info';
+      sectionExpanded[targetSectionId] = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        scrollToSection(targetSectionId);
+      });
       return;
     }
 
@@ -820,9 +1006,16 @@ class SellVehicleController extends GetxController {
       // Title is optional - backend will auto-generate if not provided
       final vehicleTitle = title.value.trim().isNotEmpty ? title.value.trim() : null;
 
-      // Parse fuel type ID from vehicle data (required field)
+      // Parse fuel type ID (from vehicle data or manual selection)
       int? fuelTypeId;
-      if (vehicleData.value?.fuelType != null) {
+      if (isManualEntryMode.value) {
+        fuelTypeId = manualFuelTypeId.value;
+        if (fuelTypeId == null) {
+          Get.snackbar('Error', 'Fuel type is required');
+          isSubmitting.value = false;
+          return;
+        }
+      } else if (vehicleData.value?.fuelType != null) {
         fuelTypeId = vehicleData.value!.fuelType!.id;
       } else {
         Get.snackbar('Error', 'Fuel type is required');
@@ -902,9 +1095,18 @@ class SellVehicleController extends GetxController {
         title: vehicleTitle,
         vin: vehicleData.value?.vin,
         vehicleExternalId: vehicleData.value?.vehicleExternalId ?? vehicleData.value?.vehicleId?.toString(),
-        brandId: vehicleData.value?.brand?.id,
-        modelId: vehicleData.value?.model?.id,
-        modelYearId: vehicleData.value?.modelYear?.id,
+        brandId: isManualEntryMode.value ? manualBrandId.value : vehicleData.value?.brand?.id,
+        modelId: isManualEntryMode.value ? manualModelId.value : vehicleData.value?.model?.id,
+        modelYearId: isManualEntryMode.value ? manualModelYearId.value : vehicleData.value?.modelYear?.id,
+        brandName: isManualEntryMode.value && manualBrandId.value != null
+            ? _findNameById(brands, manualBrandId.value!)
+            : null,
+        modelName: isManualEntryMode.value && manualBrandId.value != null && manualModelId.value != null
+            ? _findModelNameById(manualBrandId.value!, manualModelId.value!)
+            : null,
+        modelYearName: isManualEntryMode.value && manualModelYearId.value != null
+            ? _findNameById(modelYears, manualModelYearId.value!)
+            : null,
         listingTypeId: null, // Will be set by backend if not provided
         
         // Vehicle details
@@ -930,6 +1132,7 @@ class SellVehicleController extends GetxController {
         colorId: colorId.value ?? vehicleData.value?.color?.id,
         useId: vehicleData.value?.use?.id,
         bodyTypeId: vehicleData.value?.bodyType?.id,
+        gearTypeId: gearTypeId.value ?? vehicleData.value?.gearTypeId,
         
         // Dates
         firstRegistrationMonth: firstRegistrationMonth.value ?? vehicleData.value?.firstRegistrationMonth,
@@ -1036,10 +1239,14 @@ class SellVehicleController extends GetxController {
             snackPosition: SnackPosition.TOP,
           );
           isSubmitting.value = false;
-          // Wait for snackbar to display before navigating back
+          // Wait for snackbar to display before navigating
           await Future.delayed(const Duration(milliseconds: 1500));
-          // Navigate back or to success page
-          Get.back();
+          // Defer navigation to next frame to avoid inactive element / disposed controller errors
+          // during sell screen teardown. Go to main with My Listings tab to avoid duplicate
+          // MyListingsView (tab + route) and Duplicate GlobalKey.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Get.offAllNamed('/main', arguments: {'tabIndex': 3});
+          });
         },
       );
     } catch (e) {

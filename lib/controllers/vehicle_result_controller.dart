@@ -22,9 +22,9 @@ class VehicleResultController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
 
-    final queryParams = _getFiltersFromSearchController();
-    final result = await _vehicleRepository.getAllVehicles(
-      queryParameters: queryParams?.isNotEmpty == true ? queryParams : null,
+    final body = _getFiltersFromSearchController();
+    final result = await _vehicleRepository.searchVehicles(
+      body: body?.isNotEmpty == true ? body : null,
     );
 
     result.fold(

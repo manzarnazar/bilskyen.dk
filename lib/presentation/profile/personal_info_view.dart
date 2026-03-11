@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../controllers/auth_controller.dart';
@@ -83,9 +84,9 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
             ? AppColors.backgroundDark
             : AppColors.backgroundLight,
         appBar: AppBar(
-          title: const Text(
-            'Personal Info',
-            style: TextStyle(
+          title: Text(
+            AppLocalizations.of(context)!.personalInfo,
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               letterSpacing: -0.5,

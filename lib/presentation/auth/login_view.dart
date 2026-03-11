@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/app_controller/app_controller.dart';
@@ -70,6 +71,7 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Obx(() {
       final isDark = _appController.isDarkMode.value;
 
@@ -88,7 +90,7 @@ class _LoginViewState extends State<LoginView> {
                   child: TextButton(
                     onPressed: () => Get.offAllNamed('/main'),
                     child: Text(
-                      'Skip',
+                      l10n.skip,
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -106,7 +108,7 @@ class _LoginViewState extends State<LoginView> {
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
                       return Text(
-                        'BILSKYEN',
+                        l10n.brandName,
                         style: GoogleFonts.inter(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -120,7 +122,7 @@ class _LoginViewState extends State<LoginView> {
                 const SizedBox(height: 32),
                 // Title
                 Text(
-                  'Welcome Back',
+                  l10n.welcomeBack,
                   style: GoogleFonts.inter(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -131,7 +133,7 @@ class _LoginViewState extends State<LoginView> {
                 const SizedBox(height: 8),
                 // Subtitle
                 Text(
-                  'Sign in to continue exploring amazing cars.',
+                  l10n.signInSubtitle,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -146,39 +148,39 @@ class _LoginViewState extends State<LoginView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Email Field
-                    _buildLabel('EMAIL ADDRESS', isDark),
+                    _buildLabel(l10n.emailAddress, isDark),
                     const SizedBox(height: 8),
                     _buildTextField(
                       controller: _emailController,
-                      hintText: 'name@example.com',
+                      hintText: l10n.emailHint,
                       icon: Icons.mail,
                       isDark: isDark,
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return l10n.pleaseEnterEmail;
                         }
                         if (!GetUtils.isEmail(value)) {
-                          return 'Please enter a valid email';
+                          return l10n.pleaseEnterValidEmail;
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 20),
                     // Password Field
-                    _buildLabel('PASSWORD', isDark),
+                    _buildLabel(l10n.password, isDark),
                     const SizedBox(height: 8),
                     Obx(
                       () => _buildPasswordField(
                         controller: _passwordController,
-                        hintText: 'Enter your password',
+                        hintText: l10n.enterPasswordHint,
                         isDark: isDark,
                         isVisible: _authController.isLoginPasswordVisible.value,
                         onToggleVisibility: () =>
                             _authController.toggleLoginPasswordVisibility(),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
+                            return l10n.pleaseEnterPassword;
                           }
                           return null;
                         },
@@ -193,7 +195,7 @@ class _LoginViewState extends State<LoginView> {
                           Get.toNamed('/forgot-password');
                         },
                         child: Text(
-                          'Forgot Password?',
+                          l10n.forgotPassword,
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -239,7 +241,7 @@ class _LoginViewState extends State<LoginView> {
                                 ),
                               )
                             : Text(
-                                'Log In',
+                                l10n.logIn,
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -260,12 +262,12 @@ class _LoginViewState extends State<LoginView> {
                       color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
                     ),
                     children: [
-                      const TextSpan(text: "Don't have an account? "),
+                      TextSpan(text: l10n.dontHaveAccount),
                       WidgetSpan(
                         child: GestureDetector(
                           onTap: () => Get.to(() => const RegisterView()),
                           child: Text(
-                            'Register',
+                            l10n.register,
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,

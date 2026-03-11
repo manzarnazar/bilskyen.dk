@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../models/vehicle_model/vehicle_model.dart';
 import '../../controllers/favorite_controller.dart';
 import '../../main.dart';
-import 'cached_image.dart';
 import '../vehicle/widgets/enquiry_form_bottom_sheet.dart';
+import 'cached_image.dart';
 
 class VehicleCard extends StatefulWidget {
   final VehicleModel vehicle;
@@ -56,19 +57,54 @@ class _VehicleCardState extends State<VehicleCard> {
     }
   }
 
-  void _handleFavoriteToggle() {
+  void _showLoginRequiredDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    Get.dialog(
+      AlertDialog(
+        title: Text(l10n.loginRequired),
+        content: Text(l10n.pleaseSignInToListVehicle),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              Get.toNamed('/login');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.primaryForeground,
+            ),
+            child: Text(l10n.logIn),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleFavoriteToggle(BuildContext context) {
     if (!_isLoggedIn) {
+      _showLoginRequiredDialog(context);
       return;
     }
     _favoriteController.toggleFavorite(widget.vehicle.id);
   }
 
-  void _showEnquiryForm() {
+  void _handleEnquireTap(BuildContext context) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.8;
     Get.bottomSheet(
-      EnquiryFormBottomSheet(
-        vehicleId: widget.vehicle.id,
-        vehicleTitle: widget.vehicle.title,
-        type: EnquiryFormType.enquiry,
+      ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: EnquiryFormBottomSheet(
+          vehicleId: widget.vehicle.id,
+          vehicleTitle: widget.vehicle.title,
+          type: EnquiryFormType.enquiry,
+          brandName: widget.vehicle.brandName,
+          modelName: widget.vehicle.modelName,
+          price: widget.vehicle.price,
+        ),
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -119,9 +155,9 @@ class _VehicleCardState extends State<VehicleCard> {
     }
   }
 
-  /// Format mileage with thousand separators
-  String _formatMileage(int? mileage) {
-    if (mileage == null) return 'N/A';
+  /// Format mileage with thousand separators. Requires context for localized N/A.
+  String _formatMileage(BuildContext context, int? mileage) {
+    if (mileage == null) return AppLocalizations.of(context)!.na;
     final mileageString = mileage.toString();
     if (mileageString.length <= 3) {
       return mileageString;
@@ -140,42 +176,78 @@ class _VehicleCardState extends State<VehicleCard> {
     return buffer.toString().split('').reversed.join();
   }
 
-  /// Build location text (postal code and city if available)
-  String _buildLocationText() {
-    // Since we don't have postal code/city in the model, use brand/model as placeholder
-    // In a real app, you'd add location fields to the model
-    if (widget.vehicle.brandName != null && widget.vehicle.modelName != null) {
-      return '${widget.vehicle.brandName} ${widget.vehicle.modelName}';
-    } else if (widget.vehicle.brandName != null) {
-      return widget.vehicle.brandName!;
-    }
-    return 'Location';
+  /// Pill badge for seller type (Private = orange, Dealer / null = blue)
+  Widget _buildSellerTypeBadge(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final rawType = widget.vehicle.sellerType?.trim().toLowerCase() ?? '';
+    final isPrivate = rawType == 'private';
+    final sellerBackgroundColor =
+        isPrivate ? AppColors.sellerTypePrivate : AppColors.primary60;
+    final sellerLabel = isPrivate ? l10n.private : l10n.dealer;
+    final salesTypeLabel = widget.vehicle.salesTypeName;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: sellerBackgroundColor,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            sellerLabel,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryForeground,
+            ),
+          ),
+        ),
+        if (salesTypeLabel != null && salesTypeLabel.trim().isNotEmpty) ...[
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16A34A).withOpacity(0.6),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              salesTypeLabel,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryForeground,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     if (widget.isHorizontalLayout) {
-      return _buildHorizontalLayout();
+      return _buildHorizontalLayout(context);
     }
-    return _buildVerticalLayout();
+    return _buildVerticalLayout(context);
   }
 
-  Widget _buildHorizontalLayout() {
+  Widget _buildHorizontalLayout(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: widget.isDark ? AppColors.cardDark : AppColors.cardLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: widget.isDark ? AppColors.borderDark : AppColors.borderLight,
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
+          if (!widget.isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
         ],
       ),
       child: Column(
@@ -188,7 +260,7 @@ class _VehicleCardState extends State<VehicleCard> {
               // Image section (40% width)
               Expanded(
                 flex: 4,
-                child: _buildHorizontalImage(),
+                child: _buildHorizontalImage(context),
               ),
               // Details section (60% width)
               Expanded(
@@ -199,17 +271,35 @@ class _VehicleCardState extends State<VehicleCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Title
+                      // Title + optional version (subtitle)
                       Text(
                         widget.vehicle.title,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: widget.isDark ? AppColors.textDark : AppColors.textLight,
+                          color: widget.isDark
+                              ? AppColors.textDark
+                              : AppColors.textLight,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (widget.vehicle.version != null &&
+                          widget.vehicle.version!.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.vehicle.version!,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            color: widget.isDark
+                                ? AppColors.mutedDark
+                                : AppColors.mutedLight,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                       const SizedBox(height: 4),
                       // Price
                       Text(
@@ -227,7 +317,7 @@ class _VehicleCardState extends State<VehicleCard> {
                         runSpacing: 4,
                         children: [
                           if (widget.vehicle.kmDriven != null)
-                            _buildTag('${_formatMileage(widget.vehicle.kmDriven)} km'),
+                            _buildTag('${_formatMileage(context, widget.vehicle.kmDriven)} km'),
                           if (widget.vehicle.enginePowerHp != null && widget.vehicle.enginePowerHp! > 0)
                             _buildTag('${widget.vehicle.enginePowerHp!.toStringAsFixed(0)} HP'),
                           if (widget.vehicle.firstRegistrationDate.isNotEmpty)
@@ -240,6 +330,42 @@ class _VehicleCardState extends State<VehicleCard> {
                             _buildTag(widget.vehicle.modelYearName!),
                         ],
                       ),
+                      if (widget.vehicle.sellerAddress != null ||
+                          widget.vehicle.sellerPostcode != null) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 14,
+                              color: widget.isDark
+                                  ? AppColors.mutedDark
+                                  : AppColors.mutedLight,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                [
+                                  if (widget.vehicle.sellerAddress != null &&
+                                      widget.vehicle.sellerAddress!.isNotEmpty)
+                                    widget.vehicle.sellerAddress!,
+                                  if (widget.vehicle.sellerPostcode != null &&
+                                      widget.vehicle.sellerPostcode!.isNotEmpty)
+                                    widget.vehicle.sellerPostcode!,
+                                ].join(', '),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: widget.isDark
+                                      ? AppColors.textDark
+                                      : AppColors.textLight,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       // Buttons
                       Row(
@@ -259,25 +385,28 @@ class _VehicleCardState extends State<VehicleCard> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
-                              child: const Text(
-                                'View Details',
-                                style: TextStyle(
+                              child: Text(
+                                l10n.viewDetails,
+                                style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           // Enquire button
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: _showEnquiryForm,
+                              onPressed: () => _handleEnquireTap(context),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: widget.isDark ? AppColors.textDark : AppColors.textLight,
+                                foregroundColor: widget.isDark
+                                    ? AppColors.textDark
+                                    : AppColors.textLight,
                                 side: BorderSide(
-                                  color: widget.isDark ? AppColors.borderDark : AppColors.borderLight,
-                                  width: 1,
+                                  color: widget.isDark
+                                      ? AppColors.borderDark
+                                      : AppColors.borderLight,
                                 ),
                                 padding: const EdgeInsets.symmetric(vertical: 6),
                                 minimumSize: const Size(0, 32),
@@ -285,9 +414,9 @@ class _VehicleCardState extends State<VehicleCard> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
-                              child: const Text(
-                                'Enquire',
-                                style: TextStyle(
+                              child: Text(
+                                l10n.enquire,
+                                style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -302,57 +431,26 @@ class _VehicleCardState extends State<VehicleCard> {
               ),
             ],
           ),
-          // Bottom section: Location and Dealer
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                    // Location
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 12,
-                          color: widget.isDark ? AppColors.textDark : AppColors.textLight,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _buildLocationText(),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: widget.isDark ? AppColors.textDark : AppColors.textLight,
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Dealer/Seller
-                    Text(
-                      widget.vehicle.sellerType ?? 'Dealer',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: widget.isDark ? AppColors.mutedDark : AppColors.mutedLight,
-                      ),
-                    ),
-              ],
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildVerticalLayout() {
+  Widget _buildVerticalLayout(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: widget.isDark ? AppColors.cardDark : AppColors.cardLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: widget.isDark ? AppColors.borderDark : AppColors.borderLight,
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          if (!widget.isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,6 +464,12 @@ class _VehicleCardState extends State<VehicleCard> {
                   topRight: Radius.circular(12),
                 ),
                 child: _buildVehicleImage(),
+              ),
+              // Seller type pill badge (top-left)
+              Positioned(
+                top: 12,
+                left: 12,
+                child: _buildSellerTypeBadge(context),
               ),
               // Heart icon in top right (only show if logged in)
               if (_isLoggedIn)
@@ -404,7 +508,7 @@ class _VehicleCardState extends State<VehicleCard> {
                                 color: isFavorite ? Colors.red : Colors.black,
                                 size: 18,
                               ),
-                        onPressed: isLoading ? null : _handleFavoriteToggle,
+                        onPressed: isLoading ? null : () => _handleFavoriteToggle(context),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
                           minWidth: 32,
@@ -423,19 +527,37 @@ class _VehicleCardState extends State<VehicleCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title
+                // Title + optional version (subtitle) to match web card
                 Text(
                   widget.vehicle.title,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: widget.isDark ? AppColors.textDark : AppColors.textLight,
+                    color: widget.isDark
+                        ? AppColors.textDark
+                        : AppColors.textLight,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (widget.vehicle.version != null &&
+                    widget.vehicle.version!.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.vehicle.version!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: widget.isDark
+                          ? AppColors.mutedDark
+                          : AppColors.mutedLight,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 const SizedBox(height: 8),
-                
+
                 // Price
                 Text(
                   _formatPrice(widget.vehicle.price),
@@ -453,7 +575,7 @@ class _VehicleCardState extends State<VehicleCard> {
                   runSpacing: 8,
                   children: [
                     if (widget.vehicle.kmDriven != null)
-                      _buildTag('${_formatMileage(widget.vehicle.kmDriven)} km'),
+                      _buildTag('${_formatMileage(context, widget.vehicle.kmDriven)} km'),
                     if (widget.vehicle.enginePowerHp != null && widget.vehicle.enginePowerHp! > 0)
                       _buildTag('${widget.vehicle.enginePowerHp!.toStringAsFixed(0)} HP'),
                     if (widget.vehicle.firstRegistrationDate.isNotEmpty)
@@ -466,6 +588,42 @@ class _VehicleCardState extends State<VehicleCard> {
                       _buildTag(widget.vehicle.modelYearName!),
                   ],
                 ),
+                if (widget.vehicle.sellerAddress != null ||
+                    widget.vehicle.sellerPostcode != null) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: widget.isDark
+                            ? AppColors.mutedDark
+                            : AppColors.mutedLight,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          [
+                            if (widget.vehicle.sellerAddress != null &&
+                                widget.vehicle.sellerAddress!.isNotEmpty)
+                              widget.vehicle.sellerAddress!,
+                            if (widget.vehicle.sellerPostcode != null &&
+                                widget.vehicle.sellerPostcode!.isNotEmpty)
+                              widget.vehicle.sellerPostcode!,
+                          ].join(', '),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: widget.isDark
+                                ? AppColors.textDark
+                                : AppColors.textLight,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 16),
                 
                 // Buttons
@@ -485,9 +643,9 @@ class _VehicleCardState extends State<VehicleCard> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text(
-                          'View Details',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.viewDetails,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -498,21 +656,24 @@ class _VehicleCardState extends State<VehicleCard> {
                     // Enquire button
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: _showEnquiryForm,
+                        onPressed: () => _handleEnquireTap(context),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: widget.isDark ? AppColors.textDark : AppColors.textLight,
+                          foregroundColor: widget.isDark
+                              ? AppColors.textDark
+                              : AppColors.textLight,
                           side: BorderSide(
-                            color: widget.isDark ? AppColors.borderDark : AppColors.borderLight,
-                            width: 1,
+                            color: widget.isDark
+                                ? AppColors.borderDark
+                                : AppColors.borderLight,
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text(
-                          'Enquire',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.enquire,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -533,9 +694,7 @@ class _VehicleCardState extends State<VehicleCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: widget.isDark 
-            ? AppColors.surfaceDark 
-            : AppColors.mutedBackground,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
           color: widget.isDark ? AppColors.borderDark : AppColors.borderLight,
@@ -547,13 +706,13 @@ class _VehicleCardState extends State<VehicleCard> {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w500,
-          color: widget.isDark ? AppColors.textDark : AppColors.textLight,
+          color: widget.isDark ? AppColors.mutedDark : AppColors.mutedLight,
         ),
       ),
     );
   }
 
-  Widget _buildHorizontalImage() {
+  Widget _buildHorizontalImage(BuildContext context) {
     final imageUrl = widget.vehicle.imageUrl;
 
     return Stack(
@@ -582,6 +741,12 @@ class _VehicleCardState extends State<VehicleCard> {
                     width: double.infinity,
                   ),
                 ),
+        ),
+        // Seller type pill badge (top-left)
+        Positioned(
+          top: 8,
+          left: 8,
+          child: _buildSellerTypeBadge(context),
         ),
         // Heart icon in bottom right of image (only show if logged in)
         if (_isLoggedIn)
@@ -624,7 +789,7 @@ class _VehicleCardState extends State<VehicleCard> {
                           color: isFavorite ? Colors.red : Colors.black,
                           size: 16,
                         ),
-                  onPressed: isLoading ? null : _handleFavoriteToggle,
+                  onPressed: isLoading ? null : () => _handleFavoriteToggle(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
                     minWidth: 28,

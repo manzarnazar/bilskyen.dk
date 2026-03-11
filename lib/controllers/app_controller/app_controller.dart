@@ -1,15 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+
+const String _localeStorageKey = 'localeLanguageCode';
 
 class AppController extends GetxController {
   final RxBool isDarkMode = false.obs;
   final Rx<ThemeMode> themeMode = ThemeMode.system.obs;
+  final Rx<Locale> locale = const Locale('da').obs;
+  final GetStorage _storage = GetStorage();
 
   @override
   void onInit() {
     super.onInit();
     themeMode.value = ThemeMode.system;
     _updateDarkModeFromTheme();
+    _loadSavedLocale();
+  }
+
+  void _loadSavedLocale() {
+    final saved = _storage.read<String>(_localeStorageKey);
+    if (saved != null && saved.isNotEmpty) {
+      locale.value = Locale(saved);
+    }
+  }
+
+  void setLocale(Locale value) {
+    locale.value = value;
+    _storage.write(_localeStorageKey, value.languageCode);
+    Get.updateLocale(value);
   }
 
   void _updateDarkModeFromTheme() {

@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
-import 'package:car_marketplace/config/api_config.dart';
-import 'package:car_marketplace/models/vehicle_model/vehicle_model.dart';
-import 'package:car_marketplace/network/network_repository.dart';
+import 'package:bilskyen/config/api_config.dart';
+import 'package:bilskyen/models/vehicle_model/vehicle_model.dart';
+import 'package:bilskyen/network/network_repository.dart';
 
 class FavoriteRepository {
   final networkRepository = NetworkRepository();

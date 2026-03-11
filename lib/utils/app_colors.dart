@@ -105,6 +105,10 @@ class AppColors {
   
   // Special Purpose Colors
   static const Color carPlaceholderBg = Color(0xFF2A2A2A);
+
+  /// Seller type "Private" badge: orange/peach
+  /// Usage: Pill badge on vehicle cards for private sellers
+  static const Color sellerTypePrivate = Color(0xFFE07C3C);
   
   // Opacity variants for primary color
   /// Primary with 10% opacity: rgba(0, 74, 173, 0.1)

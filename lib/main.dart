@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import 'utils/app_theme.dart';
 import 'controllers/app_controller/app_controller.dart';
 import 'controllers/auth_controller.dart';
@@ -17,10 +19,8 @@ import 'presentation/profile/change_password_view.dart';
 import 'presentation/search/vehicle_result_view.dart';
 import 'presentation/vehicle/vehicle_detail_view.dart';
 import 'presentation/sell_vehicle/sell_vehicle_view.dart';
-import 'presentation/favorites/favorites_view.dart';
-import 'presentation/seller/my_listings_view.dart';
 import 'presentation/seller/edit_vehicle_view.dart';
-
+import 'presentation/search/brand_selector_view.dart';
 
 final appStorage = GetStorage();
 void main() async {
@@ -48,11 +48,22 @@ class MyApp extends StatelessWidget {
     
     return Obx(() {
       return GetMaterialApp(
-        title: 'BILSKYEN - Car Marketplace',
+        title: appController.locale.value.languageCode == 'da'
+            ? 'BILSKYEN - Bilmærked'
+            : 'BILSKYEN - Car Marketplace',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: appController.themeMode.value,
+        locale: appController.locale.value,
+        fallbackLocale: const Locale('da'),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
         initialRoute: '/splash',
         getPages: [
           GetPage(name: '/splash', page: () => const SplashView()),
@@ -65,10 +76,9 @@ class MyApp extends StatelessWidget {
           GetPage(name: '/personal-info', page: () => const PersonalInfoView()),
           GetPage(name: '/change-password', page: () => const ChangePasswordView()),
           GetPage(name: '/search-vehicles', page: () => const VehicleResultView()),
+          GetPage(name: '/brand-selector', page: () => const BrandSelectorView()),
           GetPage(name: '/vehicle-detail/:id', page: () => const VehicleDetailView()),
           GetPage(name: '/sell-your-car', page: () => const SellVehicleView()),
-          GetPage(name: '/favorites', page: () => const FavoritesView()),
-          GetPage(name: '/my-listings', page: () => const MyListingsView()),
           GetPage(name: '/edit-vehicle/:id', page: () => const EditVehicleView()),
         ],
       );

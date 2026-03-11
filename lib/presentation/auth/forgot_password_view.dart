@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/app_controller/app_controller.dart';
@@ -35,6 +36,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Obx(() {
       final isDark = _appController.isDarkMode.value;
 
@@ -54,7 +56,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
             onPressed: () => Get.back(),
           ),
           title: Text(
-            'Forgot Password',
+            l10n.forgotPasswordTitle,
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -71,7 +73,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
               children: [
                 const SizedBox(height: 16),
                 Text(
-                  'Reset your password',
+                  l10n.resetPasswordSubtitle,
                   style: GoogleFonts.inter(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -81,7 +83,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter your email and we\'ll send you a link to reset your password.',
+                  l10n.forgotPasswordDescription,
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
@@ -94,20 +96,20 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildLabel('EMAIL ADDRESS', isDark),
+                      _buildLabel(l10n.emailAddress, isDark),
                       const SizedBox(height: 8),
                       _buildTextField(
                         controller: _emailController,
-                        hintText: 'name@example.com',
+                        hintText: l10n.emailHint,
                         icon: Icons.mail,
                         isDark: isDark,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
+                            return l10n.pleaseEnterEmail;
                           }
                           if (!GetUtils.isEmail(value)) {
-                            return 'Please enter a valid email';
+                            return l10n.pleaseEnterValidEmail;
                           }
                           return null;
                         },
@@ -147,7 +149,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                                       ),
                                     )
                                   : Text(
-                                      'Send reset link',
+                                      l10n.sendResetLink,
                                       style: GoogleFonts.inter(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,

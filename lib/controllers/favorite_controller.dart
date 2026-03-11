@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import 'package:car_marketplace/repositories/favorite/favorite_repository.dart';
-import 'package:car_marketplace/main.dart';
+import 'package:bilskyen/repositories/favorite/favorite_repository.dart';
+import 'package:bilskyen/main.dart';
 
 class FavoriteController extends GetxController {
   final FavoriteRepository _favoriteRepository = FavoriteRepository();

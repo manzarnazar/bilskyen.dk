@@ -63,6 +63,7 @@ class VehicleLookupResponseModel {
   final int? grossCombinationWeight;
   final int? ownershipTax;
   final double? annualTax;
+  final int? gearTypeId;
 
   VehicleLookupResponseModel({
     this.registration,
@@ -129,7 +130,19 @@ class VehicleLookupResponseModel {
     this.grossCombinationWeight,
     this.ownershipTax,
     this.annualTax,
+    this.gearTypeId,
   });
+
+  // Helper function to safely parse double from num or string
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      if (value.isEmpty) return null;
+      return double.tryParse(value);
+    }
+    return null;
+  }
 
   // Helper function to safely parse int from string or int
   static int? _parseInt(dynamic value) {
@@ -216,7 +229,7 @@ class VehicleLookupResponseModel {
       vehicleId: _parseInt(vehicleData['vehicle_id']),
       vehicleExternalId: vehicleData['vehicle_external_id'] as String?,
       kmDriven: _parseInt(vehicleData['km_driven']),
-      fuelEfficiency: (vehicleData['fuel_efficiency'] as num?)?.toDouble(),
+      fuelEfficiency: _parseDouble(vehicleData['fuel_efficiency'] ?? vehicleData['fuelEfficiency']),
       technicalTotalWeight: _parseInt(vehicleData['technical_total_weight']),
       totalWeight: _parseInt(vehicleData['total_weight']),
       vehicleWeight: _parseInt(vehicleData['vehicle_weight']),
@@ -277,6 +290,7 @@ class VehicleLookupResponseModel {
       grossCombinationWeight: _parseInt(vehicleData['gross_combination_weight']),
       ownershipTax: _parseInt(vehicleData['ownership_tax']),
       annualTax: (vehicleData['annual_tax'] as num?)?.toDouble(),
+      gearTypeId: _parseInt(vehicleData['gear_type_id'] ?? vehicleData['gear_type']),
     );
   }
 }

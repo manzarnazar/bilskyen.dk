@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../main.dart';
 import '../../utils/app_colors.dart';
 
@@ -24,16 +25,15 @@ class SellYourCarBanner extends StatelessWidget {
   }
 
   void _showLoginDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     Get.dialog(
       AlertDialog(
-        title: const Text('Login required'),
-        content: const Text(
-          'Please sign in to list your vehicle on the marketplace.',
-        ),
+        title: Text(l10n.loginRequired),
+        content: Text(l10n.pleaseSignInToListVehicle),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () {
@@ -44,7 +44,7 @@ class SellYourCarBanner extends StatelessWidget {
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Log in'),
+            child: Text(l10n.logIn),
           ),
         ],
       ),
@@ -53,6 +53,7 @@ class SellYourCarBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(24),
@@ -71,7 +72,7 @@ class SellYourCarBanner extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Sell your car hassle-free',
+              l10n.sellYourCarHassleFree,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 22,
@@ -80,7 +81,7 @@ class SellYourCarBanner extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Get an instant offer or list it on the marketplace in minutes.',
+              l10n.sellBannerSubtitle,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.9),
                 fontSize: 14,
@@ -103,9 +104,9 @@ class SellYourCarBanner extends StatelessWidget {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Start Selling',
-                  style: TextStyle(
+                child: Text(
+                  l10n.startSelling,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),

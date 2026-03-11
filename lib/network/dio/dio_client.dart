@@ -1,5 +1,5 @@
-import 'package:car_marketplace/config/api_config.dart';
-import 'package:car_marketplace/network/dio/interceptors/network_interceptor.dart';
+import 'package:bilskyen/config/api_config.dart';
+import 'package:bilskyen/network/dio/interceptors/network_interceptor.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';

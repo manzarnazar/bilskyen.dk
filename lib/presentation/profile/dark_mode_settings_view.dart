@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 
@@ -9,6 +10,7 @@ class DarkModeSettingsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appController = Get.find<AppController>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;
@@ -19,8 +21,8 @@ class DarkModeSettingsView extends StatelessWidget {
             ? AppColors.backgroundDark
             : AppColors.backgroundLight,
         appBar: AppBar(
-          title: const Text(
-            'Dark Mode',
+          title: Text(
+            l10n.darkMode,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -59,8 +61,8 @@ class DarkModeSettingsView extends StatelessWidget {
                   child: Column(
                     children: [
                       _ThemeOption(
-                        title: 'System Default',
-                        subtitle: 'Follow system theme',
+                        title: l10n.systemDefault,
+                        subtitle: l10n.followSystemTheme,
                         icon: Icons.phone_android,
                         isSelected: currentThemeMode == ThemeMode.system,
                         onTap: () {
@@ -69,8 +71,8 @@ class DarkModeSettingsView extends StatelessWidget {
                       ),
                       _Divider(isDark: isDark),
                       _ThemeOption(
-                        title: 'Light',
-                        subtitle: 'Always use light theme',
+                        title: l10n.lightTheme,
+                        subtitle: l10n.alwaysLightTheme,
                         icon: Icons.light_mode,
                         isSelected: currentThemeMode == ThemeMode.light,
                         onTap: () {
@@ -79,8 +81,8 @@ class DarkModeSettingsView extends StatelessWidget {
                       ),
                       _Divider(isDark: isDark),
                       _ThemeOption(
-                        title: 'Dark',
-                        subtitle: 'Always use dark theme',
+                        title: l10n.darkTheme,
+                        subtitle: l10n.alwaysDarkTheme,
                         icon: Icons.dark_mode,
                         isSelected: currentThemeMode == ThemeMode.dark,
                         onTap: () {

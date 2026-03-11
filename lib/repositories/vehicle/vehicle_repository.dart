@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import 'package:car_marketplace/config/api_config.dart';
-import 'package:car_marketplace/models/vehicle_model/vehicle_model.dart';
-import 'package:car_marketplace/models/vehicle_detail_model/vehicle_detail_model.dart';
-import 'package:car_marketplace/network/network_repository.dart';
+import 'package:bilskyen/config/api_config.dart';
+import 'package:bilskyen/models/vehicle_model/vehicle_model.dart';
+import 'package:bilskyen/models/vehicle_detail_model/vehicle_detail_model.dart';
+import 'package:bilskyen/network/network_repository.dart';
 
 class VehicleRepository {
   final networkRepository = NetworkRepository();
@@ -40,6 +40,31 @@ class VehicleRepository {
     final response = await networkRepository.get(
       url: ApiConfig.vehicles,
       extraQuery: extraQuery,
+    );
+
+    if (!response.failed && response.success) {
+      final data = response.data['data'] as Map<String, dynamic>;
+      final vehiclesList = data['docs'] as List<dynamic>;
+      final vehicles = vehiclesList
+          .map((vehicleJson) => VehicleModel.fromJson(vehicleJson as Map<String, dynamic>))
+          .toList();
+      return right(vehicles);
+    }
+    return left(response.message);
+  }
+
+  /// Search vehicles via POST with body (same filter set as GET index, same response shape).
+  /// [body] keys match backend VehicleController::searchVehicles (BASIC_FILTER_KEYS + ADVANCED_FILTER_KEYS + page, limit).
+  Future<Either<String, List<VehicleModel>>> searchVehicles({
+    Map<String, dynamic>? body,
+  }) async {
+    final Map<String, dynamic> requestBody = Map<String, dynamic>.from(body ?? {});
+    requestBody.putIfAbsent('page', () => 1);
+    requestBody.putIfAbsent('limit', () => 15);
+
+    final response = await networkRepository.post(
+      url: ApiConfig.searchVehicles,
+      data: requestBody,
     );
 
     if (!response.failed && response.success) {
@@ -94,46 +119,146 @@ class VehicleRepository {
     return left(response.message.isNotEmpty ? response.message : 'Failed to create lead');
   }
 
-  /// Submit enquiry form - requires auth
-  Future<Either<String, Map<String, dynamic>>> submitEnquiry(int vehicleId, {required String name, required String message}) async {
-    final response = await networkRepository.post(
-      url: ApiConfig.vehicleEnquiries(vehicleId),
-      data: {'name': name, 'message': message},
-    );
+  /// Submit enquiry form - requires auth. Sends name, email, phone (optional), message to match API.
+  Future<Either<String, Map<String, dynamic>>> submitEnquiry(
+    int vehicleId, {
+    required String name,
+    required String email,
+    String? phone,
+    required String message,
+  }) async {
+    final data = <String, dynamic>{
+      'name': name,
+      'email': email,
+      'message': message,
+    };
+    if (phone != null && phone.trim().isNotEmpty) data['phone'] = phone.trim();
+    try {
+      final response = await networkRepository.post(
+        url: ApiConfig.vehicleEnquiries(vehicleId),
+        data: data,
+      );
 
-    if (!response.failed && response.success) {
-      final data = response.data['data'] as Map<String, dynamic>? ?? {};
-      return right(data);
+      if (!response.failed) {
+        final result = (response.data is Map<String, dynamic>)
+            ? (response.data['data'] as Map<String, dynamic>? ?? {})
+            : <String, dynamic>{};
+        return right(result);
+      }
+      return left(
+        response.message.isNotEmpty ? response.message : 'Failed to submit enquiry',
+      );
+    } catch (e) {
+      return left(e.toString());
     }
-    return left(response.message.isNotEmpty ? response.message : 'Failed to submit enquiry');
   }
 
-  /// Submit test drive request - requires auth
-  Future<Either<String, Map<String, dynamic>>> submitTestDrive(int vehicleId, {required String name, required String message}) async {
-    final response = await networkRepository.post(
-      url: ApiConfig.vehicleTestDrive(vehicleId),
-      data: {'name': name, 'message': message},
-    );
+  /// Submit test drive request - requires auth. Sends name, email, phone (optional), message to match API.
+  Future<Either<String, Map<String, dynamic>>> submitTestDrive(
+    int vehicleId, {
+    required String name,
+    required String email,
+    String? phone,
+    required String message,
+  }) async {
+    final data = <String, dynamic>{
+      'name': name,
+      'email': email,
+      'message': message,
+    };
+    if (phone != null && phone.trim().isNotEmpty) data['phone'] = phone.trim();
+    try {
+      final response = await networkRepository.post(
+        url: ApiConfig.vehicleTestDrive(vehicleId),
+        data: data,
+      );
 
-    if (!response.failed && response.success) {
-      final data = response.data['data'] as Map<String, dynamic>? ?? {};
-      return right(data);
+      if (!response.failed) {
+        final result = (response.data is Map<String, dynamic>)
+            ? (response.data['data'] as Map<String, dynamic>? ?? {})
+            : <String, dynamic>{};
+        return right(result);
+      }
+      return left(
+        response.message.isNotEmpty ? response.message : 'Failed to submit test drive request',
+      );
+    } catch (e) {
+      return left(e.toString());
     }
-    return left(response.message.isNotEmpty ? response.message : 'Failed to submit test drive request');
   }
 
-  /// Submit price negotiation - requires auth
-  Future<Either<String, Map<String, dynamic>>> submitPriceNegotiation(int vehicleId, {required String name, required String message}) async {
-    final response = await networkRepository.post(
-      url: ApiConfig.vehiclePriceNegotiation(vehicleId),
-      data: {'name': name, 'message': message},
-    );
+  /// Submit price negotiation - requires auth. Sends name, email, phone (optional), message to match API.
+  Future<Either<String, Map<String, dynamic>>> submitPriceNegotiation(
+    int vehicleId, {
+    required String name,
+    required String email,
+    String? phone,
+    required String message,
+  }) async {
+    final data = <String, dynamic>{
+      'name': name,
+      'email': email,
+      'message': message,
+    };
+    if (phone != null && phone.trim().isNotEmpty) data['phone'] = phone.trim();
+    try {
+      final response = await networkRepository.post(
+        url: ApiConfig.vehiclePriceNegotiation(vehicleId),
+        data: data,
+      );
 
-    if (!response.failed && response.success) {
-      final data = response.data['data'] as Map<String, dynamic>? ?? {};
-      return right(data);
+      if (!response.failed) {
+        final result = (response.data is Map<String, dynamic>)
+            ? (response.data['data'] as Map<String, dynamic>? ?? {})
+            : <String, dynamic>{};
+        return right(result);
+      }
+      return left(
+        response.message.isNotEmpty ? response.message : 'Failed to submit price negotiation',
+      );
+    } catch (e) {
+      return left(e.toString());
     }
-    return left(response.message.isNotEmpty ? response.message : 'Failed to submit price negotiation');
+  }
+
+  /// Submit exchange request. Sends name, email, phone (optional), message, licence_plate, kilometers, expected_price.
+  Future<Either<String, Map<String, dynamic>>> submitExchange(
+    int vehicleId, {
+    required String name,
+    required String email,
+    String? phone,
+    required String message,
+    required String licencePlate,
+    required String kilometers,
+    required String expectedPrice,
+  }) async {
+    final data = <String, dynamic>{
+      'name': name,
+      'email': email,
+      'message': message,
+      'licence_plate': licencePlate,
+      'kilometers': kilometers,
+      'expected_price': expectedPrice,
+    };
+    if (phone != null && phone.trim().isNotEmpty) data['phone'] = phone.trim();
+    try {
+      final response = await networkRepository.post(
+        url: ApiConfig.vehicleExchange(vehicleId),
+        data: data,
+      );
+
+      if (!response.failed) {
+        final result = (response.data is Map<String, dynamic>)
+            ? (response.data['data'] as Map<String, dynamic>? ?? {})
+            : <String, dynamic>{};
+        return right(result);
+      }
+      return left(
+        response.message.isNotEmpty ? response.message : 'Failed to submit exchange request',
+      );
+    } catch (e) {
+      return left(e.toString());
+    }
   }
 }
 

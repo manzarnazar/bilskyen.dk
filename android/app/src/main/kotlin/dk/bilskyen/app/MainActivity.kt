@@ -1,4 +1,4 @@
-package com.example.car_marketplace
+package dk.bilskyen.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../controllers/app_controller/app_controller.dart';
 import '../../../controllers/sell_vehicle_controller.dart';
@@ -9,6 +10,7 @@ class VehicleInfoDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     // Controller should be initialized by parent view
     final controller = Get.isRegistered<SellVehicleController>()
         ? Get.find<SellVehicleController>()
@@ -43,25 +45,25 @@ class VehicleInfoDisplay extends StatelessWidget {
           children: [
             _buildInfoItem(
               icon: Icons.check_circle,
-              label: 'Brand',
+              label: l10n.brand,
               value: vehicleData.brand?.name ?? '—',
               isDark: isDark,
             ),
             _buildInfoItem(
               icon: Icons.description,
-              label: 'Model',
+              label: l10n.model,
               value: vehicleData.model?.name ?? '—',
               isDark: isDark,
             ),
             _buildInfoItem(
               icon: Icons.calendar_today,
-              label: 'Year',
+              label: l10n.year,
               value: vehicleData.modelYear?.name ?? '—',
               isDark: isDark,
             ),
             _buildInfoItem(
               icon: Icons.local_gas_station,
-              label: 'Fuel Type',
+              label: l10n.fuelType,
               value: vehicleData.fuelType?.name ?? '—',
               isDark: isDark,
             ),

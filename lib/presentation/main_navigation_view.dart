@@ -16,8 +16,15 @@ class MainNavigationView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final navController = Get.put(MainNavigationController());
-
     final appController = Get.find<AppController>();
+
+    // Apply tab from route arguments once (e.g. post-publish -> My Listings tab)
+    final args = Get.arguments;
+    if (args is Map && args['tabIndex'] != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        navController.applyInitialTabFromArguments();
+      });
+    }
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;

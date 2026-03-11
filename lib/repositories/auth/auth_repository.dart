@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:dartz/dartz.dart';
-import 'package:car_marketplace/config/api_config.dart';
-import 'package:car_marketplace/main.dart';
-import 'package:car_marketplace/models/auth_model/register_model.dart';
-import 'package:car_marketplace/models/auth_model/user_model.dart';
-import 'package:car_marketplace/network/network_repository.dart';
+import 'package:bilskyen/config/api_config.dart';
+import 'package:bilskyen/main.dart';
+import 'package:bilskyen/models/auth_model/register_model.dart';
+import 'package:bilskyen/models/auth_model/user_model.dart';
+import 'package:bilskyen/network/network_repository.dart';
 
 class AuthRepository {
   final networkRepository = NetworkRepository();

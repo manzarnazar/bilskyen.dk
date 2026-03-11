@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../controllers/edit_vehicle_controller.dart';
@@ -19,6 +20,7 @@ class EditVehicleView extends StatelessWidget {
 
     final controller = Get.put(EditVehicleController(vehicleId: id));
     final appController = Get.find<AppController>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;
@@ -36,7 +38,7 @@ class EditVehicleView extends StatelessWidget {
           elevation: 0,
           automaticallyImplyLeading: Navigator.canPop(context),
           title: Text(
-            'Edit Vehicle',
+            l10n.editVehicle,
             style: TextStyle(
               color: AppColors.primary,
               fontSize: 16,
@@ -117,33 +119,47 @@ class EditVehicleView extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                Obx(() => DropdownButtonFormField<int>(
-                                      value: controller.variantId.value,
-                                      decoration: InputDecoration(
-                                        labelText: 'Variant',
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                        filled: true,
-                                        fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
-                                      ),
-                                      items: controller.variants
+                                Obx(() {
+                                      final variantItems = controller.variants
                                           .map((v) => DropdownMenuItem<int>(value: v.id, child: Text(v.name)))
-                                          .toList(),
-                                      onChanged: (v) => controller.variantId.value = v,
-                                    )),
+                                          .toList();
+                                      final variantValue = controller.variantId.value != null &&
+                                          controller.variants.any((v) => v.id == controller.variantId.value)
+                                          ? controller.variantId.value
+                                          : null;
+                                      return DropdownButtonFormField<int>(
+                                        value: variantValue,
+                                        decoration: InputDecoration(
+                                          labelText: 'Variant',
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          filled: true,
+                                          fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
+                                        ),
+                                        items: variantItems,
+                                        onChanged: (v) => controller.variantId.value = v,
+                                      );
+                                    }),
                                 const SizedBox(height: 16),
-                                Obx(() => DropdownButtonFormField<int>(
-                                      value: controller.colorId.value,
-                                      decoration: InputDecoration(
-                                        labelText: 'Color',
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                        filled: true,
-                                        fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
-                                      ),
-                                      items: controller.colors
+                                Obx(() {
+                                      final colorItems = controller.colors
                                           .map((c) => DropdownMenuItem<int>(value: c.id, child: Text(c.name)))
-                                          .toList(),
-                                      onChanged: (v) => controller.colorId.value = v,
-                                    )),
+                                          .toList();
+                                      final colorValue = controller.colorId.value != null &&
+                                          controller.colors.any((c) => c.id == controller.colorId.value)
+                                          ? controller.colorId.value
+                                          : null;
+                                      return DropdownButtonFormField<int>(
+                                        value: colorValue,
+                                        decoration: InputDecoration(
+                                          labelText: 'Color',
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          filled: true,
+                                          fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
+                                        ),
+                                        items: colorItems,
+                                        onChanged: (v) => controller.colorId.value = v,
+                                      );
+                                    }),
                               ],
                             ),
                           ),
@@ -176,39 +192,54 @@ class EditVehicleView extends StatelessWidget {
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: Obx(() => DropdownButtonFormField<int>(
-                                            value: controller.firstRegistrationMonth.value,
-                                            decoration: InputDecoration(
-                                              labelText: 'First reg. month',
-                                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                              filled: true,
-                                              fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
-                                            ),
-                                            items: List.generate(12, (i) => i + 1)
-                                                .map((m) => DropdownMenuItem<int>(
-                                                      value: m,
-                                                      child: Text(_monthName(m)),
-                                                    ))
-                                                .toList(),
-                                            onChanged: (v) => controller.firstRegistrationMonth.value = v,
-                                          )),
+                                      child: Obx(() {
+                                            const monthItems = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+                                            final monthValue = controller.firstRegistrationMonth.value != null &&
+                                                monthItems.contains(controller.firstRegistrationMonth.value)
+                                                ? controller.firstRegistrationMonth.value
+                                                : null;
+                                            return DropdownButtonFormField<int>(
+                                              value: monthValue,
+                                              decoration: InputDecoration(
+                                                labelText: 'First reg. month',
+                                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                                filled: true,
+                                                fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
+                                              ),
+                                              items: monthItems
+                                                  .map((m) => DropdownMenuItem<int>(
+                                                        value: m,
+                                                        child: Text(_monthName(m)),
+                                                      ))
+                                                  .toList(),
+                                              onChanged: (v) => controller.firstRegistrationMonth.value = v,
+                                            );
+                                          }),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
-                                      child: Obx(() => DropdownButtonFormField<int>(
-                                            value: controller.firstRegistrationYear.value,
-                                            decoration: InputDecoration(
-                                              labelText: 'First reg. year',
-                                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                              filled: true,
-                                              fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
-                                            ),
-                                            items: List.generate(30, (i) => DateTime.now().year - 29 + i)
+                                      child: Obx(() {
+                                            final yearItems = List.generate(30, (i) => DateTime.now().year - 29 + i)
                                                 .reversed
-                                                .map((y) => DropdownMenuItem<int>(value: y, child: Text('$y')))
-                                                .toList(),
-                                            onChanged: (v) => controller.firstRegistrationYear.value = v,
-                                          )),
+                                                .toList();
+                                            final yearValue = controller.firstRegistrationYear.value != null &&
+                                                yearItems.contains(controller.firstRegistrationYear.value)
+                                                ? controller.firstRegistrationYear.value
+                                                : null;
+                                            return DropdownButtonFormField<int>(
+                                              value: yearValue,
+                                              decoration: InputDecoration(
+                                                labelText: 'First reg. year',
+                                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                                filled: true,
+                                                fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
+                                              ),
+                                              items: yearItems
+                                                  .map((y) => DropdownMenuItem<int>(value: y, child: Text('$y')))
+                                                  .toList(),
+                                              onChanged: (v) => controller.firstRegistrationYear.value = v,
+                                            );
+                                          }),
                                     ),
                                   ],
                                 ),
@@ -235,21 +266,28 @@ class EditVehicleView extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                Obx(() => DropdownButtonFormField<int>(
-                                      value: controller.euronomId.value,
-                                      decoration: InputDecoration(
-                                        labelText: 'Euronom',
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                        filled: true,
-                                        fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
-                                      ),
-                                      items: [
+                                Obx(() {
+                                      final euronomItems = [
                                         const DropdownMenuItem<int>(value: null, child: Text('—')),
                                         ...controller.euronorms
                                             .map((e) => DropdownMenuItem<int>(value: e.id, child: Text(e.name))),
-                                      ],
-                                      onChanged: (v) => controller.euronomId.value = v,
-                                    )),
+                                      ];
+                                      final euronomValue = controller.euronomId.value != null &&
+                                          controller.euronorms.any((e) => e.id == controller.euronomId.value)
+                                          ? controller.euronomId.value
+                                          : null;
+                                      return DropdownButtonFormField<int>(
+                                        value: euronomValue,
+                                        decoration: InputDecoration(
+                                          labelText: 'Euronom',
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          filled: true,
+                                          fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
+                                        ),
+                                        items: euronomItems,
+                                        onChanged: (v) => controller.euronomId.value = v,
+                                      );
+                                    }),
                               ],
                             ),
                           ),

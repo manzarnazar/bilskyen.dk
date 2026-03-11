@@ -24,11 +24,13 @@ class ApiConfig {
   // Vehicle endpoints
   static const String featuredVehicles = 'featured-vehicles';
   static const String vehicles = 'vehicles';
+  static const String searchVehicles = 'search-vehicles';
   static String vehicleDetail(int id) => 'vehicles/$id';
   static String vehicleLeads(int id) => 'vehicles/$id/leads';
   static String vehicleEnquiries(int id) => 'vehicles/$id/enquiries';
   static String vehicleTestDrive(int id) => 'vehicles/$id/test-drive';
   static String vehiclePriceNegotiation(int id) => 'vehicles/$id/price-negotiation';
+  static String vehicleExchange(int id) => 'vehicles/$id/exchange';
   
   // Nummerplade API endpoints
   static const String nummerpladeVehicleByRegistration = 'nummerplade/vehicle-by-registration';

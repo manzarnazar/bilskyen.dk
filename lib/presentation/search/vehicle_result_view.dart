@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../controllers/app_controller/app_controller.dart';
 import '../../controllers/vehicle_result_controller.dart';
@@ -13,6 +14,7 @@ class VehicleResultView extends StatelessWidget {
   Widget build(BuildContext context) {
     final appController = Get.find<AppController>();
     final controller = Get.put(VehicleResultController());
+    final l10n = AppLocalizations.of(context)!;
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;
@@ -38,7 +40,7 @@ class VehicleResultView extends StatelessWidget {
               return const SizedBox.shrink();
             }
             return Text(
-              '${controller.vehicles.length} Advertisements',
+              l10n.advertisementsCount(controller.vehicles.length),
               style: TextStyle(
                 color: AppColors.primary,
                 fontSize: 16,
@@ -146,11 +148,16 @@ class VehicleResultView extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: controller.vehicles.length,
                 itemBuilder: (context, index) {
-                  return Obx(() => VehicleCard(
-                    vehicle: controller.vehicles[index],
-                    isDark: isDark,
-                    isHorizontalLayout: controller.isHorizontalLayout.value,
-                    checkFavoriteOnLoad: false,
+                  final vehicle = controller.vehicles[index];
+                  return Obx(() => InkWell(
+                    onTap: () => Get.toNamed('/vehicle-detail/${vehicle.id}'),
+                    borderRadius: BorderRadius.circular(12),
+                    child: VehicleCard(
+                      vehicle: vehicle,
+                      isDark: isDark,
+                      isHorizontalLayout: controller.isHorizontalLayout.value,
+                      checkFavoriteOnLoad: false,
+                    ),
                   ));
                 },
               ),

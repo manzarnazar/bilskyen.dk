@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../utils/app_colors.dart';
 import '../controllers/app_controller/app_controller.dart';
 
@@ -14,13 +15,16 @@ const _barHeight = 56.0;
 const _lineWidth = 24.0;
 const _lineHeight = 3.0;
 
-const List<_NavBarItemData> _items = [
-  _NavBarItemData(assetPath: 'assets/icons/home.png', label: 'Home'),
-  _NavBarItemData(assetPath: 'assets/icons/heart.png', label: 'Favorites'),
-  _NavBarItemData(assetPath: 'assets/icons/search.png', label: 'Search'),
-  _NavBarItemData(assetPath: 'assets/icons/list.png', label: 'My Listings'),
-  _NavBarItemData(assetPath: 'assets/icons/user.png', label: 'Profile'),
-];
+List<_NavBarItemData> _itemsFor(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+  return [
+    _NavBarItemData(assetPath: 'assets/icons/home.png', label: l10n.navHome),
+    _NavBarItemData(assetPath: 'assets/icons/heart.png', label: l10n.navFavorites),
+    _NavBarItemData(assetPath: 'assets/icons/search.png', label: l10n.navSearch),
+    _NavBarItemData(assetPath: 'assets/icons/list.png', label: l10n.navMyListings),
+    _NavBarItemData(assetPath: 'assets/icons/user.png', label: l10n.navProfile),
+  ];
+}
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -61,10 +65,10 @@ class CustomBottomNavBar extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                for (int i = 0; i < _items.length; i++)
+                for (int i = 0; i < _itemsFor(context).length; i++)
                   Expanded(
                     child: _RegularNavItem(
-                      item: _items[i],
+                      item: _itemsFor(context)[i],
                       isSelected: currentIndex == i,
                       selectedColor: selectedColor,
                       unselectedColor: unselectedColor,

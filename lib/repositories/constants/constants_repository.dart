@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:dartz/dartz.dart';
-import 'package:car_marketplace/config/api_config.dart';
-import 'package:car_marketplace/main.dart';
-import 'package:car_marketplace/models/constants_model/constants_model.dart';
-import 'package:car_marketplace/network/network_repository.dart';
+import 'package:bilskyen/config/api_config.dart';
+import 'package:bilskyen/main.dart';
+import 'package:bilskyen/models/constants_model/constants_model.dart';
+import 'package:bilskyen/network/network_repository.dart';
 
 class ConstantsRepository {
   final networkRepository = NetworkRepository();

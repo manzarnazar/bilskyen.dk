@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import '../models/vehicle_model/vehicle_model.dart';
 import '../repositories/vehicle/vehicle_repository.dart';
@@ -9,9 +8,10 @@ class HomeController extends GetxController {
   final PageController pageController = PageController();
   final RxInt currentPage = 0.obs;
   Timer? _timer;
-  
+  bool _closed = false;
+
   final VehicleRepository _vehicleRepository = VehicleRepository();
-  
+
   final RxList<VehicleModel> featuredVehicles = <VehicleModel>[].obs;
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
@@ -24,13 +24,12 @@ class HomeController extends GetxController {
 
   @override
   void onClose() {
+    _closed = true;
     _timer?.cancel();
-    // Defer disposal to next frame so any in-flight scroll animation can complete
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      try {
-        pageController.dispose();
-      } catch (_) {}
-    });
+    _timer = null;
+    try {
+      pageController.dispose();
+    } catch (_) {}
     super.onClose();
   }
 
@@ -58,27 +57,35 @@ class HomeController extends GetxController {
   }
 
   void _startAutoSlide() {
-    _timer?.cancel(); // Cancel existing timer if any
+    _timer?.cancel();
     if (featuredVehicles.isEmpty) return;
-    
+
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_closed) {
+        timer.cancel();
+        return;
+      }
       if (featuredVehicles.isEmpty) {
         timer.cancel();
         return;
       }
-      
+
       if (currentPage.value < featuredVehicles.length - 1) {
         currentPage.value++;
       } else {
         currentPage.value = 0;
       }
-      
-      if (pageController.hasClients) {
-        pageController.animateToPage(
-          currentPage.value,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+
+      if (!_closed && pageController.hasClients) {
+        try {
+          pageController.animateToPage(
+            currentPage.value,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        } catch (_) {
+          timer.cancel();
+        }
       }
     });
   }
