@@ -75,6 +75,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
   @override
   Widget build(BuildContext context) {
     final appController = Get.find<AppController>();
+    final l10n = AppLocalizations.of(context)!;
 
     return Obx(() {
       final isDark = appController.isDarkMode.value;
@@ -126,19 +127,19 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
                       _buildProfilePictureSection(isDark),
                       const SizedBox(height: 24),
                       // Identity Section
-                      _buildSectionTitle('IDENTITY'),
+                      _buildSectionTitle(l10n.identity.toUpperCase()),
                       const SizedBox(height: 12),
-                      _buildIdentityCard(isDark),
+                      _buildIdentityCard(context, isDark),
                       const SizedBox(height: 24),
                       // Contact Details Section
-                      _buildSectionTitle('CONTACT DETAILS'),
+                      _buildSectionTitle(l10n.contactDetails.toUpperCase()),
                       const SizedBox(height: 12),
-                      _buildContactDetailsCard(isDark),
+                      _buildContactDetailsCard(context, isDark),
                       const SizedBox(height: 24),
                       // Location Section
-                      _buildSectionTitle('LOCATION'),
+                      _buildSectionTitle(l10n.locationSection.toUpperCase()),
                       const SizedBox(height: 12),
-                      _buildLocationCard(isDark),
+                      _buildLocationCard(context, isDark),
                       const SizedBox(height: 100), // Space for fixed button
                     ],
                   ),
@@ -147,7 +148,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
             ],
           ),
         ),
-        bottomNavigationBar: _isLoadingUser ? null : _buildSaveButton(isDark),
+        bottomNavigationBar: _isLoadingUser ? null : _buildSaveButton(context, isDark),
       );
     });
   }
@@ -221,7 +222,8 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
     });
   }
 
-  Widget _buildIdentityCard(bool isDark) {
+  Widget _buildIdentityCard(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : Colors.white,
@@ -236,7 +238,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
           _buildInputField(
             icon: Icons.person,
             iconColor: Colors.blue,
-            label: 'FULL NAME',
+            label: l10n.fullName,
             controller: _fullNameController,
             isDark: isDark,
             showEditIcon: true,
@@ -246,7 +248,8 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
     );
   }
 
-  Widget _buildContactDetailsCard(bool isDark) {
+  Widget _buildContactDetailsCard(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : Colors.white,
@@ -261,7 +264,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
           _buildInputField(
             icon: Icons.email,
             iconColor: Colors.orange,
-            label: 'EMAIL ADDRESS',
+            label: l10n.emailAddress,
             controller: _emailController,
             isDark: isDark,
             showVerifiedIcon: true,
@@ -271,7 +274,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
           _buildInputField(
             icon: Icons.phone,
             iconColor: Colors.green,
-            label: 'PHONE NUMBER',
+            label: l10n.phoneNumber,
             controller: _phoneController,
             isDark: isDark,
             showEditIcon: true,
@@ -281,7 +284,8 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
     );
   }
 
-  Widget _buildLocationCard(bool isDark) {
+  Widget _buildLocationCard(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : Colors.white,
@@ -319,7 +323,7 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'ADDRESS',
+                        l10n.addressLabel.toUpperCase(),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -456,7 +460,8 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
     );
   }
 
-  Widget _buildSaveButton(bool isDark) {
+  Widget _buildSaveButton(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     final authController = Get.find<AuthController>();
 
     return Container(
@@ -489,8 +494,8 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
                       );
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: isDark ? Colors.white : Colors.black,
-                foregroundColor: isDark ? Colors.black : Colors.white,
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.primaryForeground,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -503,8 +508,8 @@ class _PersonalInfoViewState extends State<PersonalInfoView> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text(
-                      'Save Changes',
+                  : Text(
+                      l10n.saveChanges,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

@@ -1052,6 +1052,42 @@ abstract class AppLocalizations {
   /// **'Factory new'**
   String get factoryNew;
 
+  /// No description provided for @listingPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase'**
+  String get listingPurchase;
+
+  /// No description provided for @listingLeasing.
+  ///
+  /// In en, this message translates to:
+  /// **'Leasing'**
+  String get listingLeasing;
+
+  /// No description provided for @filterChargingAc.
+  ///
+  /// In en, this message translates to:
+  /// **'AC'**
+  String get filterChargingAc;
+
+  /// No description provided for @filterChargingDc.
+  ///
+  /// In en, this message translates to:
+  /// **'DC'**
+  String get filterChargingDc;
+
+  /// No description provided for @filterChargingAcDc.
+  ///
+  /// In en, this message translates to:
+  /// **'AC/DC'**
+  String get filterChargingAcDc;
+
+  /// No description provided for @filterNcapTest.
+  ///
+  /// In en, this message translates to:
+  /// **'NCAP test'**
+  String get filterNcapTest;
+
   /// No description provided for @equipment.
   ///
   /// In en, this message translates to:
@@ -1063,6 +1099,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset'**
   String get reset;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
 
   /// No description provided for @fuelType.
   ///
@@ -1105,6 +1147,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Variant'**
   String get variant;
+
+  /// No description provided for @noResultsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get noResultsFound;
 
   /// No description provided for @type.
   ///
@@ -1375,6 +1423,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Arrange'**
   String get arrangeTooltip;
+
+  /// No description provided for @sortTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sortTooltip;
+
+  /// No description provided for @sortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get sortBy;
+
+  /// No description provided for @sortDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get sortDefault;
+
+  /// No description provided for @sortBestMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Best match'**
+  String get sortBestMatch;
+
+  /// No description provided for @sortStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get sortStandard;
+
+  /// No description provided for @sortDistanceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance - farthest first'**
+  String get sortDistanceDesc;
+
+  /// No description provided for @sortDistanceAsc.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance - nearest first'**
+  String get sortDistanceAsc;
+
+  /// No description provided for @sortDirectionAsc.
+  ///
+  /// In en, this message translates to:
+  /// **'lowest first'**
+  String get sortDirectionAsc;
+
+  /// No description provided for @sortDirectionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'highest first'**
+  String get sortDirectionDesc;
+
+  /// No description provided for @sortColumnCreatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Date created'**
+  String get sortColumnCreatedAt;
+
+  /// No description provided for @sortColumnPublishedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Date published'**
+  String get sortColumnPublishedAt;
+
+  /// No description provided for @sortColumnPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get sortColumnPrice;
+
+  /// No description provided for @sortColumnModelYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Model year'**
+  String get sortColumnModelYear;
+
+  /// No description provided for @sortColumnMileage.
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage'**
+  String get sortColumnMileage;
+
+  /// No description provided for @sortColumnKmPerLiter.
+  ///
+  /// In en, this message translates to:
+  /// **'KM/L'**
+  String get sortColumnKmPerLiter;
+
+  /// No description provided for @sortColumnFuelEfficiency.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel efficiency'**
+  String get sortColumnFuelEfficiency;
+
+  /// No description provided for @sortColumnRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Range'**
+  String get sortColumnRange;
+
+  /// No description provided for @sortColumnBatteryCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery capacity'**
+  String get sortColumnBatteryCapacity;
+
+  /// No description provided for @sortColumnBrand.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand'**
+  String get sortColumnBrand;
+
+  /// No description provided for @sortColumnEnginePower.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine power'**
+  String get sortColumnEnginePower;
+
+  /// No description provided for @sortColumnTopSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Top speed'**
+  String get sortColumnTopSpeed;
+
+  /// No description provided for @sortColumnTowingWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Towing weight'**
+  String get sortColumnTowingWeight;
+
+  /// No description provided for @sortColumnOwnershipTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Ownership tax'**
+  String get sortColumnOwnershipTax;
+
+  /// No description provided for @sortColumnFirstRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'First registration date'**
+  String get sortColumnFirstRegistration;
+
+  /// No description provided for @sortColumnFirstRegistrationYear.
+  ///
+  /// In en, this message translates to:
+  /// **'First registration year'**
+  String get sortColumnFirstRegistrationYear;
 
   /// No description provided for @signInToManageListings.
   ///
@@ -1916,6 +2114,66 @@ abstract class AppLocalizations {
   /// **'Enter your phone number (optional)'**
   String get enterPhoneOptionalPlaceholder;
 
+  /// No description provided for @exchangeLicensePlateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'License plate'**
+  String get exchangeLicensePlateLabel;
+
+  /// No description provided for @exchangeLicensePlatePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter license plate'**
+  String get exchangeLicensePlatePlaceholder;
+
+  /// No description provided for @exchangeLicensePlateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'License plate is required'**
+  String get exchangeLicensePlateRequired;
+
+  /// No description provided for @exchangeKilometersUsedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Kilometers used'**
+  String get exchangeKilometersUsedLabel;
+
+  /// No description provided for @exchangeKilometersUsedPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter kilometers used'**
+  String get exchangeKilometersUsedPlaceholder;
+
+  /// No description provided for @exchangeKilometersUsedRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Kilometers used is required'**
+  String get exchangeKilometersUsedRequired;
+
+  /// No description provided for @exchangeValidNonNegativeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid non-negative number'**
+  String get exchangeValidNonNegativeNumber;
+
+  /// No description provided for @exchangeExpectedPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected price'**
+  String get exchangeExpectedPriceLabel;
+
+  /// No description provided for @exchangeExpectedPricePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your expected price'**
+  String get exchangeExpectedPricePlaceholder;
+
+  /// No description provided for @exchangeExpectedPriceRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected price is required'**
+  String get exchangeExpectedPriceRequired;
+
   /// No description provided for @yourOfferMessageLabel.
   ///
   /// In en, this message translates to:
@@ -2402,6 +2660,12 @@ abstract class AppLocalizations {
   /// **'Electric Range (km)'**
   String get electricRangeKm;
 
+  /// No description provided for @electricRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Electric Range'**
+  String get electricRange;
+
   /// No description provided for @electricRangeOrKmPerL.
   ///
   /// In en, this message translates to:
@@ -2689,6 +2953,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Year'**
   String get year;
+
+  /// No description provided for @identity.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity'**
+  String get identity;
+
+  /// No description provided for @contactDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Details'**
+  String get contactDetails;
+
+  /// No description provided for @locationSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get locationSection;
+
+  /// No description provided for @addressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get addressLabel;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// No description provided for @conditionAndHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Condition & history'**
+  String get conditionAndHistory;
+
+  /// No description provided for @technicalSpecifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical specifications'**
+  String get technicalSpecifications;
+
+  /// No description provided for @co2Emission.
+  ///
+  /// In en, this message translates to:
+  /// **'CO₂ emission'**
+  String get co2Emission;
+
+  /// No description provided for @electricalConsumption.
+  ///
+  /// In en, this message translates to:
+  /// **'Electrical consumption'**
+  String get electricalConsumption;
+
+  /// No description provided for @noxEmission.
+  ///
+  /// In en, this message translates to:
+  /// **'NOx emission'**
+  String get noxEmission;
+
+  /// No description provided for @fuelConsumptionWltp.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel consumption (WLTP)'**
+  String get fuelConsumptionWltp;
+
+  /// No description provided for @fuelConsumptionNedc.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel consumption (NEDC)'**
+  String get fuelConsumptionNedc;
+
+  /// No description provided for @measurementNorm.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement norm'**
+  String get measurementNorm;
+
+  /// No description provided for @productionDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Production date'**
+  String get productionDate;
+
+  /// No description provided for @enginePowerKw.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine power (kW)'**
+  String get enginePowerKw;
+
+  /// No description provided for @engineTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine type'**
+  String get engineTypeLabel;
+
+  /// No description provided for @engineDisplacementLitres.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine displacement (L)'**
+  String get engineDisplacementLitres;
+
+  /// No description provided for @gearCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Gears'**
+  String get gearCount;
+
+  /// No description provided for @particleFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Particle filter'**
+  String get particleFilter;
+
+  /// No description provided for @registrationStatusDmr.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration status (DMR)'**
+  String get registrationStatusDmr;
+
+  /// No description provided for @lastRegistrationChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Last registration change'**
+  String get lastRegistrationChange;
+
+  /// No description provided for @dealerInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Dealer information'**
+  String get dealerInformation;
+
+  /// No description provided for @contactName.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact name'**
+  String get contactName;
+
+  /// No description provided for @city.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get city;
+
+  /// No description provided for @cvr.
+  ///
+  /// In en, this message translates to:
+  /// **'CVR'**
+  String get cvr;
+
+  /// No description provided for @dealerOnlyPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Dealer pricing'**
+  String get dealerOnlyPricing;
+
+  /// No description provided for @wholesalePrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Wholesale price'**
+  String get wholesalePrice;
+
+  /// No description provided for @internalCostPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal cost price'**
+  String get internalCostPrice;
+
+  /// No description provided for @priceExcludingTax.
+  ///
+  /// In en, this message translates to:
+  /// **'Price excluding tax'**
+  String get priceExcludingTax;
+
+  /// No description provided for @wholesaleIncludesDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Wholesale includes delivery'**
+  String get wholesaleIncludesDelivery;
+
+  /// No description provided for @listingPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Listing phone'**
+  String get listingPhone;
+
+  /// No description provided for @vehicleLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle location'**
+  String get vehicleLocation;
+
+  /// No description provided for @importVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import vehicle'**
+  String get importVehicle;
+
+  /// No description provided for @visitDealerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit dealer page'**
+  String get visitDealerPage;
+
+  /// No description provided for @seeAllDealerVehicles.
+  ///
+  /// In en, this message translates to:
+  /// **'See all vehicles from this dealer'**
+  String get seeAllDealerVehicles;
+
+  /// No description provided for @leasingType.
+  ///
+  /// In en, this message translates to:
+  /// **'Leasing type'**
+  String get leasingType;
+
+  /// No description provided for @leasingCustomerType.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer type'**
+  String get leasingCustomerType;
+
+  /// No description provided for @leasingMonthlyPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly payment'**
+  String get leasingMonthlyPayment;
+
+  /// No description provided for @leasingFirstPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'First payment'**
+  String get leasingFirstPayment;
+
+  /// No description provided for @leasingResidualValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Residual value'**
+  String get leasingResidualValue;
+
+  /// No description provided for @leasingDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration (months)'**
+  String get leasingDuration;
+
+  /// No description provided for @leasingAnnualMileage.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual mileage'**
+  String get leasingAnnualMileage;
+
+  /// No description provided for @leasingTotalCost.
+  ///
+  /// In en, this message translates to:
+  /// **'Total cost'**
+  String get leasingTotalCost;
+
+  /// No description provided for @specificationCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} (×{count})'**
+  String specificationCount(String name, int count);
+
+  /// No description provided for @consumptionPer100km.
+  ///
+  /// In en, this message translates to:
+  /// **'l/100 km'**
+  String get consumptionPer100km;
+
+  /// No description provided for @consumptionLPer100kmSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'L/100km'**
+  String get consumptionLPer100kmSuffix;
+
+  /// No description provided for @pricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing'**
+  String get pricing;
+
+  /// No description provided for @registrationNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration'**
+  String get registrationNumber;
+
+  /// No description provided for @vinNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'VIN'**
+  String get vinNumber;
 }
 
 class _AppLocalizationsDelegate

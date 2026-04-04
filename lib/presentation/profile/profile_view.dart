@@ -8,6 +8,7 @@ import '../../controllers/app_controller/main_navigation_controller.dart';
 import '../../controllers/profile_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../models/auth_model/user_model.dart';
+import 'legal_content_view.dart';
 import '../../main.dart';
 
 class ProfileView extends StatelessWidget {
@@ -139,10 +140,10 @@ class ProfileView extends StatelessWidget {
                                 : AppColors.mutedLight,
                             title: l10n.privacyPolicyTitle,
                             onTap: () {
-                              Get.snackbar(
-                                l10n.info,
-                                l10n.privacyPolicyComingSoon,
-                                snackPosition: SnackPosition.TOP,
+                              Get.to(
+                                () => const LegalContentView(
+                                  pageType: LegalPageType.privacy,
+                                ),
                               );
                             },
                           ),
@@ -153,10 +154,10 @@ class ProfileView extends StatelessWidget {
                                 : AppColors.mutedLight,
                             title: l10n.termsOfService,
                             onTap: () {
-                              Get.snackbar(
-                                l10n.info,
-                                l10n.termsComingSoon,
-                                snackPosition: SnackPosition.TOP,
+                              Get.to(
+                                () => const LegalContentView(
+                                  pageType: LegalPageType.terms,
+                                ),
                               );
                             },
                           ),

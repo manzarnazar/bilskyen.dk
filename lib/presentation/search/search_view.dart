@@ -1,3 +1,5 @@
+import 'dart:math' show max, min;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -7,7 +9,23 @@ import '../../controllers/app_controller/app_controller.dart';
 import '../../controllers/search_controller.dart' as search_controller;
 import '../../controllers/vehicle_result_controller.dart';
 import '../../models/constants_model/constants_model.dart';
+import 'search_lookup_picker_view.dart';
 import '../../services/constants_service.dart';
+
+String _listingTypeLabel(LookupItem t, AppLocalizations l10n) {
+  final n = t.name.trim().toLowerCase();
+  if (n == 'purchase') return l10n.listingPurchase;
+  if (n == 'leasing') return l10n.listingLeasing;
+  return t.name;
+}
+
+/// Display text for km/L filter fields (allows half steps like the web slider).
+String _kmPerLiterSliderText(double v, {required bool isTo, required double maxVal}) {
+  if (v <= 0) return '';
+  if (isTo && v >= maxVal) return '';
+  if (v == v.roundToDouble()) return v.toInt().toString();
+  return v.toStringAsFixed(1);
+}
 
 class SearchView extends StatefulWidget {
   /// When true, "Search Vehicles" will pop and refetch results instead of navigating to result screen.
@@ -32,10 +50,7 @@ class _SearchViewState extends State<SearchView> {
   late final TextEditingController _enginePowerToController;
   late final TextEditingController _batteryFromController;
   late final TextEditingController _batteryToController;
-  late final TextEditingController _rangeKmFromController;
-  late final TextEditingController _rangeKmToController;
-  late final TextEditingController _sellerDistanceController;
-  late final TextEditingController _doorsMinController;
+  late final TextEditingController _doorCountController;
   late final TextEditingController _seatsMinController;
   late final TextEditingController _seatsMaxController;
   late final TextEditingController _towingWeightController;
@@ -45,11 +60,7 @@ class _SearchViewState extends State<SearchView> {
   late final TextEditingController _topSpeedToController;
   late final TextEditingController _weightFromController;
   late final TextEditingController _weightToController;
-  late final TextEditingController _engineDisplacementFromController;
-  late final TextEditingController _engineDisplacementToController;
-  late final TextEditingController _engineCylindersController;
-  late final TextEditingController _wheelsController;
-  late final TextEditingController _axlesController;
+  late final TextEditingController _axleCountController;
   late final TextEditingController _airbagsController;
   @override
   void initState() {
@@ -64,8 +75,8 @@ class _SearchViewState extends State<SearchView> {
     _priceToController = TextEditingController(text: _formatPrice(searchController.priceTo.value));
     _mileageFromController = TextEditingController(text: _formatMileage(searchController.mileageFrom.value));
     _mileageToController = TextEditingController(text: _formatMileage(searchController.mileageTo.value));
-    _yearFromController = TextEditingController(text: _formatYear(searchController.yearFrom.value));
-    _yearToController = TextEditingController(text: _formatYear(searchController.yearTo.value));
+    _yearFromController = TextEditingController(text: _formatYear(searchController.modelYearFrom.value));
+    _yearToController = TextEditingController(text: _formatYear(searchController.modelYearTo.value));
     _ownershipTaxFromController = TextEditingController();
     _ownershipTaxToController = TextEditingController();
     _firstRegYearFromController = TextEditingController();
@@ -74,10 +85,7 @@ class _SearchViewState extends State<SearchView> {
     _enginePowerToController = TextEditingController();
     _batteryFromController = TextEditingController();
     _batteryToController = TextEditingController();
-    _rangeKmFromController = TextEditingController();
-    _rangeKmToController = TextEditingController();
-    _sellerDistanceController = TextEditingController();
-    _doorsMinController = TextEditingController();
+    _doorCountController = TextEditingController();
     _seatsMinController = TextEditingController();
     _seatsMaxController = TextEditingController();
     _towingWeightController = TextEditingController();
@@ -87,16 +95,18 @@ class _SearchViewState extends State<SearchView> {
     _topSpeedToController = TextEditingController();
     _weightFromController = TextEditingController();
     _weightToController = TextEditingController();
-    _engineDisplacementFromController = TextEditingController();
-    _engineDisplacementToController = TextEditingController();
-    _engineCylindersController = TextEditingController();
-    _wheelsController = TextEditingController();
-    _axlesController = TextEditingController();
+    _axleCountController = TextEditingController();
     _airbagsController = TextEditingController();
+    _hydrateLegacySelections();
   }
-  String _formatPrice(double v) => v > 0 && v < 1000000 ? v.toInt().toString() : '';
-  String _formatMileage(double v) => v > 0 && v < 500000 ? v.toInt().toString() : '';
-  String _formatYear(int v) => v > 1975 && v < DateTime.now().year + 1 ? v.toString() : '';
+  String _formatPrice(double v) =>
+      v > 0 && v < search_controller.SearchViewController.priceMax ? v.toInt().toString() : '';
+  String _formatMileage(double v) =>
+      v > 0 && v < search_controller.SearchViewController.mileageMax ? v.toInt().toString() : '';
+  String _formatYear(int v) {
+    final cap = search_controller.SearchViewController.calendarYearMax;
+    return v > 1950 && v < cap ? v.toString() : '';
+  }
   @override
   void dispose() {
     _priceFromController.dispose();
@@ -113,10 +123,7 @@ class _SearchViewState extends State<SearchView> {
     _enginePowerToController.dispose();
     _batteryFromController.dispose();
     _batteryToController.dispose();
-    _rangeKmFromController.dispose();
-    _rangeKmToController.dispose();
-    _sellerDistanceController.dispose();
-    _doorsMinController.dispose();
+    _doorCountController.dispose();
     _seatsMinController.dispose();
     _seatsMaxController.dispose();
     _towingWeightController.dispose();
@@ -126,20 +133,41 @@ class _SearchViewState extends State<SearchView> {
     _topSpeedToController.dispose();
     _weightFromController.dispose();
     _weightToController.dispose();
-    _engineDisplacementFromController.dispose();
-    _engineDisplacementToController.dispose();
-    _engineCylindersController.dispose();
-    _wheelsController.dispose();
-    _axlesController.dispose();
+    _axleCountController.dispose();
     _airbagsController.dispose();
     super.dispose();
   }
+
+  void _hydrateLegacySelections() {
+    final cs = Get.find<ConstantsService>();
+    final selectedLegacyBrand = searchController.brandId.value;
+    if (selectedLegacyBrand != null && !searchController.selectedBrandIds.contains(selectedLegacyBrand)) {
+      searchController.selectedBrandIds.add(selectedLegacyBrand);
+      final name = cs.getBrands().firstWhereOrNull((e) => e.id == selectedLegacyBrand)?.name;
+      if (name != null) {
+        searchController.selectedBrandNames[selectedLegacyBrand] = name;
+      }
+    }
+
+    final selectedLegacyModel = searchController.modelId.value;
+    if (selectedLegacyModel != null && !searchController.selectedModelIds.contains(selectedLegacyModel)) {
+      searchController.selectedModelIds.add(selectedLegacyModel);
+      final model = cs.getModels().firstWhereOrNull((e) => e.id == selectedLegacyModel);
+      if (model != null) {
+        searchController.selectedModelNames[selectedLegacyModel] = model.name;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appController = Get.find<AppController>();
     return Obx(() {
       final isDark = appController.isDarkMode.value;
-      final constants = Get.find<ConstantsService>().getConstants();
+      final constantsService = Get.find<ConstantsService>();
+      final constants = constantsService.getConstants();
+      final constantsLoading = constantsService.isLoading.value;
+      final constantsError = constantsService.error.value;
       final l10n = AppLocalizations.of(context)!;
       return Scaffold(
         backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
@@ -149,14 +177,38 @@ class _SearchViewState extends State<SearchView> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.loadingFilters,
-                        style: TextStyle(
+                      if (constantsLoading) ...[
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.loadingFilters,
+                          style: TextStyle(
+                            color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                          ),
+                        ),
+                      ] else ...[
+                        Icon(
+                          Icons.error_outline,
+                          size: 40,
                           color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Text(
+                            constantsError.isNotEmpty ? constantsError : l10n.loadingFilters,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isDark ? AppColors.textDark : AppColors.textLight,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: () => constantsService.fetchConstants(),
+                          child: Text(l10n.retry),
+                        ),
+                      ],
                     ],
                   ),
                 )
@@ -188,6 +240,10 @@ class _SearchViewState extends State<SearchView> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: _listingTypeSection(context, isDark),
                         ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _salesTypeSection(context, isDark),
+                        ),
                         _expandableFilterSection(
                           context: context,
                           isDark: isDark,
@@ -207,47 +263,51 @@ class _SearchViewState extends State<SearchView> {
                           isDark: isDark,
                           title: '${l10n.fuelType} / ${l10n.bodyTypes}',
                           initiallyExpanded: searchController.fuelTypeIds.isNotEmpty ||
-                              searchController.gearTypeIds.isNotEmpty ||
-                              searchController.bodyTypeIds.isNotEmpty,
+                              searchController.bodyTypeId.value != null,
                           child: _fuelBodyContent(context, isDark),
                         ),
                         _expandableFilterSection(
                           context: context,
                           isDark: isDark,
                           title: '${l10n.color} / ${l10n.type}',
-                          initiallyExpanded: searchController.colorIds.isNotEmpty ||
-                              searchController.typeIds.isNotEmpty ||
-                              searchController.salesTypeIds.isNotEmpty ||
-                              searchController.priceTypeIds.isNotEmpty ||
-                              searchController.euronormIds.isNotEmpty ||
-                              searchController.useIds.isNotEmpty,
-                          child: _colorTypeContent(context, isDark),
+                          initiallyExpanded: searchController.colorId.value != null ||
+                              searchController.priceTypeId.value != null ||
+                              searchController.emissionNormId.value != null ||
+                              searchController.useId.value != null,
+                          child: _colorDetailsContent(context, isDark),
                         ),
                         _expandableFilterSection(
                           context: context,
                           isDark: isDark,
-                          title: '${l10n.modelYear} / ${l10n.horsepowerHp}',
-                          initiallyExpanded: false,
+                          title: '${l10n.firstRegistrationYear} / ${l10n.horsepowerHp}',
+                          initiallyExpanded: () {
+                            final y = search_controller.SearchViewController.calendarYearMax;
+                            return searchController.firstRegYearFrom.value > 1950 ||
+                                searchController.firstRegYearTo.value < y ||
+                                searchController.ownershipTaxFrom.value > 0 ||
+                                searchController.ownershipTaxTo.value < 20000 ||
+                                searchController.enginePowerKwFrom.value > 0 ||
+                                searchController.enginePowerKwTo.value < 1000 ||
+                                searchController.electricalConsumptionFrom.value > 0 ||
+                                searchController.electricalConsumptionTo.value < 500 ||
+                                searchController.kmPerLiterFrom.value > 0 ||
+                                searchController.kmPerLiterTo.value < 100;
+                          }(),
                           child: _modelYearHpContent(context, isDark),
                         ),
                         _expandableFilterSection(
                           context: context,
                           isDark: isDark,
                           title: l10n.physicalDetails,
-                          initiallyExpanded: searchController.topSpeedFrom.value > 0 ||
-                              searchController.topSpeedTo.value < 300 ||
-                              searchController.weightFrom.value > 0 ||
-                              searchController.weightTo.value < 5000 ||
-                              searchController.engineDisplacementFrom.value > 0 ||
-                              searchController.engineDisplacementTo.value < 10000 ||
-                              searchController.engineCylinders.value > 0 ||
-                              searchController.doorsMin.value > 0 ||
+                          initiallyExpanded: searchController.maxSpeedFrom.value > 0 ||
+                              searchController.maxSpeedTo.value < 400 ||
+                              searchController.maximumWeightKgFrom.value > 0 ||
+                              searchController.maximumWeightKgTo.value < 5000 ||
+                              searchController.doorCount.value > 0 ||
                               searchController.seatsMin.value > 0 ||
                               searchController.seatsMax.value > 0 ||
-                              searchController.wheels.value > 0 ||
-                              searchController.axles.value > 0 ||
-                              searchController.airbags.value > 0 ||
-                              searchController.driveAxles.isNotEmpty ||
+                              searchController.axleCount.value > 0 ||
+                              searchController.specificationsAirbags.value > 0 ||
                               searchController.towingWeight.value > 0,
                           child: _physicalDetailsContent(context, isDark),
                         ),
@@ -256,7 +316,7 @@ class _SearchViewState extends State<SearchView> {
                           isDark: isDark,
                           title: l10n.chargingType,
                           initiallyExpanded: searchController.chargingType.value != null ||
-                              searchController.ncapFive.value ||
+                              searchController.ncapTest.value ||
                               searchController.isImport.value ||
                               searchController.isFactoryNew.value,
                           child: _chargingContent(context, isDark),
@@ -406,7 +466,6 @@ class _SearchViewState extends State<SearchView> {
       child: InkWell(
         onTap: () {
           searchController.conditionId.value = id;
-          searchController.conditionIds.clear();
         },
         borderRadius: BorderRadius.circular(8),
         child: Container(
@@ -431,7 +490,10 @@ class _SearchViewState extends State<SearchView> {
   Widget _listingTypeSection(BuildContext context, bool isDark) {
     final l10n = AppLocalizations.of(context)!;
     final allTypes = Get.find<ConstantsService>().getListingTypes();
-    final types = allTypes.where((t) => t.name == 'Purchase' || t.name == 'Leasing').toList();
+    final types = allTypes.where((t) {
+      final n = t.name.trim().toLowerCase();
+      return n == 'purchase' || n == 'leasing';
+    }).toList();
     return Obx(() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -452,7 +514,7 @@ class _SearchViewState extends State<SearchView> {
                     searchController.listingTypeIds.add(t.id);
                   }
                 },
-                label: t.name,
+                label: _listingTypeLabel(t, l10n),
               );
             }).toList(),
           ),
@@ -463,75 +525,142 @@ class _SearchViewState extends State<SearchView> {
   Widget _brandModelYearContent(BuildContext context, bool isDark) {
     final l10n = AppLocalizations.of(context)!;
     final cs = Get.find<ConstantsService>();
-    final brands = cs.getBrands();
     return Obx(() {
-      final brandId = searchController.brandId.value;
-      final models = brandId != null ? cs.getModelsByBrandId(brandId) : <ModelItem>[];
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildBrandSelectorTile(context, isDark, l10n, brands, searchController.brandId.value),
-          const SizedBox(height: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.model,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
-                ),
-              ),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<int?>(
-                value: searchController.modelId.value,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  isDense: true,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
-                hint: Text(brandId == null ? l10n.selectBrandFirst : l10n.all),
-                items: [
-                  DropdownMenuItem<int?>(value: null, child: Text(l10n.all)),
-                  ...models.map((m) => DropdownMenuItem<int?>(value: m.id, child: Text(m.name))),
-                ],
-                onChanged: brandId == null ? null : (v) => searchController.modelId.value = v,
-              ),
-            ],
+          _lookupNavigationTile(
+            context: context,
+            isDark: isDark,
+            label: l10n.brand,
+            selectedIds: searchController.selectedBrandIds,
+            selectedNames: searchController.selectedBrandNames,
+            onTap: () => Get.to(
+              () => const SearchLookupPickerView(type: SearchLookupType.brand),
+            ),
+            onRemoveSelected: (id) {
+              searchController.selectedBrandIds.remove(id);
+              searchController.selectedBrandNames.remove(id);
+              searchController.selectedModelIds.clear();
+              searchController.selectedModelNames.clear();
+              searchController.selectedVariantIds.clear();
+              searchController.selectedVariantNames.clear();
+              searchController.brandId.value = null;
+              searchController.modelId.value = null;
+            },
           ),
           const SizedBox(height: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.modelYear,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+          AbsorbPointer(
+            absorbing: searchController.selectedBrandIds.isEmpty,
+            child: Opacity(
+              opacity: searchController.selectedBrandIds.isEmpty ? 0.5 : 1,
+              child: _lookupNavigationTile(
+                context: context,
+                isDark: isDark,
+                label: l10n.model,
+                selectedIds: searchController.selectedModelIds,
+                selectedNames: searchController.selectedModelNames,
+                onTap: () => Get.to(
+                  () => const SearchLookupPickerView(type: SearchLookupType.model),
                 ),
+                onRemoveSelected: (id) {
+                  searchController.selectedModelIds.remove(id);
+                  searchController.selectedModelNames.remove(id);
+                  searchController.selectedVariantIds.clear();
+                  searchController.selectedVariantNames.clear();
+                  searchController.modelId.value = null;
+                },
+                emptyHint: l10n.selectBrandFirst,
               ),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<int?>(
-                value: searchController.modelYearId.value,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  isDense: true,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+          const SizedBox(height: 12),
+          AbsorbPointer(
+            absorbing: searchController.selectedModelIds.isEmpty,
+            child: Opacity(
+              opacity: searchController.selectedModelIds.isEmpty ? 0.5 : 1,
+              child: _lookupNavigationTile(
+                context: context,
+                isDark: isDark,
+                label: l10n.variant,
+                selectedIds: searchController.selectedVariantIds,
+                selectedNames: searchController.selectedVariantNames,
+                onTap: () => Get.to(
+                  () => const SearchLookupPickerView(type: SearchLookupType.variant),
                 ),
-                hint: Text(l10n.all),
-                items: [
-                  DropdownMenuItem<int?>(value: null, child: Text(l10n.all)),
-                  ...cs.getModelYears().map((y) => DropdownMenuItem<int?>(value: y.id, child: Text(y.name))),
-                ],
-                onChanged: (v) => searchController.modelYearId.value = v,
+                onRemoveSelected: (id) {
+                  searchController.selectedVariantIds.remove(id);
+                  searchController.selectedVariantNames.remove(id);
+                },
+                emptyHint: l10n.selectBrandFirst,
               ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _singleSelectDropdown(
+            isDark: isDark,
+            label: l10n.gearType,
+            value: searchController.gearTypeId.value,
+            items: cs.getGearTypes(),
+            onChanged: (v) => searchController.gearTypeId.value = v,
+          ),
+          const SizedBox(height: 12),
+          Obx(() {
+            final currentYear = search_controller.SearchViewController.calendarYearMax;
+            // Isolate model-year observables so the range slider and slider thumbs rebuild reliably.
+            final mf = searchController.modelYearFrom.value;
+            final mt = searchController.modelYearTo.value;
+            return _rangeRow(
+              isDark: isDark,
+              label: l10n.modelYear,
+              fromCtrl: _yearFromController,
+              toCtrl: _yearToController,
+              fromVal: mf.toDouble(),
+              toVal: mt.toDouble(),
+              min: 1950,
+              max: currentYear.toDouble(),
+              divisions: currentYear - 1950,
+              onSliderChanged: (a, b) {
+                searchController.modelYearFrom.value = a.toInt();
+                searchController.modelYearTo.value = b.toInt();
+                _yearFromController.text = a > 1950 ? a.toInt().toString() : '';
+                _yearToController.text = b < currentYear ? b.toInt().toString() : '';
+              },
+              onFromChanged: (n) {
+                searchController.modelYearFrom.value = n.clamp(1950, currentYear.toDouble()).toInt();
+              },
+              onToChanged: (n) {
+                searchController.modelYearTo.value = n.clamp(1950, currentYear.toDouble()).toInt();
+              },
+            );
+          }),
+        ],
+      );
+    });
+  }
+
+  Widget _salesTypeSection(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
+    final cs = Get.find<ConstantsService>();
+    return Obx(() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _filterSectionTitle(l10n.salesType, isDark),
+          DropdownButtonFormField<int?>(
+            value: searchController.salesTypeId.value,
+            isExpanded: true,
+            decoration: InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            hint: Text(l10n.all),
+            items: [
+              DropdownMenuItem<int?>(value: null, child: Text(l10n.all)),
+              ...cs.getSalesTypes().map((s) => DropdownMenuItem<int?>(value: s.id, child: Text(s.name))),
             ],
+            onChanged: (v) => searchController.salesTypeId.value = v,
           ),
         ],
       );
@@ -539,7 +668,13 @@ class _SearchViewState extends State<SearchView> {
   }
   Widget _priceKmContent(BuildContext context, bool isDark) {
     final l10n = AppLocalizations.of(context)!;
+    final priceMax = search_controller.SearchViewController.priceMax.toDouble();
+    final mileageMax = search_controller.SearchViewController.mileageMax.toDouble();
     return Obx(() {
+      final pf = searchController.priceFrom.value.clamp(0.0, priceMax);
+      final pt = searchController.priceTo.value.clamp(0.0, priceMax);
+      final mf = searchController.mileageFrom.value.clamp(0.0, mileageMax);
+      final mt = searchController.mileageTo.value.clamp(0.0, mileageMax);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -567,7 +702,9 @@ class _SearchViewState extends State<SearchView> {
                   ),
                   onChanged: (v) {
                     final n = int.tryParse(v);
-                    if (n != null) searchController.priceFrom.value = n.toDouble();
+                    if (n != null) {
+                      searchController.priceFrom.value = n.clamp(0, search_controller.SearchViewController.priceMax).toDouble();
+                    }
                   },
                 ),
               ),
@@ -587,7 +724,9 @@ class _SearchViewState extends State<SearchView> {
                   ),
                   onChanged: (v) {
                     final n = int.tryParse(v);
-                    if (n != null) searchController.priceTo.value = n.toDouble();
+                    if (n != null) {
+                      searchController.priceTo.value = n.clamp(0, search_controller.SearchViewController.priceMax).toDouble();
+                    }
                   },
                 ),
               ),
@@ -596,15 +735,15 @@ class _SearchViewState extends State<SearchView> {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: RangeSlider(
-              values: RangeValues(searchController.priceFrom.value.clamp(0, 1000000), searchController.priceTo.value.clamp(0, 1000000)),
+              values: RangeValues(min(pf, pt), max(pf, pt)),
               min: 0,
-              max: 1000000,
+              max: priceMax,
               divisions: 100,
               onChanged: (v) {
                 searchController.priceFrom.value = v.start;
                 searchController.priceTo.value = v.end;
                 _priceFromController.text = v.start > 0 ? v.start.toInt().toString() : '';
-                _priceToController.text = v.end < 1000000 ? v.end.toInt().toString() : '';
+                _priceToController.text = v.end < priceMax ? v.end.toInt().toString() : '';
               },
             ),
           ),
@@ -633,7 +772,9 @@ class _SearchViewState extends State<SearchView> {
                   ),
                   onChanged: (v) {
                     final n = int.tryParse(v);
-                    if (n != null) searchController.mileageFrom.value = n.toDouble();
+                    if (n != null) {
+                      searchController.mileageFrom.value = n.clamp(0, search_controller.SearchViewController.mileageMax).toDouble();
+                    }
                   },
                 ),
               ),
@@ -651,22 +792,24 @@ class _SearchViewState extends State<SearchView> {
                   ),
                   onChanged: (v) {
                     final n = int.tryParse(v);
-                    if (n != null) searchController.mileageTo.value = n.toDouble();
+                    if (n != null) {
+                      searchController.mileageTo.value = n.clamp(0, search_controller.SearchViewController.mileageMax).toDouble();
+                    }
                   },
                 ),
               ),
             ],
           ),
           RangeSlider(
-            values: RangeValues(searchController.mileageFrom.value.clamp(0, 500000), searchController.mileageTo.value.clamp(0, 500000)),
+            values: RangeValues(min(mf, mt), max(mf, mt)),
             min: 0,
-            max: 500000,
+            max: mileageMax,
             divisions: 50,
             onChanged: (v) {
               searchController.mileageFrom.value = v.start;
               searchController.mileageTo.value = v.end;
               _mileageFromController.text = v.start > 0 ? v.start.toInt().toString() : '';
-              _mileageToController.text = v.end < 500000 ? v.end.toInt().toString() : '';
+              _mileageToController.text = v.end < mileageMax ? v.end.toInt().toString() : '';
             },
           ),
         ],
@@ -719,51 +862,47 @@ class _SearchViewState extends State<SearchView> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: _singleSelectDropdown(
-                  isDark: isDark,
-                  label: l10n.fuelType,
-                  value: searchController.fuelTypeIds.isNotEmpty ? searchController.fuelTypeIds.first : null,
-                  items: cs.getFuelTypes(),
-                  onChanged: (v) {
-                    searchController.fuelTypeIds.clear();
-                    if (v != null) searchController.fuelTypeIds.add(v);
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _singleSelectDropdown(
-                  isDark: isDark,
-                  label: l10n.gearType,
-                  value: searchController.gearTypeIds.isNotEmpty ? searchController.gearTypeIds.first : null,
-                  items: cs.getGearTypes(),
-                  onChanged: (v) {
-                    searchController.gearTypeIds.clear();
-                    if (v != null) searchController.gearTypeIds.add(v);
-                  },
-                ),
-              ),
-            ],
+          Text(
+            l10n.fuelType,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 0,
+            runSpacing: 0,
+            children: cs.getFuelTypes().map((ft) {
+              final selected = searchController.fuelTypeIds.contains(ft.id);
+              return _wrapCheckboxChip(
+                isDark,
+                value: selected,
+                onTap: () {
+                  if (selected) {
+                    searchController.fuelTypeIds.remove(ft.id);
+                  } else {
+                    searchController.fuelTypeIds.add(ft.id);
+                  }
+                },
+                label: ft.name,
+              );
+            }).toList(),
           ),
           const SizedBox(height: 12),
           _singleSelectDropdown(
             isDark: isDark,
             label: l10n.bodyTypes,
-            value: searchController.bodyTypeIds.isNotEmpty ? searchController.bodyTypeIds.first : null,
+            value: searchController.bodyTypeId.value,
             items: cs.getBodyTypes(),
-            onChanged: (v) {
-              searchController.bodyTypeIds.clear();
-              if (v != null) searchController.bodyTypeIds.add(v);
-            },
+            onChanged: (v) => searchController.bodyTypeId.value = v,
           ),
         ],
       );
     });
   }
-  Widget _colorTypeContent(BuildContext context, bool isDark) {
+  Widget _colorDetailsContent(BuildContext context, bool isDark) {
     final l10n = AppLocalizations.of(context)!;
     final cs = Get.find<ConstantsService>();
     return Obx(() {
@@ -779,53 +918,18 @@ class _SearchViewState extends State<SearchView> {
               Expanded(
                 child: dropdown(
                   l10n.color,
-                  searchController.colorIds.isNotEmpty ? searchController.colorIds.first : null,
+                  searchController.colorId.value,
                   cs.getColors(),
-                  (v) {
-                    searchController.colorIds.clear();
-                    if (v != null) searchController.colorIds.add(v);
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: dropdown(
-                  l10n.type,
-                  searchController.typeIds.isNotEmpty ? searchController.typeIds.first : null,
-                  cs.getTypes(),
-                  (v) {
-                    searchController.typeIds.clear();
-                    if (v != null) searchController.typeIds.add(v);
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: dropdown(
-                  l10n.salesType,
-                  searchController.salesTypeIds.isNotEmpty ? searchController.salesTypeIds.first : null,
-                  cs.getSalesTypes(),
-                  (v) {
-                    searchController.salesTypeIds.clear();
-                    if (v != null) searchController.salesTypeIds.add(v);
-                  },
+                  (v) => searchController.colorId.value = v,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: dropdown(
                   l10n.priceType,
-                  searchController.priceTypeIds.isNotEmpty ? searchController.priceTypeIds.first : null,
+                  searchController.priceTypeId.value,
                   cs.getPriceTypes(),
-                  (v) {
-                    searchController.priceTypeIds.clear();
-                    if (v != null) searchController.priceTypeIds.add(v);
-                  },
+                  (v) => searchController.priceTypeId.value = v,
                 ),
               ),
             ],
@@ -837,24 +941,18 @@ class _SearchViewState extends State<SearchView> {
               Expanded(
                 child: dropdown(
                   l10n.euronorms,
-                  searchController.euronormIds.isNotEmpty ? searchController.euronormIds.first : null,
+                  searchController.emissionNormId.value,
                   cs.getEuronorms(),
-                  (v) {
-                    searchController.euronormIds.clear();
-                    if (v != null) searchController.euronormIds.add(v);
-                  },
+                  (v) => searchController.emissionNormId.value = v,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: dropdown(
                   l10n.use,
-                  searchController.useIds.isNotEmpty ? searchController.useIds.first : null,
+                  searchController.useId.value,
                   cs.getVehicleUses(),
-                  (v) {
-                    searchController.useIds.clear();
-                    if (v != null) searchController.useIds.add(v);
-                  },
+                  (v) => searchController.useId.value = v,
                 ),
               ),
             ],
@@ -876,8 +974,16 @@ class _SearchViewState extends State<SearchView> {
     required void Function(double, double) onSliderChanged,
     required void Function(double) onFromChanged,
     required void Function(double) onToChanged,
+    bool allowDecimal = false,
   }) {
     final l10n = AppLocalizations.of(context)!;
+    final clampedFrom = fromVal.clamp(min, max);
+    final clampedTo = toVal.clamp(min, max);
+    final rangeStart = clampedFrom <= clampedTo ? clampedFrom : clampedTo;
+    final rangeEnd = clampedFrom <= clampedTo ? clampedTo : clampedFrom;
+    final formatters = allowDecimal
+        ? <TextInputFormatter>[FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))]
+        : <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -895,8 +1001,10 @@ class _SearchViewState extends State<SearchView> {
             Expanded(
               child: TextFormField(
                 controller: fromCtrl,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                keyboardType: allowDecimal
+                    ? const TextInputType.numberWithOptions(decimal: true)
+                    : TextInputType.number,
+                inputFormatters: formatters,
                 decoration: InputDecoration(
                   hintText: l10n.from,
                   isDense: true,
@@ -904,7 +1012,7 @@ class _SearchViewState extends State<SearchView> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
                 onChanged: (v) {
-                  final n = double.tryParse(v);
+                  final n = double.tryParse(v.replaceAll(',', '.'));
                   if (n != null) onFromChanged(n);
                 },
               ),
@@ -913,8 +1021,10 @@ class _SearchViewState extends State<SearchView> {
             Expanded(
               child: TextFormField(
                 controller: toCtrl,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                keyboardType: allowDecimal
+                    ? const TextInputType.numberWithOptions(decimal: true)
+                    : TextInputType.number,
+                inputFormatters: formatters,
                 decoration: InputDecoration(
                   hintText: l10n.to,
                   isDense: true,
@@ -922,7 +1032,7 @@ class _SearchViewState extends State<SearchView> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
                 onChanged: (v) {
-                  final n = double.tryParse(v);
+                  final n = double.tryParse(v.replaceAll(',', '.'));
                   if (n != null) onToChanged(n);
                 },
               ),
@@ -932,7 +1042,7 @@ class _SearchViewState extends State<SearchView> {
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: RangeSlider(
-            values: RangeValues(fromVal.clamp(min, max), toVal.clamp(min, max)),
+            values: RangeValues(rangeStart, rangeEnd),
             min: min,
             max: max,
             divisions: divisions,
@@ -944,31 +1054,12 @@ class _SearchViewState extends State<SearchView> {
   }
   Widget _modelYearHpContent(BuildContext context, bool isDark) {
     final l10n = AppLocalizations.of(context)!;
-    final currentYear = DateTime.now().year + 1;
+    final regYearMax = search_controller.SearchViewController.calendarYearMax;
+    const fuelEffMax = 100.0;
     return Obx(() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _rangeRow(
-            isDark: isDark,
-            label: l10n.modelYear,
-            fromCtrl: _yearFromController,
-            toCtrl: _yearToController,
-            fromVal: searchController.yearFrom.value.toDouble(),
-            toVal: searchController.yearTo.value.toDouble(),
-            min: 1975,
-            max: currentYear.toDouble(),
-            divisions: currentYear - 1975,
-            onSliderChanged: (a, b) {
-              searchController.yearFrom.value = a.toInt();
-              searchController.yearTo.value = b.toInt();
-              _yearFromController.text = a > 1975 ? a.toInt().toString() : '';
-              _yearToController.text = b < currentYear ? b.toInt().toString() : '';
-            },
-            onFromChanged: (n) => searchController.yearFrom.value = n.clamp(1975, currentYear).toInt(),
-            onToChanged: (n) => searchController.yearTo.value = n.clamp(1975, currentYear).toInt(),
-          ),
-          const SizedBox(height: 16),
           _rangeRow(
             isDark: isDark,
             label: l10n.firstRegistrationYear,
@@ -976,17 +1067,17 @@ class _SearchViewState extends State<SearchView> {
             toCtrl: _firstRegYearToController,
             fromVal: searchController.firstRegYearFrom.value.toDouble(),
             toVal: searchController.firstRegYearTo.value.toDouble(),
-            min: 1975,
-            max: currentYear.toDouble(),
-            divisions: currentYear - 1975,
+            min: 1950,
+            max: regYearMax.toDouble(),
+            divisions: regYearMax - 1950,
             onSliderChanged: (a, b) {
               searchController.firstRegYearFrom.value = a.toInt();
               searchController.firstRegYearTo.value = b.toInt();
-              _firstRegYearFromController.text = a > 1975 ? a.toInt().toString() : '';
-              _firstRegYearToController.text = b < currentYear ? b.toInt().toString() : '';
+              _firstRegYearFromController.text = a > 1950 ? a.toInt().toString() : '';
+              _firstRegYearToController.text = b < regYearMax ? b.toInt().toString() : '';
             },
-            onFromChanged: (n) => searchController.firstRegYearFrom.value = n.clamp(1975, currentYear).toInt(),
-            onToChanged: (n) => searchController.firstRegYearTo.value = n.clamp(1975, currentYear).toInt(),
+            onFromChanged: (n) => searchController.firstRegYearFrom.value = n.clamp(1950, regYearMax.toDouble()).toInt(),
+            onToChanged: (n) => searchController.firstRegYearTo.value = n.clamp(1950, regYearMax.toDouble()).toInt(),
           ),
           const SizedBox(height: 16),
           _rangeRow(
@@ -997,13 +1088,13 @@ class _SearchViewState extends State<SearchView> {
             fromVal: searchController.ownershipTaxFrom.value,
             toVal: searchController.ownershipTaxTo.value,
             min: 0,
-            max: 100000,
-            divisions: 100,
+            max: 20000,
+            divisions: 40,
             onSliderChanged: (a, b) {
               searchController.ownershipTaxFrom.value = a;
               searchController.ownershipTaxTo.value = b;
               _ownershipTaxFromController.text = a > 0 ? a.toInt().toString() : '';
-              _ownershipTaxToController.text = b < 100000 ? b.toInt().toString() : '';
+              _ownershipTaxToController.text = b < 20000 ? b.toInt().toString() : '';
             },
             onFromChanged: (n) => searchController.ownershipTaxFrom.value = n,
             onToChanged: (n) => searchController.ownershipTaxTo.value = n,
@@ -1014,19 +1105,19 @@ class _SearchViewState extends State<SearchView> {
             label: l10n.horsepowerHp,
             fromCtrl: _enginePowerFromController,
             toCtrl: _enginePowerToController,
-            fromVal: searchController.enginePowerFrom.value,
-            toVal: searchController.enginePowerTo.value,
+            fromVal: searchController.enginePowerKwFrom.value,
+            toVal: searchController.enginePowerKwTo.value,
             min: 0,
             max: 1000,
             divisions: 100,
             onSliderChanged: (a, b) {
-              searchController.enginePowerFrom.value = a;
-              searchController.enginePowerTo.value = b;
+              searchController.enginePowerKwFrom.value = a;
+              searchController.enginePowerKwTo.value = b;
               _enginePowerFromController.text = a > 0 ? a.toInt().toString() : '';
               _enginePowerToController.text = b < 1000 ? b.toInt().toString() : '';
             },
-            onFromChanged: (n) => searchController.enginePowerFrom.value = n,
-            onToChanged: (n) => searchController.enginePowerTo.value = n,
+            onFromChanged: (n) => searchController.enginePowerKwFrom.value = n,
+            onToChanged: (n) => searchController.enginePowerKwTo.value = n,
           ),
           const SizedBox(height: 16),
           _rangeRow(
@@ -1034,39 +1125,19 @@ class _SearchViewState extends State<SearchView> {
             label: l10n.batteryCapacityKwh,
             fromCtrl: _batteryFromController,
             toCtrl: _batteryToController,
-            fromVal: searchController.batteryCapacityFrom.value,
-            toVal: searchController.batteryCapacityTo.value,
+            fromVal: searchController.electricalConsumptionFrom.value,
+            toVal: searchController.electricalConsumptionTo.value,
             min: 0,
-            max: 200,
+            max: 500,
             divisions: 50,
             onSliderChanged: (a, b) {
-              searchController.batteryCapacityFrom.value = a;
-              searchController.batteryCapacityTo.value = b;
+              searchController.electricalConsumptionFrom.value = a;
+              searchController.electricalConsumptionTo.value = b;
               _batteryFromController.text = a > 0 ? a.toInt().toString() : '';
-              _batteryToController.text = b < 200 ? b.toInt().toString() : '';
+              _batteryToController.text = b < 500 ? b.toInt().toString() : '';
             },
-            onFromChanged: (n) => searchController.batteryCapacityFrom.value = n,
-            onToChanged: (n) => searchController.batteryCapacityTo.value = n,
-          ),
-          const SizedBox(height: 16),
-          _rangeRow(
-            isDark: isDark,
-            label: l10n.rangeKm,
-            fromCtrl: _rangeKmFromController,
-            toCtrl: _rangeKmToController,
-            fromVal: searchController.rangeKmFrom.value,
-            toVal: searchController.rangeKmTo.value,
-            min: 0,
-            max: 1000,
-            divisions: 50,
-            onSliderChanged: (a, b) {
-              searchController.rangeKmFrom.value = a;
-              searchController.rangeKmTo.value = b;
-              _rangeKmFromController.text = a > 0 ? a.toInt().toString() : '';
-              _rangeKmToController.text = b < 1000 ? b.toInt().toString() : '';
-            },
-            onFromChanged: (n) => searchController.rangeKmFrom.value = n,
-            onToChanged: (n) => searchController.rangeKmTo.value = n,
+            onFromChanged: (n) => searchController.electricalConsumptionFrom.value = n,
+            onToChanged: (n) => searchController.electricalConsumptionTo.value = n,
           ),
           const SizedBox(height: 16),
           _rangeRow(
@@ -1074,19 +1145,24 @@ class _SearchViewState extends State<SearchView> {
             label: l10n.fuelEfficiency,
             fromCtrl: _fuelEfficiencyFromController,
             toCtrl: _fuelEfficiencyToController,
-            fromVal: searchController.fuelEfficiencyFrom.value,
-            toVal: searchController.fuelEfficiencyTo.value,
+            fromVal: searchController.kmPerLiterFrom.value,
+            toVal: searchController.kmPerLiterTo.value,
             min: 0,
-            max: 100,
-            divisions: 50,
+            max: fuelEffMax,
+            divisions: 200,
+            allowDecimal: true,
             onSliderChanged: (a, b) {
-              searchController.fuelEfficiencyFrom.value = a;
-              searchController.fuelEfficiencyTo.value = b;
-              _fuelEfficiencyFromController.text = a > 0 ? a.toInt().toString() : '';
-              _fuelEfficiencyToController.text = b < 100 ? b.toInt().toString() : '';
+              final af = (((a * 2).round() / 2).clamp(0.0, fuelEffMax) as num).toDouble();
+              final bf = (((b * 2).round() / 2).clamp(0.0, fuelEffMax) as num).toDouble();
+              searchController.kmPerLiterFrom.value = af;
+              searchController.kmPerLiterTo.value = bf;
+              _fuelEfficiencyFromController.text =
+                  _kmPerLiterSliderText(af, isTo: false, maxVal: fuelEffMax);
+              _fuelEfficiencyToController.text =
+                  _kmPerLiterSliderText(bf, isTo: true, maxVal: fuelEffMax);
             },
-            onFromChanged: (n) => searchController.fuelEfficiencyFrom.value = n,
-            onToChanged: (n) => searchController.fuelEfficiencyTo.value = n,
+            onFromChanged: (n) => searchController.kmPerLiterFrom.value = n.clamp(0, fuelEffMax),
+            onToChanged: (n) => searchController.kmPerLiterTo.value = n.clamp(0, fuelEffMax),
           ),
         ],
       );
@@ -1094,9 +1170,8 @@ class _SearchViewState extends State<SearchView> {
   }
   Widget _physicalDetailsContent(BuildContext context, bool isDark) {
     final l10n = AppLocalizations.of(context)!;
-    const topSpeedMax = 300.0;
+    const topSpeedMax = 400.0;
     const weightMax = 5000.0;
-    const engineDispMax = 10000.0;
     return Obx(() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1106,19 +1181,19 @@ class _SearchViewState extends State<SearchView> {
             label: l10n.topSpeedKmh,
             fromCtrl: _topSpeedFromController,
             toCtrl: _topSpeedToController,
-            fromVal: searchController.topSpeedFrom.value,
-            toVal: searchController.topSpeedTo.value,
+            fromVal: searchController.maxSpeedFrom.value,
+            toVal: searchController.maxSpeedTo.value,
             min: 0,
             max: topSpeedMax,
-            divisions: 60,
+            divisions: 80,
             onSliderChanged: (a, b) {
-              searchController.topSpeedFrom.value = a;
-              searchController.topSpeedTo.value = b;
+              searchController.maxSpeedFrom.value = a;
+              searchController.maxSpeedTo.value = b;
               _topSpeedFromController.text = a > 0 ? a.toInt().toString() : '';
               _topSpeedToController.text = b < topSpeedMax ? b.toInt().toString() : '';
             },
-            onFromChanged: (n) => searchController.topSpeedFrom.value = n,
-            onToChanged: (n) => searchController.topSpeedTo.value = n,
+            onFromChanged: (n) => searchController.maxSpeedFrom.value = n,
+            onToChanged: (n) => searchController.maxSpeedTo.value = n,
           ),
           const SizedBox(height: 16),
           _rangeRow(
@@ -1126,50 +1201,30 @@ class _SearchViewState extends State<SearchView> {
             label: l10n.weightKg,
             fromCtrl: _weightFromController,
             toCtrl: _weightToController,
-            fromVal: searchController.weightFrom.value,
-            toVal: searchController.weightTo.value,
+            fromVal: searchController.maximumWeightKgFrom.value,
+            toVal: searchController.maximumWeightKgTo.value,
             min: 0,
             max: weightMax,
             divisions: 50,
             onSliderChanged: (a, b) {
-              searchController.weightFrom.value = a;
-              searchController.weightTo.value = b;
+              searchController.maximumWeightKgFrom.value = a;
+              searchController.maximumWeightKgTo.value = b;
               _weightFromController.text = a > 0 ? a.toInt().toString() : '';
               _weightToController.text = b < weightMax ? b.toInt().toString() : '';
             },
-            onFromChanged: (n) => searchController.weightFrom.value = n,
-            onToChanged: (n) => searchController.weightTo.value = n,
-          ),
-          const SizedBox(height: 16),
-          _rangeRow(
-            isDark: isDark,
-            label: l10n.engineDisplacementCc,
-            fromCtrl: _engineDisplacementFromController,
-            toCtrl: _engineDisplacementToController,
-            fromVal: searchController.engineDisplacementFrom.value,
-            toVal: searchController.engineDisplacementTo.value,
-            min: 0,
-            max: engineDispMax,
-            divisions: 100,
-            onSliderChanged: (a, b) {
-              searchController.engineDisplacementFrom.value = a;
-              searchController.engineDisplacementTo.value = b;
-              _engineDisplacementFromController.text = a > 0 ? a.toInt().toString() : '';
-              _engineDisplacementToController.text = b < engineDispMax ? b.toInt().toString() : '';
-            },
-            onFromChanged: (n) => searchController.engineDisplacementFrom.value = n,
-            onToChanged: (n) => searchController.engineDisplacementTo.value = n,
+            onFromChanged: (n) => searchController.maximumWeightKgFrom.value = n,
+            onToChanged: (n) => searchController.maximumWeightKgTo.value = n,
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: TextFormField(
-                  controller: _engineCylindersController,
+                  controller: _doorCountController,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
-                    labelText: l10n.cylinders,
+                    labelText: l10n.doors,
                     labelStyle: TextStyle(color: isDark ? AppColors.mutedDark : AppColors.mutedLight, fontSize: 12),
                     isDense: true,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -1177,26 +1232,7 @@ class _SearchViewState extends State<SearchView> {
                   ),
                   onChanged: (v) {
                     final n = int.tryParse(v);
-                    if (n != null) searchController.engineCylinders.value = n.clamp(0, 16);
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: _doorsMinController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: l10n.doorsMin,
-                    labelStyle: TextStyle(color: isDark ? AppColors.mutedDark : AppColors.mutedLight, fontSize: 12),
-                    isDense: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                  onChanged: (v) {
-                    final n = int.tryParse(v);
-                    if (n != null) searchController.doorsMin.value = n.clamp(0, 10);
+                    if (n != null) searchController.doorCount.value = n.clamp(0, 10);
                   },
                 ),
               ),
@@ -1245,26 +1281,7 @@ class _SearchViewState extends State<SearchView> {
             children: [
               Expanded(
                 child: TextFormField(
-                  controller: _wheelsController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: l10n.wheels,
-                    labelStyle: TextStyle(color: isDark ? AppColors.mutedDark : AppColors.mutedLight, fontSize: 12),
-                    isDense: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                  onChanged: (v) {
-                    final n = int.tryParse(v);
-                    if (n != null) searchController.wheels.value = n.clamp(0, 20);
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: _axlesController,
+                  controller: _axleCountController,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
@@ -1276,7 +1293,7 @@ class _SearchViewState extends State<SearchView> {
                   ),
                   onChanged: (v) {
                     final n = int.tryParse(v);
-                    if (n != null) searchController.axles.value = n.clamp(0, 10);
+                    if (n != null) searchController.axleCount.value = n.clamp(0, 10);
                   },
                 ),
               ),
@@ -1295,61 +1312,9 @@ class _SearchViewState extends State<SearchView> {
                   ),
                   onChanged: (v) {
                     final n = int.tryParse(v);
-                    if (n != null) searchController.airbags.value = n.clamp(0, 20);
+                    if (n != null) searchController.specificationsAirbags.value = n.clamp(0, 20);
                   },
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            l10n.driveWheels,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _wrapCheckboxChip(
-                isDark,
-                value: searchController.driveAxles.contains('fwd'),
-                onTap: () {
-                  if (searchController.driveAxles.contains('fwd')) {
-                    searchController.driveAxles.remove('fwd');
-                  } else {
-                    searchController.driveAxles.add('fwd');
-                  }
-                },
-                label: l10n.driveWheelFwd,
-              ),
-              _wrapCheckboxChip(
-                isDark,
-                value: searchController.driveAxles.contains('rwd'),
-                onTap: () {
-                  if (searchController.driveAxles.contains('rwd')) {
-                    searchController.driveAxles.remove('rwd');
-                  } else {
-                    searchController.driveAxles.add('rwd');
-                  }
-                },
-                label: l10n.driveWheelRwd,
-              ),
-              _wrapCheckboxChip(
-                isDark,
-                value: searchController.driveAxles.contains('awd'),
-                onTap: () {
-                  if (searchController.driveAxles.contains('awd')) {
-                    searchController.driveAxles.remove('awd');
-                  } else {
-                    searchController.driveAxles.add('awd');
-                  }
-                },
-                label: l10n.driveWheelAwd,
               ),
             ],
           ),
@@ -1403,9 +1368,9 @@ class _SearchViewState extends State<SearchView> {
                 hint: Text(l10n.all),
                 items: [
                   DropdownMenuItem<String?>(value: null, child: Text(l10n.all)),
-                  const DropdownMenuItem<String?>(value: 'AC', child: Text('AC')),
-                  const DropdownMenuItem<String?>(value: 'DC', child: Text('DC')),
-                  const DropdownMenuItem<String?>(value: 'AC/DC', child: Text('AC/DC')),
+                  DropdownMenuItem<String?>(value: 'AC', child: Text(l10n.filterChargingAc)),
+                  DropdownMenuItem<String?>(value: 'DC', child: Text(l10n.filterChargingDc)),
+                  DropdownMenuItem<String?>(value: 'AC/DC', child: Text(l10n.filterChargingAcDc)),
                 ],
                 onChanged: (v) => searchController.chargingType.value = v,
               ),
@@ -1418,9 +1383,9 @@ class _SearchViewState extends State<SearchView> {
             children: [
               _wrapCheckboxChip(
                 isDark,
-                value: searchController.ncapFive.value,
-                onTap: () => searchController.ncapFive.value = !searchController.ncapFive.value,
-                label: l10n.ncapFiveStar,
+                value: searchController.ncapTest.value,
+                onTap: () => searchController.ncapTest.value = !searchController.ncapTest.value,
+                label: l10n.filterNcapTest,
               ),
               _wrapCheckboxChip(
                 isDark,
@@ -1441,9 +1406,37 @@ class _SearchViewState extends State<SearchView> {
     });
   }
   Widget _equipmentContent(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Get.find<ConstantsService>();
     final equipmentTypes = cs.getEquipmentTypes();
-    if (equipmentTypes.isEmpty) return const SizedBox.shrink();
+    final otherEquipments = cs.getEquipmentsWithoutType();
+    if (equipmentTypes.isEmpty && otherEquipments.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    Widget equipmentWrap(List<EquipmentItem> equipments) {
+      return Obx(() {
+        return Wrap(
+          spacing: 0,
+          runSpacing: 0,
+          children: equipments.map((e) {
+            final selected = searchController.equipmentIds.contains(e.id);
+            return _wrapCheckboxChip(
+              isDark,
+              value: selected,
+              onTap: () {
+                if (selected) {
+                  searchController.equipmentIds.remove(e.id);
+                } else {
+                  searchController.equipmentIds.add(e.id);
+                }
+              },
+              label: e.name,
+            );
+          }).toList(),
+        );
+      });
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1462,56 +1455,49 @@ class _SearchViewState extends State<SearchView> {
             children: [
               Padding(
                 padding: const EdgeInsets.only(left: 8, right: 8, bottom: 12),
-                child: Obx(() {
-                  return Wrap(
-                    spacing: 0,
-                    runSpacing: 0,
-                    children: equipments.map((e) {
-                      final selected = searchController.equipmentIds.contains(e.id);
-                      return _wrapCheckboxChip(
-                        isDark,
-                        value: selected,
-                        onTap: () {
-                          if (selected) {
-                            searchController.equipmentIds.remove(e.id);
-                          } else {
-                            searchController.equipmentIds.add(e.id);
-                          }
-                        },
-                        label: e.name,
-                      );
-                    }).toList(),
-                  );
-                }),
+                child: equipmentWrap(equipments),
               ),
             ],
           );
         }),
+        if (otherEquipments.isNotEmpty)
+          ExpansionTile(
+            title: Text(
+              l10n.equipmentOther,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textDark : AppColors.textLight,
+              ),
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 8, right: 8, bottom: 12),
+                child: equipmentWrap(otherEquipments),
+              ),
+            ],
+          ),
       ],
     );
   }
-  Widget _buildBrandSelectorTile(
-    BuildContext context,
-    bool isDark,
-    AppLocalizations l10n,
-    List<LookupItem> brands,
-    int? selectedBrandId,
-  ) {
-    LookupItem? selectedBrand;
-    if (selectedBrandId != null) {
-      try {
-        selectedBrand = brands.firstWhere((b) => b.id == selectedBrandId);
-      } catch (_) {
-        selectedBrand = null;
-      }
-    }
-    final displayText = selectedBrand?.name ?? l10n.all;
+  Widget _lookupNavigationTile({
+    required BuildContext context,
+    required bool isDark,
+    required String label,
+    required List<int> selectedIds,
+    required Map<int, String> selectedNames,
+    required VoidCallback onTap,
+    required void Function(int id) onRemoveSelected,
+    String? emptyHint,
+  }) {
+    final selectedLabel = selectedIds.isEmpty
+        ? (emptyHint ?? AppLocalizations.of(context)!.all)
+        : selectedIds.map((id) => selectedNames[id] ?? '#$id').join(', ');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          l10n.brand,
+          label,
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w500,
@@ -1519,29 +1505,66 @@ class _SearchViewState extends State<SearchView> {
           ),
         ),
         const SizedBox(height: 6),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => Get.toNamed('/brand-selector'),
-            borderRadius: BorderRadius.circular(8),
-            child: InputDecorator(
-              decoration: InputDecoration(
-                isDense: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                suffixIcon: Icon(Icons.chevron_right, color: isDark ? AppColors.mutedDark : AppColors.mutedLight, size: 24),
-              ),
-              child: Text(
-                displayText,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: isDark ? AppColors.textDark : AppColors.textLight,
-                ),
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: InputDecorator(
+            decoration: InputDecoration(
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              suffixIcon: Icon(Icons.expand_more, color: isDark ? AppColors.mutedDark : AppColors.mutedLight),
+            ),
+            child: Text(
+              selectedLabel,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 16,
+                color: isDark ? AppColors.textDark : AppColors.textLight,
               ),
             ),
           ),
         ),
+        if (selectedIds.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _selectedLookupChips(
+            isDark: isDark,
+            chips: selectedIds.map((id) {
+              return _LookupChipData(
+                id: id,
+                label: selectedNames[id] ?? '#$id',
+              );
+            }).toList(),
+            onRemove: onRemoveSelected,
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _selectedLookupChips({
+    required bool isDark,
+    required List<_LookupChipData> chips,
+    required void Function(int id) onRemove,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: chips.map((chip) {
+        return InputChip(
+          label: Text(
+            chip.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          onDeleted: () => onRemove(chip.id),
+          deleteIcon: const Icon(Icons.close, size: 18),
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          backgroundColor: isDark ? AppColors.cardDark : AppColors.borderLight.withValues(alpha: 0.5),
+        );
+      }).toList(),
     );
   }
 
@@ -1596,10 +1619,7 @@ class _SearchViewState extends State<SearchView> {
               _enginePowerToController.text = '';
               _batteryFromController.text = '';
               _batteryToController.text = '';
-              _rangeKmFromController.text = '';
-              _rangeKmToController.text = '';
-              _sellerDistanceController.text = '';
-              _doorsMinController.text = '';
+              _doorCountController.text = '';
               _seatsMinController.text = '';
               _seatsMaxController.text = '';
               _towingWeightController.text = '';
@@ -1609,11 +1629,7 @@ class _SearchViewState extends State<SearchView> {
               _topSpeedToController.text = '';
               _weightFromController.text = '';
               _weightToController.text = '';
-              _engineDisplacementFromController.text = '';
-              _engineDisplacementToController.text = '';
-              _engineCylindersController.text = '';
-              _wheelsController.text = '';
-              _axlesController.text = '';
+              _axleCountController.text = '';
               _airbagsController.text = '';
             },
             style: OutlinedButton.styleFrom(
@@ -1647,4 +1663,14 @@ class _SearchViewState extends State<SearchView> {
       ],
     );
   }
+}
+
+class _LookupChipData {
+  final int id;
+  final String label;
+
+  const _LookupChipData({
+    required this.id,
+    required this.label,
+  });
 }

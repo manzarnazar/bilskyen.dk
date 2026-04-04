@@ -1,4 +1,6 @@
 class VehicleLookupResponseModel {
+  /// Canonical DMR fact row id from local lookup (plate or manual resolve).
+  final int? dmrFactVehicleId;
   final String? registration;
   final String? vin;
   final String? title;
@@ -66,6 +68,7 @@ class VehicleLookupResponseModel {
   final int? gearTypeId;
 
   VehicleLookupResponseModel({
+    this.dmrFactVehicleId,
     this.registration,
     this.vin,
     this.title,
@@ -188,7 +191,36 @@ class VehicleLookupResponseModel {
       }
     }
 
+    final my = vehicleData['model_year'];
+    ModelYearModel? modelYearObj;
+    if (my is int) {
+      final y = my;
+      modelYearObj = ModelYearModel(id: y, name: '$y');
+    } else if (my is num) {
+      final y = my.toInt();
+      modelYearObj = ModelYearModel(id: y, name: '$y');
+    } else if (my is Map<String, dynamic>) {
+      modelYearObj = ModelYearModel.fromJson(my);
+    }
+
+    final fuelEff = _parseDouble(
+      vehicleData['fuel_efficiency'] ??
+          vehicleData['fuelEfficiency'] ??
+          vehicleData['km_per_liter'],
+    );
+
+    int? parseFirstRegYear(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String && v.length >= 4) {
+        return int.tryParse(v.substring(0, 4));
+      }
+      return null;
+    }
+
     return VehicleLookupResponseModel(
+      dmrFactVehicleId: _parseInt(vehicleData['dmr_fact_vehicle_id']),
       registration: vehicleData['registration'] as String?,
       vin: vehicleData['vin'] as String?,
       title: vehicleData['title'] as String?,
@@ -198,10 +230,7 @@ class VehicleLookupResponseModel {
       model: vehicleData['model'] != null
           ? ModelModel.fromJson(vehicleData['model'] as Map<String, dynamic>)
           : null,
-      modelYear: vehicleData['model_year'] != null
-          ? ModelYearModel.fromJson(
-              vehicleData['model_year'] as Map<String, dynamic>)
-          : null,
+      modelYear: modelYearObj,
       fuelType: vehicleData['fuel_type'] != null
           ? FuelTypeModel.fromJson(
               vehicleData['fuel_type'] as Map<String, dynamic>)
@@ -215,7 +244,10 @@ class VehicleLookupResponseModel {
       euronorm: vehicleData['euronorm'] != null
           ? EuronomModel.fromJson(
               vehicleData['euronorm'] as Map<String, dynamic>)
-          : null,
+          : (vehicleData['euronom'] != null
+              ? EuronomModel.fromJson(
+                  vehicleData['euronom'] as Map<String, dynamic>)
+              : null),
       type: vehicleData['type'] != null
           ? TypeModel.fromJson(vehicleData['type'] as Map<String, dynamic>)
           : null,
@@ -229,8 +261,9 @@ class VehicleLookupResponseModel {
       vehicleId: _parseInt(vehicleData['vehicle_id']),
       vehicleExternalId: vehicleData['vehicle_external_id'] as String?,
       kmDriven: _parseInt(vehicleData['km_driven']),
-      fuelEfficiency: _parseDouble(vehicleData['fuel_efficiency'] ?? vehicleData['fuelEfficiency']),
-      technicalTotalWeight: _parseInt(vehicleData['technical_total_weight']),
+      fuelEfficiency: fuelEff,
+      technicalTotalWeight: _parseInt(vehicleData['technical_total_weight']) ??
+          _parseInt(vehicleData['maximum_weight_kg']),
       totalWeight: _parseInt(vehicleData['total_weight']),
       vehicleWeight: _parseInt(vehicleData['vehicle_weight']),
       firstRegistrationDate: vehicleData['first_registration_date'] as String?,
@@ -238,7 +271,7 @@ class VehicleLookupResponseModel {
           ? _parseInt(vehicleData['first_registration_month'])
           : _parseMonthFromDate(vehicleData['first_registration_date'] as String?),
       firstRegistrationYear: vehicleData['first_registration_year'] != null
-          ? _parseInt(vehicleData['first_registration_year'])
+          ? parseFirstRegYear(vehicleData['first_registration_year'])
           : _parseYearFromDate(vehicleData['first_registration_date'] as String?),
       lastInspectionDate: vehicleData['last_inspection_date'] as String?,
       lastInspectionMonth: vehicleData['last_inspection_month'] != null
@@ -251,25 +284,37 @@ class VehicleLookupResponseModel {
       lastInspectionResult: vehicleData['last_inspection_result'] as String?,
       equipment: vehicleData['equipment'] != null
           ? (vehicleData['equipment'] as List)
-              .map((e) => EquipmentModel.fromJson(e as Map<String, dynamic>))
+              .whereType<Map>()
+              .map((e) =>
+                  EquipmentModel.fromJson(Map<String, dynamic>.from(e)))
               .toList()
           : null,
       description: vehicleData['description'] as String?,
       version: vehicleData['version'] as String?,
-      enginePower: _parseInt(vehicleData['engine_power']),
-      engineDisplacement: _parseInt(vehicleData['engine_displacement']),
+      enginePower: _parseInt(vehicleData['engine_power']) ??
+          _parseInt(vehicleData['engine_power_kw']),
+      engineDisplacement: _parseInt(vehicleData['engine_displacement']) ??
+          _parseInt(vehicleData['engine_size_cc']),
       engineCylinders: _parseInt(vehicleData['engine_cylinders']),
       engineCode: vehicleData['engine_code'] as String?,
-      topSpeed: _parseInt(vehicleData['top_speed']),
-      doors: _parseInt(vehicleData['doors']),
+      topSpeed: _parseInt(vehicleData['top_speed']) ??
+          _parseInt(vehicleData['max_speed']),
+      doors: _parseInt(vehicleData['doors']) ??
+          _parseInt(vehicleData['door_count']),
       minimumSeats: _parseInt(vehicleData['minimum_seats']),
       maximumSeats: _parseInt(vehicleData['maximum_seats']),
       wheels: _parseInt(vehicleData['wheels']),
-      axles: _parseInt(vehicleData['axles']),
+      axles: _parseInt(vehicleData['axles']) ??
+          _parseInt(vehicleData['axle_count']),
       driveAxles: _parseInt(vehicleData['drive_axles']),
       wheelbase: _parseInt(vehicleData['wheelbase']),
       coupling: vehicleData['coupling'] as bool?,
-      ncapFive: vehicleData['ncap_five'] as bool?,
+      ncapFive: vehicleData['ncap_five'] as bool? ??
+          (vehicleData['ncap_test'] == null
+              ? null
+              : (vehicleData['ncap_test'] == true ||
+                  vehicleData['ncap_test'] == 1 ||
+                  vehicleData['ncap_test'] == '1')),
       airbags: _parseInt(vehicleData['airbags']),
       integratedChildSeats: _parseInt(vehicleData['integrated_child_seats']),
       seatBeltAlarms: _parseInt(vehicleData['seat_belt_alarms']),
@@ -304,7 +349,7 @@ class BrandModel {
 
   factory BrandModel.fromJson(Map<String, dynamic> json) {
     return BrandModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
     );
   }
@@ -319,9 +364,11 @@ class ModelModel {
 
   factory ModelModel.fromJson(Map<String, dynamic> json) {
     return ModelModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
-      brandId: json['brand_id'] as int?,
+      brandId: json['brand_id'] == null
+          ? null
+          : (json['brand_id'] as num).toInt(),
     );
   }
 }
@@ -334,7 +381,7 @@ class ModelYearModel {
 
   factory ModelYearModel.fromJson(Map<String, dynamic> json) {
     return ModelYearModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
     );
   }
@@ -348,7 +395,7 @@ class FuelTypeModel {
 
   factory FuelTypeModel.fromJson(Map<String, dynamic> json) {
     return FuelTypeModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
     );
   }
@@ -362,7 +409,7 @@ class ColorModel {
 
   factory ColorModel.fromJson(Map<String, dynamic> json) {
     return ColorModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
     );
   }
@@ -371,13 +418,17 @@ class ColorModel {
 class VariantModel {
   final int id;
   final String name;
+  final int? modelId;
 
-  VariantModel({required this.id, required this.name});
+  VariantModel({required this.id, required this.name, this.modelId});
 
   factory VariantModel.fromJson(Map<String, dynamic> json) {
     return VariantModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
+      modelId: json['model_id'] == null
+          ? null
+          : (json['model_id'] as num).toInt(),
     );
   }
 }
@@ -390,7 +441,7 @@ class EuronomModel {
 
   factory EuronomModel.fromJson(Map<String, dynamic> json) {
     return EuronomModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
     );
   }
@@ -452,10 +503,11 @@ class EquipmentModel {
   });
 
   factory EquipmentModel.fromJson(Map<String, dynamic> json) {
+    final et = json['equipment_type_id'];
     return EquipmentModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
-      equipmentTypeId: json['equipment_type_id'] as int?,
+      equipmentTypeId: et == null ? null : (et as num).toInt(),
       equipmentType: json['equipment_type'] != null
           ? EquipmentTypeModel.fromJson(
               json['equipment_type'] as Map<String, dynamic>)

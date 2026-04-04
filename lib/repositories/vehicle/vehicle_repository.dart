@@ -26,7 +26,7 @@ class VehicleRepository {
   }
 
   /// Get all vehicles, optionally with filter query parameters.
-  /// [queryParameters] keys should match backend VehicleController::index (e.g. search, condition_id, price_from, price_to, brand_id, model_id, category_id, mileage_from, mileage_to, year_from, year_to, fuel_type_id, gear_type_id, body_type_id, sales_type_id, equipment_ids, euronorm). List values are sent as repeated query params for Laravel.
+  /// [queryParameters] keys should match backend VehicleController whitelist (same public names as POST search-vehicles: e.g. search, km_driven_from/to, model_year_from/to, brand_id, model_id, variant_id, fuel_type_id, gear_type_id, body_type_id, sales_type_id, emission_norm_id, equipment_ids). List values are sent as repeated query params for Laravel.
   Future<Either<String, List<VehicleModel>>> getAllVehicles({
     Map<String, dynamic>? queryParameters,
   }) async {
@@ -53,8 +53,8 @@ class VehicleRepository {
     return left(response.message);
   }
 
-  /// Search vehicles via POST with body (same filter set as GET index, same response shape).
-  /// [body] keys match backend VehicleController::searchVehicles (BASIC_FILTER_KEYS + ADVANCED_FILTER_KEYS + page, limit).
+  /// Search vehicles via POST JSON body (same response shape as GET index).
+  /// [body] keys are whitelisted in VehicleController::searchVehicles (see web vehicles sidebar: search, sort, page, limit, listing_type_id, condition_id, brand_id, model_id, variant_id, fuel_type_id, price_from/to, km_driven_from/to, gear_type_id, body_type_id, color_id, sales_type_id, price_type_id, emission_norm_id, use_id, model_year_from/to, first_registration_year_from/to, ownership_tax_from/to, engine_power_kw_from/to, electrical_consumption_from/to, km_per_liter_from/to, charging_type, max_speed_from/to, maximum_weight_kg_from/to, door_count, seats_min/max, axle_count, specifications_airbags, towing_weight, ncap_test, is_import, is_factory_new, equipment_ids).
   Future<Either<String, List<VehicleModel>>> searchVehicles({
     Map<String, dynamic>? body,
   }) async {

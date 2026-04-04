@@ -101,7 +101,7 @@ class EditVehicleView extends StatelessWidget {
                           ExpandableSection(
                             sectionId: 'basic-info',
                             title: 'Basic Vehicle Information',
-                            subtitle: 'Title, variant, and color',
+                            subtitle: 'Title, variant, color, and fuel type',
                             sectionNumber: 1,
                             isExpanded: controller.sectionExpanded['basic-info'] ?? true,
                             onToggle: () => controller.toggleSection('basic-info'),
@@ -120,13 +120,53 @@ class EditVehicleView extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 16),
                                 Obx(() {
+                                      if (controller.isLoadingVariants.value) {
+                                        return InputDecorator(
+                                          decoration: InputDecoration(
+                                            labelText: 'Variant',
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                            filled: true,
+                                            fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Text(
+                                                'Loading variants…',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                      final vid = controller.variantId.value;
                                       final variantItems = controller.variants
                                           .map((v) => DropdownMenuItem<int>(value: v.id, child: Text(v.name)))
                                           .toList();
-                                      final variantValue = controller.variantId.value != null &&
-                                          controller.variants.any((v) => v.id == controller.variantId.value)
-                                          ? controller.variantId.value
-                                          : null;
+                                      if (vid != null &&
+                                          !controller.variants.any((v) => v.id == vid)) {
+                                        variantItems.add(
+                                          DropdownMenuItem<int>(
+                                            value: vid,
+                                            child: Text(
+                                              controller.initialVariantName ?? 'Variant $vid',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      final variantValue =
+                                          vid != null && variantItems.any((e) => e.value == vid) ? vid : null;
                                       return DropdownButtonFormField<int>(
                                         value: variantValue,
                                         decoration: InputDecoration(
@@ -136,7 +176,9 @@ class EditVehicleView extends StatelessWidget {
                                           fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
                                         ),
                                         items: variantItems,
-                                        onChanged: (v) => controller.variantId.value = v,
+                                        onChanged: variantItems.isEmpty
+                                            ? null
+                                            : (v) => controller.variantId.value = v,
                                       );
                                     }),
                                 const SizedBox(height: 16),
@@ -158,6 +200,41 @@ class EditVehicleView extends StatelessWidget {
                                         ),
                                         items: colorItems,
                                         onChanged: (v) => controller.colorId.value = v,
+                                      );
+                                    }),
+                                const SizedBox(height: 16),
+                                Obx(() {
+                                      final fid = controller.fuelTypeId.value;
+                                      final fuelItems = controller.fuelTypes
+                                          .map((f) => DropdownMenuItem<int>(
+                                                value: f.id,
+                                                child: Text(f.name),
+                                              ))
+                                          .toList();
+                                      if (fid != null && !controller.fuelTypes.any((f) => f.id == fid)) {
+                                        fuelItems.add(
+                                          DropdownMenuItem<int>(
+                                            value: fid,
+                                            child: Text(
+                                              controller.initialFuelTypeName ?? 'Fuel $fid',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      final fuelValue =
+                                          fid != null && fuelItems.any((e) => e.value == fid) ? fid : null;
+                                      return DropdownButtonFormField<int>(
+                                        value: fuelValue,
+                                        decoration: InputDecoration(
+                                          labelText: 'Fuel type',
+                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          filled: true,
+                                          fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
+                                        ),
+                                        items: fuelItems,
+                                        onChanged: fuelItems.isEmpty
+                                            ? null
+                                            : (v) => controller.fuelTypeId.value = v,
                                       );
                                     }),
                               ],
@@ -244,6 +321,61 @@ class EditVehicleView extends StatelessWidget {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Obx(() {
+                                            const monthItems = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+                                            final monthValue = controller.lastInspectionMonth.value != null &&
+                                                monthItems.contains(controller.lastInspectionMonth.value)
+                                                ? controller.lastInspectionMonth.value
+                                                : null;
+                                            return DropdownButtonFormField<int>(
+                                              value: monthValue,
+                                              decoration: InputDecoration(
+                                                labelText: 'Last inspection month',
+                                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                                filled: true,
+                                                fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
+                                              ),
+                                              items: monthItems
+                                                  .map((m) => DropdownMenuItem<int>(
+                                                        value: m,
+                                                        child: Text(_monthName(m)),
+                                                      ))
+                                                  .toList(),
+                                              onChanged: (v) => controller.lastInspectionMonth.value = v,
+                                            );
+                                          }),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Obx(() {
+                                            final yearItems = List.generate(30, (i) => DateTime.now().year - 29 + i)
+                                                .reversed
+                                                .toList();
+                                            final yearValue = controller.lastInspectionYear.value != null &&
+                                                yearItems.contains(controller.lastInspectionYear.value)
+                                                ? controller.lastInspectionYear.value
+                                                : null;
+                                            return DropdownButtonFormField<int>(
+                                              value: yearValue,
+                                              decoration: InputDecoration(
+                                                labelText: 'Last inspection year',
+                                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                                filled: true,
+                                                fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
+                                              ),
+                                              items: yearItems
+                                                  .map((y) => DropdownMenuItem<int>(value: y, child: Text('$y')))
+                                                  .toList(),
+                                              onChanged: (v) => controller.lastInspectionYear.value = v,
+                                            );
+                                          }),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
                                 TextFormField(
                                   controller: controller.technicalTotalWeightController,
                                   keyboardType: TextInputType.number,
@@ -259,7 +391,7 @@ class EditVehicleView extends StatelessWidget {
                                   controller: controller.fuelEfficiencyController,
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                   decoration: InputDecoration(
-                                    labelText: 'Fuel efficiency',
+                                    labelText: 'Fuel efficiency (km/l)',
                                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                                     filled: true,
                                     fillColor: isDark ? AppColors.surfaceDark : AppColors.mutedBackground,
@@ -301,10 +433,38 @@ class EditVehicleView extends StatelessWidget {
                             child: _buildEquipmentSection(controller, isDark),
                           ),
                           ExpandableSection(
+                            sectionId: 'servicebog',
+                            title: 'Service book',
+                            subtitle: 'Service history',
+                            sectionNumber: 4,
+                            isExpanded: controller.sectionExpanded['servicebog'] ?? true,
+                            onToggle: () => controller.toggleSection('servicebog'),
+                            child: Obx(() {
+                              return Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: ['Yes', 'No', 'Default'].map((v) {
+                                  final selected = controller.servicebog.value == v;
+                                  return ChoiceChip(
+                                    label: Text(v),
+                                    selected: selected,
+                                    onSelected: (_) => controller.servicebog.value = v,
+                                    selectedColor: AppColors.primary.withOpacity(0.3),
+                                    labelStyle: TextStyle(
+                                      color: selected
+                                          ? AppColors.primary
+                                          : (isDark ? AppColors.textDark : AppColors.textLight),
+                                    ),
+                                  );
+                                }).toList(),
+                              );
+                            }),
+                          ),
+                          ExpandableSection(
                             sectionId: 'pricing',
                             title: 'Pricing',
                             subtitle: 'Price',
-                            sectionNumber: 4,
+                            sectionNumber: 5,
                             isExpanded: controller.sectionExpanded['pricing'] ?? true,
                             onToggle: () => controller.toggleSection('pricing'),
                             child: TextFormField(
@@ -328,7 +488,7 @@ class EditVehicleView extends StatelessWidget {
                             sectionId: 'description',
                             title: 'Description',
                             subtitle: 'Vehicle description',
-                            sectionNumber: 5,
+                            sectionNumber: 6,
                             isExpanded: controller.sectionExpanded['description'] ?? true,
                             onToggle: () => controller.toggleSection('description'),
                             child: TextFormField(
@@ -347,7 +507,7 @@ class EditVehicleView extends StatelessWidget {
                             sectionId: 'seller-info',
                             title: 'Seller Information',
                             subtitle: 'Contact and address',
-                            sectionNumber: 6,
+                            sectionNumber: 7,
                             isExpanded: controller.sectionExpanded['seller-info'] ?? true,
                             onToggle: () => controller.toggleSection('seller-info'),
                             child: Column(

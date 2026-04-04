@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:bilskyen/repositories/favorite/favorite_repository.dart';
 import 'package:bilskyen/main.dart';
+import 'favorites_controller.dart';
 
 class FavoriteController extends GetxController {
   final FavoriteRepository _favoriteRepository = FavoriteRepository();
@@ -147,6 +148,10 @@ class FavoriteController extends GetxController {
         },
         (success) {
           // Success - keep the updated status
+          // If this was an unfavorite action from favorites screen, remove card immediately.
+          if (currentStatus == true && Get.isRegistered<FavoritesController>()) {
+            Get.find<FavoritesController>().removeVehicle(vehicleId);
+          }
           // Optionally show a success message
           // final newStatus = !currentStatus;
           // if (newStatus) {

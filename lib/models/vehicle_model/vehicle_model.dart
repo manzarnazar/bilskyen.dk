@@ -54,6 +54,13 @@ class VehicleModel {
   /// Getter to maintain compatibility with card which expects imageUrl
   String get imageUrl => image;
 
+  static int? _parseInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return int.tryParse(v.toString());
+  }
+
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
     // Prefer thumbnail_url, fallback to image_url, then image
     final imageUrl = json['thumbnail_url'] as String? ??
@@ -61,10 +68,23 @@ class VehicleModel {
         json['image'] as String? ??
         '';
 
+    // API historically used `vehicle_list_status_*`, but some endpoints now return
+    // `list_status_*`. Support both so status badges/publish buttons work.
+    final statusIdRaw = json['vehicle_list_status_id'] ?? json['list_status_id'];
+    final statusNameRaw = json['vehicle_list_status_name'] ?? json['list_status_name'];
+
+    final versionRaw = (json['version'] as String?)?.trim();
+    final variantRaw = (json['variant_name'] as String?)?.trim();
+    final resolvedVersion = (versionRaw != null && versionRaw.isNotEmpty)
+        ? versionRaw
+        : (variantRaw != null && variantRaw.isNotEmpty)
+            ? variantRaw
+            : null;
+
     return VehicleModel(
       id: json['id'] as int,
       title: json['title'] as String,
-      version: json['version'] as String?,
+      version: resolvedVersion,
       price: json['price'] as int,
       image: imageUrl,
       kmDriven: json['km_driven'] as int?,
@@ -79,8 +99,8 @@ class VehicleModel {
       sellerAddress: json['seller_address'] as String?,
       sellerPostcode: json['seller_postcode'] as String?,
       userId: json['user_id'] as int?,
-      vehicleListStatusId: json['vehicle_list_status_id'] as int?,
-      vehicleListStatusName: json['vehicle_list_status_name'] as String?,
+      vehicleListStatusId: _parseInt(statusIdRaw),
+      vehicleListStatusName: statusNameRaw?.toString(),
       enquiriesCount: json['enquiries_count'] as int?,
       viewsCount: json['views_count'] as int?,
       salesTypeName: json['sales_type_name'] as String?,
@@ -106,8 +126,11 @@ class VehicleModel {
       'seller_address': sellerAddress,
       'seller_postcode': sellerPostcode,
       'user_id': userId,
+      // Keep both keys for compatibility if this model is ever serialized back.
       'vehicle_list_status_id': vehicleListStatusId,
+      'list_status_id': vehicleListStatusId,
       'vehicle_list_status_name': vehicleListStatusName,
+      'list_status_name': vehicleListStatusName,
       'enquiries_count': enquiriesCount,
       'views_count': viewsCount,
       'sales_type_name': salesTypeName,

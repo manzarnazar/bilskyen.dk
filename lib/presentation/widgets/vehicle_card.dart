@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:bilskyen/gen_l10n/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../models/vehicle_model/vehicle_model.dart';
+import '../../controllers/auth_controller.dart';
 import '../../controllers/favorite_controller.dart';
 import '../../main.dart';
 import '../vehicle/widgets/enquiry_form_bottom_sheet.dart';
@@ -30,6 +33,33 @@ class VehicleCard extends StatefulWidget {
 class _VehicleCardState extends State<VehicleCard> {
   late FavoriteController _favoriteController;
   bool _isLoggedIn = false;
+
+  int? get _currentUserId {
+    if (Get.isRegistered<AuthController>()) {
+      final authController = Get.find<AuthController>();
+      final id = authController.currentUser.value?.id;
+      if (id != null) return id;
+    }
+
+    final userRaw = appStorage.read('user');
+    if (userRaw == null) return null;
+    try {
+      final userMap = jsonDecode(userRaw.toString());
+      if (userMap is Map<String, dynamic>) {
+        final rawId = userMap['id'];
+        if (rawId is int) return rawId;
+        if (rawId is num) return rawId.toInt();
+        return int.tryParse(rawId?.toString() ?? '');
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  bool get _isOwnVehicle {
+    final ownerId = widget.vehicle.userId;
+    final currentUserId = _currentUserId;
+    return ownerId != null && currentUserId != null && ownerId == currentUserId;
+  }
 
   @override
   void initState() {
@@ -168,7 +198,7 @@ class _VehicleCardState extends State<VehicleCard> {
 
     for (int i = 0; i < reversed.length; i++) {
       if (i > 0 && i % 3 == 0) {
-        buffer.write('.');
+        buffer.write(',');
       }
       buffer.write(reversed[i]);
     }
@@ -394,35 +424,37 @@ class _VehicleCardState extends State<VehicleCard> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          // Enquire button
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => _handleEnquireTap(context),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: widget.isDark
-                                    ? AppColors.textDark
-                                    : AppColors.textLight,
-                                side: BorderSide(
-                                  color: widget.isDark
-                                      ? AppColors.borderDark
-                                      : AppColors.borderLight,
+                          if (!_isOwnVehicle) ...[
+                            const SizedBox(width: 8),
+                            // Enquire button
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _handleEnquireTap(context),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: widget.isDark
+                                      ? AppColors.textDark
+                                      : AppColors.textLight,
+                                  side: BorderSide(
+                                    color: widget.isDark
+                                        ? AppColors.borderDark
+                                        : AppColors.borderLight,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 6),
+                                  minimumSize: const Size(0, 32),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 6),
-                                minimumSize: const Size(0, 32),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                              child: Text(
-                                l10n.enquire,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                                child: Text(
+                                  l10n.enquire,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ],
@@ -652,34 +684,36 @@ class _VehicleCardState extends State<VehicleCard> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    // Enquire button
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => _handleEnquireTap(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: widget.isDark
-                              ? AppColors.textDark
-                              : AppColors.textLight,
-                          side: BorderSide(
-                            color: widget.isDark
-                                ? AppColors.borderDark
-                                : AppColors.borderLight,
+                    if (!_isOwnVehicle) ...[
+                      const SizedBox(width: 12),
+                      // Enquire button
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _handleEnquireTap(context),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: widget.isDark
+                                ? AppColors.textDark
+                                : AppColors.textLight,
+                            side: BorderSide(
+                              color: widget.isDark
+                                  ? AppColors.borderDark
+                                  : AppColors.borderLight,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          l10n.enquire,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                          child: Text(
+                            l10n.enquire,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ],

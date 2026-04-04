@@ -185,7 +185,33 @@ class _SellVehicleViewState extends State<SellVehicleView> {
                                       ),
                                     ),
                                     const SizedBox(height: 12),
-                                    // Brand
+                                    if (controller.isLoadingManualDropdowns.value)
+                                      Padding(
+                                        padding: const EdgeInsets.only(bottom: 12),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: AppColors.primary,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Loading options…',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: isDark
+                                                    ? AppColors.mutedDark
+                                                    : AppColors.mutedLight,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    // Brand (DMR)
                                     DropdownButtonFormField<int>(
                                       value: controller.manualBrandId.value,
                                       decoration: InputDecoration(
@@ -194,20 +220,23 @@ class _SellVehicleViewState extends State<SellVehicleView> {
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                       ),
-                                      items: controller.brands.map((b) => DropdownMenuItem<int>(
-                                        value: b.id,
-                                        child: Text(b.name),
-                                      )).toList(),
-                                      onChanged: (v) {
-                                        controller.manualBrandId.value = v;
-                                        controller.manualModelId.value = null;
-                                      },
+                                      items: controller.dmrManualBrands
+                                          .map((b) => DropdownMenuItem<int>(
+                                                value: b.id,
+                                                child: Text(
+                                                  b.name,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ))
+                                          .toList(),
+                                      onChanged: controller.isLoadingManualDropdowns.value
+                                          ? null
+                                          : (v) => controller.onManualBrandChanged(v),
                                     ),
                                     const SizedBox(height: 16),
-                                    // Model (filtered by brand)
+                                    // Model (DMR, after brand)
                                     Obx(() {
-                                      final brandId = controller.manualBrandId.value;
-                                      final modelList = controller.getModelsByBrand(brandId);
+                                      final modelList = controller.dmrManualModels;
                                       return DropdownButtonFormField<int>(
                                         value: controller.manualModelId.value,
                                         decoration: InputDecoration(
@@ -216,15 +245,23 @@ class _SellVehicleViewState extends State<SellVehicleView> {
                                             borderRadius: BorderRadius.circular(8),
                                           ),
                                         ),
-                                        items: modelList.map((m) => DropdownMenuItem<int>(
-                                          value: m.id,
-                                          child: Text(m.name),
-                                        )).toList(),
-                                        onChanged: (v) => controller.manualModelId.value = v,
+                                        items: modelList
+                                            .map((m) => DropdownMenuItem<int>(
+                                                  value: m.id,
+                                                  child: Text(
+                                                    m.name,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ))
+                                            .toList(),
+                                        onChanged: controller.manualBrandId.value == null ||
+                                                controller.isLoadingManualDropdowns.value
+                                            ? null
+                                            : (v) => controller.onManualModelChanged(v),
                                       );
                                     }),
                                     const SizedBox(height: 16),
-                                    // Year
+                                    // Model year (integer year, matches DMR `model_aar`)
                                     DropdownButtonFormField<int>(
                                       value: controller.manualModelYearId.value,
                                       decoration: InputDecoration(
@@ -233,14 +270,21 @@ class _SellVehicleViewState extends State<SellVehicleView> {
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                       ),
-                                      items: controller.modelYears.map((y) => DropdownMenuItem<int>(
-                                        value: y.id,
-                                        child: Text(y.name),
-                                      )).toList(),
-                                      onChanged: (v) => controller.manualModelYearId.value = v,
+                                      items: List.generate(
+                                        DateTime.now().year - 1974,
+                                        (index) {
+                                          final year = DateTime.now().year - index;
+                                          return DropdownMenuItem<int>(
+                                            value: year,
+                                            child: Text('$year'),
+                                          );
+                                        },
+                                      ),
+                                      onChanged: (v) =>
+                                          controller.manualModelYearId.value = v,
                                     ),
                                     const SizedBox(height: 16),
-                                    // Fuel Type
+                                    // Fuel Type (DMR drive energies)
                                     DropdownButtonFormField<int>(
                                       value: controller.manualFuelTypeId.value,
                                       decoration: InputDecoration(
@@ -249,11 +293,17 @@ class _SellVehicleViewState extends State<SellVehicleView> {
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                       ),
-                                      items: controller.fuelTypes.map((f) => DropdownMenuItem<int>(
-                                        value: f.id,
-                                        child: Text(f.name),
-                                      )).toList(),
-                                      onChanged: (v) => controller.manualFuelTypeId.value = v,
+                                      items: controller.dmrManualFuelTypes
+                                          .map((f) => DropdownMenuItem<int>(
+                                                value: f.id,
+                                                child: Text(
+                                                  f.name,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ))
+                                          .toList(),
+                                      onChanged: (v) =>
+                                          controller.manualFuelTypeId.value = v,
                                     ),
                                     const SizedBox(height: 24),
                                   ],
@@ -314,8 +364,65 @@ class _SellVehicleViewState extends State<SellVehicleView> {
                                   ],
                                 )
                               : const SizedBox.shrink()),
+                          // Fuel type (lookup flow — editable; manual flow uses DMR fuel above)
+                          Obx(() {
+                            if (controller.isManualEntryMode.value ||
+                                controller.vehicleData.value == null) {
+                              return const SizedBox.shrink();
+                            }
+                            final effectiveId = controller.lookupFuelTypeId.value ??
+                                controller.vehicleData.value?.fuelType?.id;
+                            final fuelTypeItems = <DropdownMenuItem<int>>[
+                              ...controller.fuelTypes.map(
+                                (f) => DropdownMenuItem<int>(
+                                  value: f.id,
+                                  child: Text(
+                                    f.name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ];
+                            if (effectiveId != null &&
+                                !controller.fuelTypes.any((f) => f.id == effectiveId)) {
+                              fuelTypeItems.add(
+                                DropdownMenuItem<int>(
+                                  value: effectiveId,
+                                  child: Text(
+                                    controller.vehicleData.value?.fuelType?.name ??
+                                        '$effectiveId',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              );
+                            }
+                            final value = effectiveId != null &&
+                                    (controller.fuelTypes.any((f) => f.id == effectiveId) ||
+                                        effectiveId ==
+                                            controller.vehicleData.value?.fuelType?.id)
+                                ? effectiveId
+                                : null;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: DropdownButtonFormField<int>(
+                                value: value,
+                                decoration: InputDecoration(
+                                  labelText: l10n.fuelTypeRequired,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? AppColors.surfaceDark
+                                      : AppColors.mutedBackground,
+                                ),
+                                items: fuelTypeItems,
+                                onChanged: (v) => controller.lookupFuelTypeId.value = v,
+                              ),
+                            );
+                          }),
                           const SizedBox(height: 16),
-                          // Variant Dropdown (enabled in manual mode, disabled from lookup)
+                          // Variant Dropdown
                           Obx(() {
                             // Get variant items from the variants list
                             final variantItems = controller.variants.map((variant) {
@@ -356,9 +463,7 @@ class _SellVehicleViewState extends State<SellVehicleView> {
                                     : AppColors.mutedBackground,
                               ),
                               items: variantItems,
-                              onChanged: controller.isManualEntryMode.value
-                                  ? (value) => controller.variantId.value = value
-                                  : null,
+                              onChanged: (value) => controller.variantId.value = value,
                             );
                           }),
                           const SizedBox(height: 16),
@@ -559,29 +664,48 @@ class _SellVehicleViewState extends State<SellVehicleView> {
                           const SizedBox(height: 16),
                           // Fuel Efficiency (label changes based on fuel type)
                           Obx(() {
-                            // Get fuel type ID from vehicle data
-                            final fuelTypeId = controller.vehicleData.value?.fuelType?.id;
-                            
-                            // Electric fuel types: 3 (Electric), 7 (El)
-                            const electricFuelTypes = [3, 7];
-                            // Hybrid fuel types: 4 (Hybrid), 5 (Plug-in Hybrid)
-                            const hybridFuelTypes = [4, 5];
-                            
                             String labelText;
                             String hintText;
-                            
-                            if (fuelTypeId != null && electricFuelTypes.contains(fuelTypeId)) {
-                              // Electric vehicles
-                              labelText = l10n.electricRangeKm;
-                              hintText = '0';
-                            } else if (fuelTypeId != null && hybridFuelTypes.contains(fuelTypeId)) {
-                              // Hybrid vehicles
-                              labelText = l10n.electricRangeOrKmPerL;
-                              hintText = '0.00';
+
+                            if (controller.isManualEntryMode.value &&
+                                controller.manualFuelTypeId.value != null) {
+                              String name = '';
+                              for (final f in controller.dmrManualFuelTypes) {
+                                if (f.id == controller.manualFuelTypeId.value) {
+                                  name = f.name.toLowerCase();
+                                  break;
+                                }
+                              }
+                              if (name.contains('hybrid') || name.contains('plug')) {
+                                labelText = l10n.electricRangeOrKmPerL;
+                                hintText = '0.00';
+                              } else if (name.contains('el') ||
+                                  name.contains('electric') ||
+                                  name.contains('battery')) {
+                                labelText = l10n.electricRangeKm;
+                                hintText = '0';
+                              } else {
+                                labelText = l10n.kmPerL;
+                                hintText = '0.00';
+                              }
                             } else {
-                              // Petrol, Diesel, or other fuel types
-                              labelText = l10n.kmPerL;
-                              hintText = '0.00';
+                              final fuelTypeId = controller
+                                      .lookupFuelTypeId.value ??
+                                  controller.vehicleData.value?.fuelType?.id;
+                              const electricFuelTypes = [3, 7];
+                              const hybridFuelTypes = [4, 5];
+                              if (fuelTypeId != null &&
+                                  electricFuelTypes.contains(fuelTypeId)) {
+                                labelText = l10n.electricRangeKm;
+                                hintText = '0';
+                              } else if (fuelTypeId != null &&
+                                  hybridFuelTypes.contains(fuelTypeId)) {
+                                labelText = l10n.electricRangeOrKmPerL;
+                                hintText = '0.00';
+                              } else {
+                                labelText = l10n.kmPerL;
+                                hintText = '0.00';
+                              }
                             }
                             
                             return TextFormField(

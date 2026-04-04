@@ -255,27 +255,27 @@ class _EnquiryFormContentState extends State<EnquiryFormContent> {
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _licencePlateController,
-                        label: 'Licence plate *',
-                        hint: 'Enter licence plate',
+                        label: '${l10n.exchangeLicensePlateLabel} *',
+                        hint: l10n.exchangeLicensePlatePlaceholder,
                         isDark: isDark,
                         validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Licence plate is required'
+                            ? l10n.exchangeLicensePlateRequired
                             : null,
                         keyboardType: TextInputType.text,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _kilometersController,
-                        label: 'Kilometres used *',
-                        hint: 'Enter kilometres used',
+                        label: '${l10n.exchangeKilometersUsedLabel} *',
+                        hint: l10n.exchangeKilometersUsedPlaceholder,
                         isDark: isDark,
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
-                            return 'Kilometres used is required';
+                            return l10n.exchangeKilometersUsedRequired;
                           }
                           final value = int.tryParse(v.trim());
                           if (value == null || value < 0) {
-                            return 'Enter a valid non-negative number';
+                            return l10n.exchangeValidNonNegativeNumber;
                           }
                           return null;
                         },
@@ -284,11 +284,11 @@ class _EnquiryFormContentState extends State<EnquiryFormContent> {
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _expectedPriceController,
-                        label: 'Expected price *',
-                        hint: 'Enter your expected price',
+                        label: '${l10n.exchangeExpectedPriceLabel} *',
+                        hint: l10n.exchangeExpectedPricePlaceholder,
                         isDark: isDark,
                         validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Expected price is required'
+                            ? l10n.exchangeExpectedPriceRequired
                             : null,
                         keyboardType: TextInputType.text,
                       ),

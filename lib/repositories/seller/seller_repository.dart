@@ -49,7 +49,8 @@ class SellerRepository {
       'sort': sort,
     };
     if (vehicleListStatusId != null) {
-      query['vehicle_list_status_id'] = vehicleListStatusId;
+      // API field name was updated to `list_status_id`.
+      query['list_status_id'] = vehicleListStatusId;
     }
     if (search != null && search.isNotEmpty) {
       query['search'] = search;
@@ -133,7 +134,8 @@ class SellerRepository {
   ) async {
     final response = await _network.patch(
       url: ApiConfig.sellerVehicleStatus(id),
-      data: {'vehicle_list_status_id': vehicleListStatusId},
+      // API field name was updated to `list_status_id`.
+      data: {'list_status_id': vehicleListStatusId},
     );
 
     if (!response.failed && response.success) {

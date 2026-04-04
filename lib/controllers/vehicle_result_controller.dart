@@ -1,6 +1,9 @@
+import 'dart:async' show unawaited;
+
 import 'package:get/get.dart';
 import '../models/vehicle_model/vehicle_model.dart';
 import '../repositories/vehicle/vehicle_repository.dart';
+import 'favorite_controller.dart';
 import 'search_controller.dart' as search_controller;
 
 class VehicleResultController extends GetxController {
@@ -14,6 +17,11 @@ class VehicleResultController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    if (Get.isRegistered<search_controller.SearchViewController>()) {
+      final searchController =
+          Get.find<search_controller.SearchViewController>();
+      searchController.sort.value = null;
+    }
     fetchVehicles();
   }
 
@@ -34,6 +42,13 @@ class VehicleResultController extends GetxController {
       },
       (vehiclesList) {
         vehicles.value = vehiclesList;
+        // Hydrate favorite cache so hearts stay correct without per-card API calls.
+        final favController = Get.put(FavoriteController());
+        unawaited(
+          favController.checkBatchFavorites(
+            vehiclesList.map((v) => v.id).toList(),
+          ),
+        );
       },
     );
 

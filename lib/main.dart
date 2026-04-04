@@ -20,7 +20,6 @@ import 'presentation/search/vehicle_result_view.dart';
 import 'presentation/vehicle/vehicle_detail_view.dart';
 import 'presentation/sell_vehicle/sell_vehicle_view.dart';
 import 'presentation/seller/edit_vehicle_view.dart';
-import 'presentation/search/brand_selector_view.dart';
 
 final appStorage = GetStorage();
 void main() async {
@@ -76,7 +75,6 @@ class MyApp extends StatelessWidget {
           GetPage(name: '/personal-info', page: () => const PersonalInfoView()),
           GetPage(name: '/change-password', page: () => const ChangePasswordView()),
           GetPage(name: '/search-vehicles', page: () => const VehicleResultView()),
-          GetPage(name: '/brand-selector', page: () => const BrandSelectorView()),
           GetPage(name: '/vehicle-detail/:id', page: () => const VehicleDetailView()),
           GetPage(name: '/sell-your-car', page: () => const SellVehicleView()),
           GetPage(name: '/edit-vehicle/:id', page: () => const EditVehicleView()),

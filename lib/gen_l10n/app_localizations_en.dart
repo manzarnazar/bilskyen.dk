@@ -493,10 +493,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get factoryNew => 'Factory new';
 
   @override
+  String get listingPurchase => 'Purchase';
+
+  @override
+  String get listingLeasing => 'Leasing';
+
+  @override
+  String get filterChargingAc => 'AC';
+
+  @override
+  String get filterChargingDc => 'DC';
+
+  @override
+  String get filterChargingAcDc => 'AC/DC';
+
+  @override
+  String get filterNcapTest => 'NCAP test';
+
+  @override
   String get equipment => 'Equipment';
 
   @override
   String get reset => 'Reset';
+
+  @override
+  String get apply => 'Apply';
 
   @override
   String get fuelType => 'Fuel type';
@@ -518,6 +539,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get variant => 'Variant';
+
+  @override
+  String get noResultsFound => 'No results found';
 
   @override
   String get type => 'Type';
@@ -665,6 +689,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get arrangeTooltip => 'Arrange';
+
+  @override
+  String get sortTooltip => 'Sort';
+
+  @override
+  String get sortBy => 'Sort by';
+
+  @override
+  String get sortDefault => 'Default';
+
+  @override
+  String get sortBestMatch => 'Best match';
+
+  @override
+  String get sortStandard => 'Standard';
+
+  @override
+  String get sortDistanceDesc => 'Distance - farthest first';
+
+  @override
+  String get sortDistanceAsc => 'Distance - nearest first';
+
+  @override
+  String get sortDirectionAsc => 'lowest first';
+
+  @override
+  String get sortDirectionDesc => 'highest first';
+
+  @override
+  String get sortColumnCreatedAt => 'Date created';
+
+  @override
+  String get sortColumnPublishedAt => 'Date published';
+
+  @override
+  String get sortColumnPrice => 'Price';
+
+  @override
+  String get sortColumnModelYear => 'Model year';
+
+  @override
+  String get sortColumnMileage => 'Mileage';
+
+  @override
+  String get sortColumnKmPerLiter => 'KM/L';
+
+  @override
+  String get sortColumnFuelEfficiency => 'Fuel efficiency';
+
+  @override
+  String get sortColumnRange => 'Range';
+
+  @override
+  String get sortColumnBatteryCapacity => 'Battery capacity';
+
+  @override
+  String get sortColumnBrand => 'Brand';
+
+  @override
+  String get sortColumnEnginePower => 'Engine power';
+
+  @override
+  String get sortColumnTopSpeed => 'Top speed';
+
+  @override
+  String get sortColumnTowingWeight => 'Towing weight';
+
+  @override
+  String get sortColumnOwnershipTax => 'Ownership tax';
+
+  @override
+  String get sortColumnFirstRegistration => 'First registration date';
+
+  @override
+  String get sortColumnFirstRegistrationYear => 'First registration year';
 
   @override
   String get signInToManageListings => 'Sign in to manage your listings';
@@ -940,6 +1039,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get enterPhoneOptionalPlaceholder =>
       'Enter your phone number (optional)';
+
+  @override
+  String get exchangeLicensePlateLabel => 'License plate';
+
+  @override
+  String get exchangeLicensePlatePlaceholder => 'Enter license plate';
+
+  @override
+  String get exchangeLicensePlateRequired => 'License plate is required';
+
+  @override
+  String get exchangeKilometersUsedLabel => 'Kilometers used';
+
+  @override
+  String get exchangeKilometersUsedPlaceholder => 'Enter kilometers used';
+
+  @override
+  String get exchangeKilometersUsedRequired => 'Kilometers used is required';
+
+  @override
+  String get exchangeValidNonNegativeNumber =>
+      'Enter a valid non-negative number';
+
+  @override
+  String get exchangeExpectedPriceLabel => 'Expected price';
+
+  @override
+  String get exchangeExpectedPricePlaceholder => 'Enter your expected price';
+
+  @override
+  String get exchangeExpectedPriceRequired => 'Expected price is required';
 
   @override
   String get yourOfferMessageLabel => 'Your Offer / Message';
@@ -1218,6 +1348,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get electricRangeKm => 'Electric Range (km)';
 
   @override
+  String get electricRange => 'Electric Range';
+
+  @override
   String get electricRangeOrKmPerL => 'Electric Range / KM/L';
 
   @override
@@ -1369,4 +1502,153 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get year => 'Year';
+
+  @override
+  String get identity => 'Identity';
+
+  @override
+  String get contactDetails => 'Contact Details';
+
+  @override
+  String get locationSection => 'Location';
+
+  @override
+  String get addressLabel => 'Address';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get conditionAndHistory => 'Condition & history';
+
+  @override
+  String get technicalSpecifications => 'Technical specifications';
+
+  @override
+  String get co2Emission => 'CO₂ emission';
+
+  @override
+  String get electricalConsumption => 'Electrical consumption';
+
+  @override
+  String get noxEmission => 'NOx emission';
+
+  @override
+  String get fuelConsumptionWltp => 'Fuel consumption (WLTP)';
+
+  @override
+  String get fuelConsumptionNedc => 'Fuel consumption (NEDC)';
+
+  @override
+  String get measurementNorm => 'Measurement norm';
+
+  @override
+  String get productionDate => 'Production date';
+
+  @override
+  String get enginePowerKw => 'Engine power (kW)';
+
+  @override
+  String get engineTypeLabel => 'Engine type';
+
+  @override
+  String get engineDisplacementLitres => 'Engine displacement (L)';
+
+  @override
+  String get gearCount => 'Gears';
+
+  @override
+  String get particleFilter => 'Particle filter';
+
+  @override
+  String get registrationStatusDmr => 'Registration status (DMR)';
+
+  @override
+  String get lastRegistrationChange => 'Last registration change';
+
+  @override
+  String get dealerInformation => 'Dealer information';
+
+  @override
+  String get contactName => 'Contact name';
+
+  @override
+  String get city => 'City';
+
+  @override
+  String get cvr => 'CVR';
+
+  @override
+  String get dealerOnlyPricing => 'Dealer pricing';
+
+  @override
+  String get wholesalePrice => 'Wholesale price';
+
+  @override
+  String get internalCostPrice => 'Internal cost price';
+
+  @override
+  String get priceExcludingTax => 'Price excluding tax';
+
+  @override
+  String get wholesaleIncludesDelivery => 'Wholesale includes delivery';
+
+  @override
+  String get listingPhone => 'Listing phone';
+
+  @override
+  String get vehicleLocation => 'Vehicle location';
+
+  @override
+  String get importVehicle => 'Import vehicle';
+
+  @override
+  String get visitDealerPage => 'Visit dealer page';
+
+  @override
+  String get seeAllDealerVehicles => 'See all vehicles from this dealer';
+
+  @override
+  String get leasingType => 'Leasing type';
+
+  @override
+  String get leasingCustomerType => 'Customer type';
+
+  @override
+  String get leasingMonthlyPayment => 'Monthly payment';
+
+  @override
+  String get leasingFirstPayment => 'First payment';
+
+  @override
+  String get leasingResidualValue => 'Residual value';
+
+  @override
+  String get leasingDuration => 'Duration (months)';
+
+  @override
+  String get leasingAnnualMileage => 'Annual mileage';
+
+  @override
+  String get leasingTotalCost => 'Total cost';
+
+  @override
+  String specificationCount(String name, int count) {
+    return '$name (×$count)';
+  }
+
+  @override
+  String get consumptionPer100km => 'l/100 km';
+
+  @override
+  String get consumptionLPer100kmSuffix => 'L/100km';
+
+  @override
+  String get pricing => 'Pricing';
+
+  @override
+  String get registrationNumber => 'Registration';
+
+  @override
+  String get vinNumber => 'VIN';
 }

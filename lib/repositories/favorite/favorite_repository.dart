@@ -46,9 +46,9 @@ class FavoriteRepository {
   /// Remove a vehicle from favorites
   Future<Either<String, bool>> removeFavorite(int vehicleId) async {
     try {
-      final response = await networkRepository.post(
+      final response = await networkRepository.delete(
         url: ApiConfig.favoritesDelete(vehicleId),
-        data: {},
+
       );
 
       if (!response.failed && response.success) {

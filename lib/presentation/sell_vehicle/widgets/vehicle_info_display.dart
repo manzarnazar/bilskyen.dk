@@ -61,12 +61,6 @@ class VehicleInfoDisplay extends StatelessWidget {
               value: vehicleData.modelYear?.name ?? '—',
               isDark: isDark,
             ),
-            _buildInfoItem(
-              icon: Icons.local_gas_station,
-              label: l10n.fuelType,
-              value: vehicleData.fuelType?.name ?? '—',
-              isDark: isDark,
-            ),
           ],
         ),
       );

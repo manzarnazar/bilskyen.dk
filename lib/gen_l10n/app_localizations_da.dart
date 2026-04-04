@@ -492,10 +492,31 @@ class AppLocalizationsDa extends AppLocalizations {
   String get factoryNew => 'Fabriksny';
 
   @override
+  String get listingPurchase => 'Køb';
+
+  @override
+  String get listingLeasing => 'Leasing';
+
+  @override
+  String get filterChargingAc => 'AC';
+
+  @override
+  String get filterChargingDc => 'DC';
+
+  @override
+  String get filterChargingAcDc => 'AC/DC';
+
+  @override
+  String get filterNcapTest => 'NCAP-test';
+
+  @override
   String get equipment => 'Udstyr';
 
   @override
   String get reset => 'Nulstil';
+
+  @override
+  String get apply => 'Anvend';
 
   @override
   String get fuelType => 'Brændstoftype';
@@ -517,6 +538,9 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get variant => 'Variant';
+
+  @override
+  String get noResultsFound => 'Ingen resultater fundet';
 
   @override
   String get type => 'Type';
@@ -667,6 +691,81 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get arrangeTooltip => 'Arranger';
+
+  @override
+  String get sortTooltip => 'Sortering';
+
+  @override
+  String get sortBy => 'Sorter efter';
+
+  @override
+  String get sortDefault => 'Standard';
+
+  @override
+  String get sortBestMatch => 'Bedste match';
+
+  @override
+  String get sortStandard => 'Standard';
+
+  @override
+  String get sortDistanceDesc => 'Afstand - længst væk først';
+
+  @override
+  String get sortDistanceAsc => 'Afstand - nærmest først';
+
+  @override
+  String get sortDirectionAsc => 'laveste først';
+
+  @override
+  String get sortDirectionDesc => 'højeste først';
+
+  @override
+  String get sortColumnCreatedAt => 'Oprettelsesdato';
+
+  @override
+  String get sortColumnPublishedAt => 'Publiceringsdato';
+
+  @override
+  String get sortColumnPrice => 'Pris';
+
+  @override
+  String get sortColumnModelYear => 'Modelår';
+
+  @override
+  String get sortColumnMileage => 'Kilometertal';
+
+  @override
+  String get sortColumnKmPerLiter => 'KM/L';
+
+  @override
+  String get sortColumnFuelEfficiency => 'Brændstofeffektivitet';
+
+  @override
+  String get sortColumnRange => 'Rækkevidde';
+
+  @override
+  String get sortColumnBatteryCapacity => 'Batterikapacitet';
+
+  @override
+  String get sortColumnBrand => 'Mærke';
+
+  @override
+  String get sortColumnEnginePower => 'Motoreffekt';
+
+  @override
+  String get sortColumnTopSpeed => 'Tophastighed';
+
+  @override
+  String get sortColumnTowingWeight => 'Trækvægt';
+
+  @override
+  String get sortColumnOwnershipTax => 'Ejerafgift';
+
+  @override
+  String get sortColumnFirstRegistration => 'Første registreringsdato';
+
+  @override
+  String get sortColumnFirstRegistrationYear => 'Første registreringsår';
 
   @override
   String get signInToManageListings =>
@@ -946,6 +1045,37 @@ class AppLocalizationsDa extends AppLocalizations {
       'Indtast dit telefonnummer (valgfrit)';
 
   @override
+  String get exchangeLicensePlateLabel => 'Nummerplade';
+
+  @override
+  String get exchangeLicensePlatePlaceholder => 'Indtast nummerplade';
+
+  @override
+  String get exchangeLicensePlateRequired => 'Nummerplade er påkrævet';
+
+  @override
+  String get exchangeKilometersUsedLabel => 'Kørte kilometer';
+
+  @override
+  String get exchangeKilometersUsedPlaceholder => 'Indtast kørte kilometer';
+
+  @override
+  String get exchangeKilometersUsedRequired => 'Kørte kilometer er påkrævet';
+
+  @override
+  String get exchangeValidNonNegativeNumber =>
+      'Indtast et gyldigt ikke-negativt tal';
+
+  @override
+  String get exchangeExpectedPriceLabel => 'Forventet pris';
+
+  @override
+  String get exchangeExpectedPricePlaceholder => 'Indtast din forventede pris';
+
+  @override
+  String get exchangeExpectedPriceRequired => 'Forventet pris er påkrævet';
+
+  @override
   String get yourOfferMessageLabel => 'Dit tilbud / besked';
 
   @override
@@ -1218,6 +1348,9 @@ class AppLocalizationsDa extends AppLocalizations {
   String get electricRangeKm => 'Elrækkevidde (km)';
 
   @override
+  String get electricRange => 'Elektrisk rækkevidde';
+
+  @override
   String get electricRangeOrKmPerL => 'Elrækkevidde / KM/L';
 
   @override
@@ -1368,4 +1501,153 @@ class AppLocalizationsDa extends AppLocalizations {
 
   @override
   String get year => 'År';
+
+  @override
+  String get identity => 'Identitet';
+
+  @override
+  String get contactDetails => 'Kontaktoplysninger';
+
+  @override
+  String get locationSection => 'Placering';
+
+  @override
+  String get addressLabel => 'Adresse';
+
+  @override
+  String get saveChanges => 'Gem ændringer';
+
+  @override
+  String get conditionAndHistory => 'Stand og historik';
+
+  @override
+  String get technicalSpecifications => 'Tekniske specifikationer';
+
+  @override
+  String get co2Emission => 'CO₂-udledning';
+
+  @override
+  String get electricalConsumption => 'Strømforbrug';
+
+  @override
+  String get noxEmission => 'NOx-udledning';
+
+  @override
+  String get fuelConsumptionWltp => 'Brændstofforbrug (WLTP)';
+
+  @override
+  String get fuelConsumptionNedc => 'Brændstofforbrug (NEDC)';
+
+  @override
+  String get measurementNorm => 'Målenorm';
+
+  @override
+  String get productionDate => 'Produktionsdato';
+
+  @override
+  String get enginePowerKw => 'Motoreffekt (kW)';
+
+  @override
+  String get engineTypeLabel => 'Motortype';
+
+  @override
+  String get engineDisplacementLitres => 'Motorstørrelse (L)';
+
+  @override
+  String get gearCount => 'Gear';
+
+  @override
+  String get particleFilter => 'Partikelfilter';
+
+  @override
+  String get registrationStatusDmr => 'Registreringsstatus (DMR)';
+
+  @override
+  String get lastRegistrationChange => 'Seneste registreringsændring';
+
+  @override
+  String get dealerInformation => 'Forhandlerinformation';
+
+  @override
+  String get contactName => 'Kontaktnavn';
+
+  @override
+  String get city => 'By';
+
+  @override
+  String get cvr => 'CVR';
+
+  @override
+  String get dealerOnlyPricing => 'Forhandlerpriser';
+
+  @override
+  String get wholesalePrice => 'Engrospris';
+
+  @override
+  String get internalCostPrice => 'Intern kostpris';
+
+  @override
+  String get priceExcludingTax => 'Pris ekskl. moms';
+
+  @override
+  String get wholesaleIncludesDelivery => 'Engros inkl. levering';
+
+  @override
+  String get listingPhone => 'Telefon i annoncen';
+
+  @override
+  String get vehicleLocation => 'Køretøjs placering';
+
+  @override
+  String get importVehicle => 'Importkøretøj';
+
+  @override
+  String get visitDealerPage => 'Besøg forhandlerside';
+
+  @override
+  String get seeAllDealerVehicles => 'Se alle køretøjer fra denne forhandler';
+
+  @override
+  String get leasingType => 'Leasingtype';
+
+  @override
+  String get leasingCustomerType => 'Kundetype';
+
+  @override
+  String get leasingMonthlyPayment => 'Månedlig ydelse';
+
+  @override
+  String get leasingFirstPayment => 'Første betaling';
+
+  @override
+  String get leasingResidualValue => 'Restværdi';
+
+  @override
+  String get leasingDuration => 'Varighed (måneder)';
+
+  @override
+  String get leasingAnnualMileage => 'Årlig kørsel';
+
+  @override
+  String get leasingTotalCost => 'Samlet omkostning';
+
+  @override
+  String specificationCount(String name, int count) {
+    return '$name (×$count)';
+  }
+
+  @override
+  String get consumptionPer100km => 'l/100 km';
+
+  @override
+  String get consumptionLPer100kmSuffix => 'L/100 km';
+
+  @override
+  String get pricing => 'Pris';
+
+  @override
+  String get registrationNumber => 'Registrering';
+
+  @override
+  String get vinNumber => 'Stelnummer (VIN)';
 }

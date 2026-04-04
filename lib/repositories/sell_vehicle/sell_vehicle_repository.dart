@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
 import '../../config/api_config.dart';
+import '../../models/constants_model/constants_model.dart';
 import '../../models/sell_vehicle_model/vehicle_lookup_response_model.dart';
 import '../../models/sell_vehicle_model/reference_data_model.dart';
 import '../../models/sell_vehicle_model/sell_vehicle_request_model.dart';
@@ -10,24 +11,31 @@ import '../../network/network_repository.dart';
 class SellVehicleRepository {
   final networkRepository = NetworkRepository();
 
-  /// Get vehicle by registration (license plate)
+  Map<String, dynamic>? _unwrapDataMap(dynamic responseData) {
+    if (responseData is! Map) return null;
+    final root = responseData as Map<String, dynamic>;
+    if (root.containsKey('data') && root['data'] is Map<String, dynamic>) {
+      return root['data'] as Map<String, dynamic>;
+    }
+    return root;
+  }
+
+  /// POST /dmr/vehicle-by-registration — local DMR dataset (no Nummerplade).
   Future<Either<String, VehicleLookupResponseModel>> getVehicleByRegistration(
       String registration) async {
     final response = await networkRepository.post(
-      url: ApiConfig.nummerpladeVehicleByRegistration,
+      url: ApiConfig.dmrVehicleByRegistration,
       data: {
         'registration': registration,
-        'advanced': true,
       },
     );
 
     if (!response.failed && response.success) {
       try {
-        // Handle nested response structure: data.data.data or data.data
         dynamic responseData = response.data;
         if (responseData is Map && responseData.containsKey('data')) {
           if (responseData['data'] is Map &&
-              responseData['data'].containsKey('data')) {
+              (responseData['data'] as Map).containsKey('data')) {
             responseData = responseData['data']['data'];
           } else if (responseData['data'] is Map) {
             responseData = responseData['data'];
@@ -46,20 +54,178 @@ class SellVehicleRepository {
         : 'Failed to fetch vehicle information');
   }
 
-  /// Get colors reference data
+  /// GET /dmr/manual-brands
+  Future<Either<String, List<LookupItem>>> searchManualBrands({
+    String? search,
+    int limit = 500,
+  }) async {
+    final query = <String, dynamic>{'limit': limit};
+    if (search != null && search.trim().isNotEmpty) {
+      query['search'] = search.trim();
+    }
+    final response = await networkRepository.get(
+      url: ApiConfig.dmrManualBrands,
+      extraQuery: query,
+    );
+    if (!response.failed && response.success) {
+      try {
+        final data = _unwrapDataMap(response.data);
+        final items = (data?['items'] as List<dynamic>? ?? [])
+            .map((e) => LookupItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return right(items);
+      } catch (e) {
+        return left('Failed to parse brands: $e');
+      }
+    }
+    return left(response.message.isNotEmpty
+        ? response.message
+        : 'Failed to fetch brands');
+  }
+
+  /// GET /dmr/manual-models?brand_id=
+  Future<Either<String, List<ModelItem>>> searchManualModels({
+    required int brandId,
+    String? search,
+    int limit = 500,
+  }) async {
+    final query = <String, dynamic>{
+      'brand_id': brandId,
+      'limit': limit,
+    };
+    if (search != null && search.trim().isNotEmpty) {
+      query['search'] = search.trim();
+    }
+    final response = await networkRepository.get(
+      url: ApiConfig.dmrManualModels,
+      extraQuery: query,
+    );
+    if (!response.failed && response.success) {
+      try {
+        final data = _unwrapDataMap(response.data);
+        final items = (data?['items'] as List<dynamic>? ?? [])
+            .map((e) => ModelItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return right(items);
+      } catch (e) {
+        return left('Failed to parse models: $e');
+      }
+    }
+    return left(response.message.isNotEmpty
+        ? response.message
+        : 'Failed to fetch models');
+  }
+
+  /// GET /dmr/manual-fuel-types
+  Future<Either<String, List<LookupItem>>> searchManualFuelTypes({
+    String? search,
+    int limit = 10,
+  }) async {
+    final query = <String, dynamic>{'limit': limit};
+    if (search != null && search.trim().isNotEmpty) {
+      query['search'] = search.trim();
+    }
+    final response = await networkRepository.get(
+      url: ApiConfig.dmrManualFuelTypes,
+      extraQuery: query,
+    );
+    if (!response.failed && response.success) {
+      try {
+        final data = _unwrapDataMap(response.data);
+        final items = (data?['items'] as List<dynamic>? ?? [])
+            .map((e) => LookupItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return right(items);
+      } catch (e) {
+        return left('Failed to parse fuel types: $e');
+      }
+    }
+    return left(response.message.isNotEmpty
+        ? response.message
+        : 'Failed to fetch fuel types');
+  }
+
+  /// POST /dmr/vehicle-by-manual — resolves `dmr_fact_vehicle_id` for manual selections.
+  Future<Either<String, int>> resolveDmrFactVehicleIdByManual({
+    required int manualBrandId,
+    required int manualModelId,
+    required int manualModelYearId,
+    required int manualFuelTypeId,
+  }) async {
+    final response = await networkRepository.post(
+      url: ApiConfig.dmrVehicleByManual,
+      data: {
+        'manual_brand_id': manualBrandId,
+        'manual_model_id': manualModelId,
+        'manual_model_year_id': manualModelYearId,
+        'manual_fuel_type_id': manualFuelTypeId,
+      },
+    );
+    if (!response.failed && response.success) {
+      try {
+        final data = _unwrapDataMap(response.data);
+        final id = data?['dmr_fact_vehicle_id'];
+        if (id == null) return left('No DMR vehicle id in response');
+        return right((id as num).toInt());
+      } catch (e) {
+        return left('Failed to parse manual resolve: $e');
+      }
+    }
+    String msg = response.message.isNotEmpty
+        ? response.message
+        : 'No matching vehicle was found for the selected manual values.';
+    if (response.data is Map) {
+      final m = response.data as Map<String, dynamic>;
+      if (m['message'] is String && (m['message'] as String).isNotEmpty) {
+        msg = m['message'] as String;
+      }
+    }
+    return left(msg);
+  }
+
+  /// GET /variants — scoped to DMR `model_id` (same as web `reloadVariantsFromApi`).
+  Future<Either<String, List<VariantModel>>> searchVariants({
+    required int modelId,
+    String? search,
+    int limit = 25,
+  }) async {
+    final query = <String, dynamic>{
+      'model_ids': modelId.toString(),
+      'limit': limit,
+    };
+    if (search != null && search.trim().isNotEmpty) {
+      query['search'] = search.trim();
+    }
+    final response = await networkRepository.get(
+      url: ApiConfig.variants,
+      extraQuery: query,
+    );
+    if (!response.failed && response.success) {
+      try {
+        final data = _unwrapDataMap(response.data);
+        final items = (data?['items'] as List<dynamic>? ?? [])
+            .map((e) => VariantModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return right(items);
+      } catch (e) {
+        return left('Failed to parse variants: $e');
+      }
+    }
+    return left(response.message.isNotEmpty
+        ? response.message
+        : 'Failed to fetch variants');
+  }
+
+  /// Colors from public `/constants` (DMR colours), not Nummerplade.
   Future<Either<String, List<ColorModel>>> getColors() async {
     final response = await networkRepository.get(
-      url: ApiConfig.nummerpladeReferenceColors,
+      url: ApiConfig.constants,
     );
 
     if (!response.failed && response.success) {
       try {
-        dynamic responseData = response.data;
-        if (responseData is Map && responseData.containsKey('data')) {
-          responseData = responseData['data'];
-        }
-
-        final colorsList = responseData as List<dynamic>;
+        final data = response.data['data'] as Map<String, dynamic>?;
+        final colorsList = data?['colors'] as List<dynamic>? ?? [];
         final colors = colorsList
             .map((e) => ColorModel.fromJson(e as Map<String, dynamic>))
             .toList();
@@ -73,22 +239,18 @@ class SellVehicleRepository {
         : 'Failed to fetch colors');
   }
 
-  /// Get equipment reference data
+  /// Equipment from public `/constants`.
   Future<Either<String, List<EquipmentModel>>> getEquipment() async {
     final response = await networkRepository.get(
-      url: ApiConfig.nummerpladeReferenceEquipment,
+      url: ApiConfig.constants,
     );
 
     if (!response.failed && response.success) {
       try {
-        dynamic responseData = response.data;
-        if (responseData is Map && responseData.containsKey('data')) {
-          responseData = responseData['data'];
-        }
-
-        final equipmentList = responseData as List<dynamic>;
+        final data = response.data['data'] as Map<String, dynamic>?;
+        final equipmentList = data?['equipments'] as List<dynamic>? ?? [];
         final equipment = equipmentList
-            .map((e) => EquipmentModel.fromJson(e as Map<String, dynamic>))
+            .map((e) => _equipmentFromConstantsJson(e as Map<String, dynamic>))
             .toList();
         return right(equipment);
       } catch (e) {
@@ -100,24 +262,29 @@ class SellVehicleRepository {
         : 'Failed to fetch equipment');
   }
 
-  /// Get variants reference data
+  static EquipmentModel _equipmentFromConstantsJson(Map<String, dynamic> json) {
+    final typeId = json['equipment_type_id'];
+    return EquipmentModel(
+      id: (json['id'] as num).toInt(),
+      name: json['name'] as String,
+      equipmentTypeId: typeId == null ? null : (typeId as num).toInt(),
+    );
+  }
+
+  /// Full variant list (optional; prefer [searchVariants] with `model_id`).
   Future<Either<String, List<VariantModel>>> getVariants() async {
     final response = await networkRepository.get(
       url: ApiConfig.variants,
+      extraQuery: const {'limit': 500},
     );
 
     if (!response.failed && response.success) {
       try {
-        dynamic responseData = response.data;
-        if (responseData is Map && responseData.containsKey('data')) {
-          responseData = responseData['data'];
-        }
-
-        final variantsList = responseData as List<dynamic>;
-        final variants = variantsList
+        final data = _unwrapDataMap(response.data);
+        final items = (data?['items'] as List<dynamic>? ?? [])
             .map((e) => VariantModel.fromJson(e as Map<String, dynamic>))
             .toList();
-        return right(variants);
+        return right(items);
       } catch (e) {
         return left('Failed to parse variants: ${e.toString()}');
       }
@@ -139,6 +306,9 @@ class SellVehicleRepository {
         if (responseData is Map && responseData.containsKey('data')) {
           responseData = responseData['data'];
         }
+        if (responseData is Map && responseData.containsKey('items')) {
+          responseData = responseData['items'];
+        }
 
         final euronormsList = responseData as List<dynamic>;
         final euronorms = euronormsList
@@ -156,15 +326,11 @@ class SellVehicleRepository {
 
   /// Get locations reference data (if available via API)
   Future<Either<String, List<LocationModel>>> getLocations() async {
-    // Note: Locations might need to be fetched from internal API
-    // For now, return empty list
     return right([]);
   }
 
   /// Get plans reference data (if available via API)
   Future<Either<String, List<PlanModel>>> getPlans() async {
-    // Note: Plans need to be fetched from internal API
-    // For now, return empty list
     return right([]);
   }
 
@@ -174,7 +340,6 @@ class SellVehicleRepository {
     required List<File> images,
   }) async {
     try {
-      // Create FormData
       final formData = await networkRepository.createFormData(
         fields: requestData.toJson(),
         multipleFiles: {
@@ -187,9 +352,7 @@ class SellVehicleRepository {
         formData: formData,
       );
 
-      // Handle authentication errors (302 redirect or 401)
       if (response.failed) {
-        // Check if it's an authentication error
         if (response.data is Map) {
           final responseData = response.data as Map<String, dynamic>;
           if (responseData.containsKey('status_code')) {
@@ -207,7 +370,6 @@ class SellVehicleRepository {
             );
           }
         }
-        // Check response message for authentication hints
         if (response.message.contains('Authentication') ||
             response.message.contains('login')) {
           return left(
@@ -224,53 +386,43 @@ class SellVehicleRepository {
         return right(responseData as Map<String, dynamic>);
       }
 
-      // Handle validation errors (422 status code) or failed responses
       final errorMessages = <String>[];
-      
-      // Check for Laravel validation errors format: { "errors": { "field": ["message1", "message2"] } }
+
       if (response.data is Map) {
         final responseData = response.data as Map<String, dynamic>;
-        
+
         if (responseData.containsKey('errors') && responseData['errors'] is Map) {
           final errors = responseData['errors'] as Map<String, dynamic>;
           errors.forEach((field, value) {
             if (value is List) {
-              // Multiple error messages for the same field
               for (var errorMsg in value) {
-                // Convert snake_case field names to readable format
                 final readableField = _formatFieldName(field);
                 errorMessages.add('$readableField: $errorMsg');
               }
             } else if (value is String) {
-              // Single error message
               final readableField = _formatFieldName(field);
               errorMessages.add('$readableField: $value');
             } else {
-              // Fallback for other types
               final readableField = _formatFieldName(field);
               errorMessages.add('$readableField: $value');
             }
           });
         }
-        
-        // Also check for 'message' field (Laravel sometimes uses this for general errors)
+
         if (responseData.containsKey('message')) {
           final message = responseData['message'];
           if (message is String && message.isNotEmpty) {
-            // Only add if we don't have field-specific errors, or as additional context
             if (errorMessages.isEmpty) {
               errorMessages.add(message);
             }
           }
         }
       }
-      
-      // Return formatted error messages if we have any
+
       if (errorMessages.isNotEmpty) {
         return left(errorMessages.join('\n'));
       }
 
-      // Fallback to response message
       return left(response.message.isNotEmpty
           ? response.message
           : 'Failed to submit vehicle listing');
@@ -279,8 +431,6 @@ class SellVehicleRepository {
     }
   }
 
-  /// Formats field names from snake_case to readable format
-  /// Example: 'fuel_type_id' -> 'Fuel Type', 'first_registration_date' -> 'First Registration Date'
   String _formatFieldName(String fieldName) {
     return fieldName
         .split('_')

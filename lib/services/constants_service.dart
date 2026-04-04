@@ -81,8 +81,49 @@ class ConstantsService extends GetxService {
     return getModels().where((model) => model.brandId == brandId).toList();
   }
 
+  Future<List<LookupItem>> searchBrands({
+    String? search,
+    int limit = 25,
+  }) async {
+    final result = await _repository.searchBrands(search: search, limit: limit);
+    return result.fold((_) => <LookupItem>[], (items) => items);
+  }
+
+  Future<List<ModelItem>> searchModels({
+    String? search,
+    List<int> brandIds = const [],
+    int limit = 25,
+  }) async {
+    final result = await _repository.searchModels(
+      search: search,
+      brandIds: brandIds,
+      limit: limit,
+    );
+    return result.fold((_) => <ModelItem>[], (items) => items);
+  }
+
+  Future<List<VariantItem>> searchVariants({
+    String? search,
+    List<int> modelIds = const [],
+    int limit = 25,
+  }) async {
+    final result = await _repository.searchVariants(
+      search: search,
+      modelIds: modelIds,
+      limit: limit,
+    );
+    return result.fold((_) => <VariantItem>[], (items) => items);
+  }
+
   /// Get equipments filtered by equipment type ID
   List<EquipmentItem> getEquipmentsByTypeId(int equipmentTypeId) {
-    return getEquipments().where((equipment) => equipment.equipmentTypeId == equipmentTypeId).toList();
+    return getEquipments()
+        .where((equipment) => equipment.equipmentTypeId == equipmentTypeId)
+        .toList();
+  }
+
+  /// Equipments with no type (same as web `equipment_other` group).
+  List<EquipmentItem> getEquipmentsWithoutType() {
+    return getEquipments().where((e) => e.equipmentTypeId == null).toList();
   }
 }

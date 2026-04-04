@@ -28,6 +28,16 @@ class SellVehicleController extends GetxController {
   final Rx<int?> manualModelYearId = Rx<int?>(null);
   final Rx<int?> manualFuelTypeId = Rx<int?>(null);
 
+  /// Plate-lookup flow: overrides `vehicleData.fuelType` when user picks from constants list.
+  final Rx<int?> lookupFuelTypeId = Rx<int?>(null);
+
+  /// DMR manual dropdowns (same API as web `sell-your-car-form.js`).
+  final RxList<LookupItem> dmrManualBrands = <LookupItem>[].obs;
+  final RxList<ModelItem> dmrManualModels = <ModelItem>[].obs;
+  final RxList<LookupItem> dmrManualFuelTypes = <LookupItem>[].obs;
+  final RxBool isLoadingManualDropdowns = false.obs;
+  final RxnInt resolvedDmrFactVehicleId = RxnInt();
+
   // License plate lookup
   final registrationController = TextEditingController();
   final RxBool isLookingUp = false.obs;
@@ -168,6 +178,7 @@ class SellVehicleController extends GetxController {
     ever(euronomId, (_) => _onSpecChanged());
     ever(selectedEquipmentIds, (_) => _onSpecChanged());
     ever(servicebog, (_) => _onSpecChanged());
+    ever(lookupFuelTypeId, (_) => _onSpecChanged());
   }
 
   /// Load user data to pre-fill seller information
@@ -204,11 +215,9 @@ class SellVehicleController extends GetxController {
       // Map gear types from constants
       gearTypes.assignAll(constants.gearTypes);
 
-      // Map brands, model years, fuel types for manual entry
-      brands.assignAll(constants.brands);
-      modelYears.assignAll(constants.modelYears);
       fuelTypes.assignAll(constants.fuelTypes);
-      models.assignAll(constants.models);
+
+      // Manual brand/model/year/fuel come from DMR API (`enterManualMode`), not global constants.
 
       // Map colors from constants
       colors.value = constants.colors.map((item) => ColorModel(
@@ -216,11 +225,8 @@ class SellVehicleController extends GetxController {
         name: item.name,
       )).toList();
 
-      // Map variants from constants
-      variants.value = constants.variants.map((item) => VariantModel(
-        id: item.id,
-        name: item.name,
-      )).toList();
+      // Variants are loaded per DMR `model_id` via [searchVariants] after lookup or manual model select.
+      variants.clear();
 
       // Map equipment from constants
       final equipmentList = constants.equipments.map((item) => EquipmentModel(
@@ -281,7 +287,6 @@ class SellVehicleController extends GetxController {
         },
       );
 
-      // Load variants
       final variantsResult = await _repository.getVariants();
       variantsResult.fold(
         (error) => null,
@@ -305,14 +310,62 @@ class SellVehicleController extends GetxController {
   }
 
   /// Enter manual mode when user does not have a registration number
-  void enterManualMode() {
+  Future<void> enterManualMode() async {
     isManualEntryMode.value = true;
-    registrationController.text = 'N/A';
+    registrationController.clear();
     vehicleData.value = null;
+    resolvedDmrFactVehicleId.value = null;
+    dmrManualModels.clear();
+    variants.clear();
     _resetFormFields();
     isFormVisible.value = true;
     lookupError.value = '';
-    // Variant will be user-selectable in manual mode
+    await _loadDmrManualInitialOptions();
+  }
+
+  Future<void> _loadDmrManualInitialOptions() async {
+    isLoadingManualDropdowns.value = true;
+    try {
+      final brandsResult = await _repository.searchManualBrands(limit: 500);
+      final fuelsResult = await _repository.searchManualFuelTypes(limit: 10);
+      brandsResult.fold((_) => null, dmrManualBrands.assignAll);
+      fuelsResult.fold((_) => null, dmrManualFuelTypes.assignAll);
+    } finally {
+      isLoadingManualDropdowns.value = false;
+    }
+  }
+
+  /// When user picks a DMR brand, load models for that brand.
+  Future<void> onManualBrandChanged(int? brandId) async {
+    manualBrandId.value = brandId;
+    manualModelId.value = null;
+    manualModelYearId.value = null;
+    variantId.value = null;
+    dmrManualModels.clear();
+    variants.clear();
+    if (brandId == null) return;
+    isLoadingManualDropdowns.value = true;
+    try {
+      final result = await _repository.searchManualModels(brandId: brandId, limit: 500);
+      result.fold((_) => null, dmrManualModels.assignAll);
+    } finally {
+      isLoadingManualDropdowns.value = false;
+    }
+  }
+
+  /// When user picks a DMR model, load variants for that model (web `reloadVariantsFromApi`).
+  Future<void> onManualModelChanged(int? modelId) async {
+    manualModelId.value = modelId;
+    variantId.value = null;
+    variants.clear();
+    if (modelId == null) return;
+    isLoadingManualDropdowns.value = true;
+    try {
+      final result = await _repository.searchVariants(modelId: modelId);
+      result.fold((_) => null, (list) => variants.value = list);
+    } finally {
+      isLoadingManualDropdowns.value = false;
+    }
   }
 
   /// Return to license plate lookup mode
@@ -320,6 +373,10 @@ class SellVehicleController extends GetxController {
     isManualEntryMode.value = false;
     registrationController.text = '';
     vehicleData.value = null;
+    resolvedDmrFactVehicleId.value = null;
+    dmrManualBrands.clear();
+    dmrManualModels.clear();
+    dmrManualFuelTypes.clear();
     _resetFormFields();
     isFormVisible.value = false;
     manualBrandId.value = null;
@@ -327,6 +384,7 @@ class SellVehicleController extends GetxController {
     manualModelYearId.value = null;
     manualFuelTypeId.value = null;
     lookupError.value = '';
+    variants.clear();
   }
 
   /// Perform license plate lookup
@@ -345,19 +403,24 @@ class SellVehicleController extends GetxController {
 
     final result = await _repository.getVehicleByRegistration(registration);
 
-    result.fold(
-      (error) {
-        lookupError.value = error;
-        isLookingUp.value = false;
-      },
-      (data) {
-        vehicleData.value = data;
-        _autoFillForm(data);
-        isFormVisible.value = true;
-        isLookingUp.value = false;
-        lookupError.value = '';
-      },
-    );
+    final data = result.fold((l) => null as VehicleLookupResponseModel?, (r) => r);
+    if (data == null) {
+      lookupError.value =
+          result.fold((l) => l, (_) => 'Failed to fetch vehicle information');
+      isLookingUp.value = false;
+      return;
+    }
+
+    vehicleData.value = data;
+    _autoFillForm(data);
+    isFormVisible.value = true;
+    isLookingUp.value = false;
+    lookupError.value = '';
+    resolvedDmrFactVehicleId.value = data.dmrFactVehicleId;
+    if (data.model != null) {
+      final vResult = await _repository.searchVariants(modelId: data.model!.id);
+      vResult.fold((_) => null, (list) => variants.value = list);
+    }
   }
 
   /// Reset form fields when performing a new lookup
@@ -389,7 +452,8 @@ class SellVehicleController extends GetxController {
     manualModelId.value = null;
     manualModelYearId.value = null;
     manualFuelTypeId.value = null;
-    
+    lookupFuelTypeId.value = null;
+
     // Reset description
     descriptionController.clear();
     descriptionUserEdited.value = false;
@@ -573,17 +637,39 @@ class SellVehicleController extends GetxController {
     // Fuel efficiency / electric range (label by fuel type)
     final fuelEffText = fuelEfficiencyController.text.trim();
     if (fuelEffText.isNotEmpty) {
-      final fuelTypeId = vehicleData.value?.fuelType?.id;
-      const electricFuelTypes = [3, 7];
-      const hybridFuelTypes = [4, 5];
       final val = double.tryParse(fuelEffText) ?? int.tryParse(fuelEffText)?.toDouble();
       if (val != null) {
-        if (fuelTypeId != null && electricFuelTypes.contains(fuelTypeId)) {
-          parts.add('Electric range: ${val.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} km');
-        } else if (fuelTypeId != null && hybridFuelTypes.contains(fuelTypeId)) {
-          parts.add('Range/Efficiency: ${val.toStringAsFixed(2)} km');
+        if (isManualEntryMode.value && manualFuelTypeId.value != null) {
+          String name = '';
+          for (final f in dmrManualFuelTypes) {
+            if (f.id == manualFuelTypeId.value) {
+              name = f.name.toLowerCase();
+              break;
+            }
+          }
+          if (name.contains('hybrid') || name.contains('plug')) {
+            parts.add('Range/Efficiency: ${val.toStringAsFixed(2)} km');
+          } else if (name.contains('el') ||
+              name.contains('electric') ||
+              name.contains('battery')) {
+            parts.add(
+                'Electric range: ${val.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} km');
+          } else {
+            parts.add('Fuel efficiency: ${val.toStringAsFixed(2)} km/l');
+          }
         } else {
-          parts.add('Fuel efficiency: ${val.toStringAsFixed(2)} km/l');
+          final fuelTypeId =
+              lookupFuelTypeId.value ?? vehicleData.value?.fuelType?.id;
+          const electricFuelTypes = [3, 7];
+          const hybridFuelTypes = [4, 5];
+          if (fuelTypeId != null && electricFuelTypes.contains(fuelTypeId)) {
+            parts.add(
+                'Electric range: ${val.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} km');
+          } else if (fuelTypeId != null && hybridFuelTypes.contains(fuelTypeId)) {
+            parts.add('Range/Efficiency: ${val.toStringAsFixed(2)} km');
+          } else {
+            parts.add('Fuel efficiency: ${val.toStringAsFixed(2)} km/l');
+          }
         }
       }
     }
@@ -711,23 +797,24 @@ class SellVehicleController extends GetxController {
     }
   }
 
-  static String? _findNameById(List<LookupItem> list, int id) {
-    for (final item in list) {
-      if (item.id == id) return item.name;
+  String? _manualBrandName(int brandId) {
+    for (final b in dmrManualBrands) {
+      if (b.id == brandId) return b.name;
     }
     return null;
   }
 
-  String? _findModelNameById(int brandId, int modelId) {
-    for (final m in getModelsByBrand(brandId)) {
+  String? _manualModelName(int modelId) {
+    for (final m in dmrManualModels) {
       if (m.id == modelId) return m.name;
     }
     return null;
   }
 
-  /// Get models filtered by brand (for manual entry)
+  /// DMR models for the selected brand (manual entry), or legacy constants models.
   List<ModelItem> getModelsByBrand(int? brandId) {
     if (brandId == null) return [];
+    if (isManualEntryMode.value) return dmrManualModels.toList();
     return models.where((m) => m.brandId == brandId).toList();
   }
 
@@ -799,12 +886,17 @@ class SellVehicleController extends GetxController {
       }
     }
 
-    // Registration - required, max 20 characters (or "N/A" in manual mode)
+    // Registration - required for plate lookup; manual entry may omit (submitted as N/A).
     final registration = registrationController.text.trim();
-    if (registration.isEmpty) {
-      errors.add('Registration number is required');
-      firstSectionId ??= 'license';
-    } else if (registration.length > 20) {
+    if (!isManualEntryMode.value) {
+      if (registration.isEmpty) {
+        errors.add('Registration number is required');
+        firstSectionId ??= 'license';
+      } else if (registration.length > 20) {
+        errors.add('Registration number must be maximum 20 characters');
+        firstSectionId ??= 'license';
+      }
+    } else if (registration.isNotEmpty && registration.length > 20) {
       errors.add('Registration number must be maximum 20 characters');
       firstSectionId ??= 'license';
     }
@@ -855,9 +947,10 @@ class SellVehicleController extends GetxController {
         errors.add('Year is required');
         firstSectionId ??= 'basic-info';
       }
-    } else if (vehicleData.value?.fuelType == null) {
+    } else if (vehicleData.value?.fuelType == null &&
+        lookupFuelTypeId.value == null) {
       errors.add('Fuel type is required');
-      firstSectionId ??= 'specifications';
+      firstSectionId ??= 'basic-info';
     }
 
     // Kilometer driven - required, must be >= 0
@@ -1003,10 +1096,34 @@ class SellVehicleController extends GetxController {
     isSubmitting.value = true;
 
     try {
+      if (isManualEntryMode.value) {
+        final resolve = await _repository.resolveDmrFactVehicleIdByManual(
+          manualBrandId: manualBrandId.value!,
+          manualModelId: manualModelId.value!,
+          manualModelYearId: manualModelYearId.value!,
+          manualFuelTypeId: manualFuelTypeId.value!,
+        );
+        final ok = resolve.fold((err) {
+          Get.snackbar(
+            'Manual entry',
+            err,
+            duration: const Duration(seconds: 5),
+          );
+          return false;
+        }, (id) {
+          resolvedDmrFactVehicleId.value = id;
+          return true;
+        });
+        if (!ok) {
+          isSubmitting.value = false;
+          return;
+        }
+      }
+
       // Title is optional - backend will auto-generate if not provided
       final vehicleTitle = title.value.trim().isNotEmpty ? title.value.trim() : null;
 
-      // Parse fuel type ID (from vehicle data or manual selection)
+      // Parse fuel type ID (from vehicle data, lookup override, or manual selection)
       int? fuelTypeId;
       if (isManualEntryMode.value) {
         fuelTypeId = manualFuelTypeId.value;
@@ -1015,12 +1132,14 @@ class SellVehicleController extends GetxController {
           isSubmitting.value = false;
           return;
         }
-      } else if (vehicleData.value?.fuelType != null) {
-        fuelTypeId = vehicleData.value!.fuelType!.id;
       } else {
-        Get.snackbar('Error', 'Fuel type is required');
-        isSubmitting.value = false;
-        return;
+        fuelTypeId =
+            lookupFuelTypeId.value ?? vehicleData.value?.fuelType?.id;
+        if (fuelTypeId == null) {
+          Get.snackbar('Error', 'Fuel type is required');
+          isSubmitting.value = false;
+          return;
+        }
       }
 
       // Parse price (required field, already validated)
@@ -1087,11 +1206,18 @@ class SellVehicleController extends GetxController {
       // Build request model with all fields from vehicle lookup response
       // Note: The model will handle date conversion from month/year to date strings
       // Backend will automatically set vehicle_list_status_id to 2 and published_at to now()
+      final regRaw = registrationController.text.trim();
+      final registrationOut =
+          regRaw.isEmpty ? 'N/A' : regRaw.toUpperCase();
+
       final requestData = SellVehicleRequestModel(
-        registration: registrationController.text.trim().toUpperCase(),
+        registration: registrationOut,
         price: priceValue,
         fuelTypeId: fuelTypeId,
         kmDriven: kmDrivenValue,
+        dmrFactVehicleId: isManualEntryMode.value
+            ? null
+            : (vehicleData.value?.dmrFactVehicleId ?? resolvedDmrFactVehicleId.value),
         title: vehicleTitle,
         vin: vehicleData.value?.vin,
         vehicleExternalId: vehicleData.value?.vehicleExternalId ?? vehicleData.value?.vehicleId?.toString(),
@@ -1099,13 +1225,13 @@ class SellVehicleController extends GetxController {
         modelId: isManualEntryMode.value ? manualModelId.value : vehicleData.value?.model?.id,
         modelYearId: isManualEntryMode.value ? manualModelYearId.value : vehicleData.value?.modelYear?.id,
         brandName: isManualEntryMode.value && manualBrandId.value != null
-            ? _findNameById(brands, manualBrandId.value!)
+            ? _manualBrandName(manualBrandId.value!)
             : null,
-        modelName: isManualEntryMode.value && manualBrandId.value != null && manualModelId.value != null
-            ? _findModelNameById(manualBrandId.value!, manualModelId.value!)
+        modelName: isManualEntryMode.value && manualModelId.value != null
+            ? _manualModelName(manualModelId.value!)
             : null,
         modelYearName: isManualEntryMode.value && manualModelYearId.value != null
-            ? _findNameById(modelYears, manualModelYearId.value!)
+            ? '${manualModelYearId.value}'
             : null,
         listingTypeId: null, // Will be set by backend if not provided
         

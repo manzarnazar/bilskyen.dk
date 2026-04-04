@@ -7,6 +7,9 @@ class SellVehicleRequestModel {
   final int fuelTypeId;
   final int kmDriven;
 
+  /// DMR fact vehicle id from plate lookup; required by API when not manual entry.
+  final int? dmrFactVehicleId;
+
   // Optional basic fields
   final String? title;
   final String? vin;
@@ -117,6 +120,7 @@ class SellVehicleRequestModel {
     required this.price,
     required this.fuelTypeId,
     required this.kmDriven,
+    this.dmrFactVehicleId,
     this.title,
     this.vin,
     this.mileage,
@@ -246,11 +250,14 @@ class SellVehicleRequestModel {
     if (categoryId != null) json['category_id'] = categoryId;
     if (brandId != null) json['brand_id'] = brandId;
     if (modelId != null) json['model_id'] = modelId;
-    if (modelYearId != null) json['model_year_id'] = modelYearId;
+    // Web/backend expect `model_year` (int), not `model_year_id`
+    if (modelYearId != null) json['model_year'] = modelYearId;
     if (brandName != null) json['brand_name'] = brandName;
     if (modelName != null) json['model_name'] = modelName;
     if (modelYearName != null) json['model_year_name'] = modelYearName;
-    if (modelYear != null) json['model_year'] = modelYear;
+    if (dmrFactVehicleId != null) {
+      json['dmr_fact_vehicle_id'] = dmrFactVehicleId;
+    }
 
     // Vehicle details
     if (description != null) json['description'] = description;
@@ -271,7 +278,7 @@ class SellVehicleRequestModel {
     // Vehicle specifications
     if (variantId != null) json['variant_id'] = variantId;
     if (variantName != null) json['variant_name'] = variantName;
-    if (colorId != null) json['color_id'] = colorId;
+    if (colorId != null) json['colour_id'] = colorId;
     if (useId != null) json['use_id'] = useId;
     if (bodyTypeId != null) json['body_type_id'] = bodyTypeId;
     if (priceTypeId != null) json['price_type_id'] = priceTypeId;
@@ -279,12 +286,24 @@ class SellVehicleRequestModel {
     if (gearTypeId != null) json['gear_type_id'] = gearTypeId;
     if (salesTypeId != null) json['sales_type_id'] = salesTypeId;
 
-    // Dates - convert month/year to date strings
+    // First registration: web sends month/year; backend merge uses those for DB
+    if (firstRegistrationMonth != null) {
+      json['first_registration_month'] = firstRegistrationMonth;
+    }
+    if (firstRegistrationYear != null) {
+      json['first_registration_year'] = firstRegistrationYear;
+    }
     final firstRegDate = _getFirstRegistrationDate();
     if (firstRegDate != null) {
       json['first_registration_date'] = firstRegDate;
     }
 
+    if (lastInspectionMonth != null) {
+      json['last_inspection_month'] = lastInspectionMonth;
+    }
+    if (lastInspectionYear != null) {
+      json['last_inspection_year'] = lastInspectionYear;
+    }
     final lastInspDate = _getLastInspectionDate();
     if (lastInspDate != null) {
       json['last_inspection_date'] = lastInspDate;
@@ -300,8 +319,9 @@ class SellVehicleRequestModel {
     // Weight and dimensions
     if (totalWeight != null) json['total_weight'] = totalWeight;
     if (vehicleWeight != null) json['vehicle_weight'] = vehicleWeight;
-    if (technicalTotalWeight != null)
-      json['technical_total_weight'] = technicalTotalWeight;
+    if (technicalTotalWeight != null) {
+      json['maximum_weight_kg'] = technicalTotalWeight;
+    }
     if (towingWeight != null) json['towing_weight'] = towingWeight;
     if (towingWeightBrakes != null)
       json['towing_weight_brakes'] = towingWeightBrakes;
@@ -315,9 +335,9 @@ class SellVehicleRequestModel {
       json['engine_displacement'] = engineDisplacement;
     if (engineCylinders != null) json['engine_cylinders'] = engineCylinders;
     if (engineCode != null) json['engine_code'] = engineCode;
-    if (fuelEfficiency != null) json['fuel_efficiency'] = fuelEfficiency;
+    if (fuelEfficiency != null) json['km_per_liter'] = fuelEfficiency;
     if (euronorm != null) json['euronorm'] = euronorm;
-    if (euronomId != null) json['euronom_id'] = euronomId;
+    if (euronomId != null) json['emission_norm_id'] = euronomId;
     if (euronomName != null) json['euronom_name'] = euronomName;
 
     // Electric vehicle fields

@@ -32,23 +32,32 @@ class ApiConfig {
   static String vehiclePriceNegotiation(int id) => 'vehicles/$id/price-negotiation';
   static String vehicleExchange(int id) => 'vehicles/$id/exchange';
   
-  // Nummerplade API endpoints
-  static const String nummerpladeVehicleByRegistration = 'nummerplade/vehicle-by-registration';
-  static const String nummerpladeReferenceColors = 'nummerplade/reference/colors';
-  static const String nummerpladeReferenceEquipment = 'nummerplade/reference/equipment';
+  // DMR fact vehicle lookup (replaces Nummerplade for sell flow)
+  static const String dmrVehicleByRegistration = 'dmr/vehicle-by-registration';
+  static const String dmrManualBrands = 'dmr/manual-brands';
+  static const String dmrManualModels = 'dmr/manual-models';
+  static const String dmrManualFuelTypes = 'dmr/manual-fuel-types';
+  static const String dmrVehicleByManual = 'dmr/vehicle-by-manual';
   
   // Lookup endpoints
+  static const String brands = 'brands';
+  static const String models = 'models';
+  static const String types = 'types';
   static const String variants = 'variants';
   static const String euronorms = 'euronorms';
   static const String constants = 'constants';
   
   // Sell Your Car endpoint
   static const String sellYourCar = 'sell-your-car';
+
+  // Public legal content endpoints
+  static const String privacyPolicy = 'privacy-policy';
+  static const String termsOfService = 'terms-of-service';
   
   // Favorites endpoints
   static const String favorites = 'favorites';
   static String favoritesCheck(int vehicleId) => 'favorites/check/$vehicleId';
-  static String favoritesDelete(int vehicleId) => 'favorites/delete/$vehicleId';
+  static String favoritesDelete(int vehicleId) => 'favorites/$vehicleId';
   static const String favoritesCheckBatch = 'favorites/check-batch';
 
   // Seller profile endpoints (auth required)
