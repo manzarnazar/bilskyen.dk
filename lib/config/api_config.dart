@@ -42,6 +42,8 @@ class ApiConfig {
   // Lookup endpoints
   static const String brands = 'brands';
   static const String models = 'models';
+  /// Published-inventory models for search filters (matches web listing-models).
+  static const String listingModels = 'listing-models';
   static const String types = 'types';
   static const String variants = 'variants';
   static const String euronorms = 'euronorms';

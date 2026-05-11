@@ -73,7 +73,7 @@ class _SearchLookupPickerViewState extends State<SearchLookupPickerView> {
         fetched = await constants.searchBrands(search: query, limit: 25);
         break;
       case SearchLookupType.model:
-        final models = await constants.searchModels(
+        final models = await constants.searchListingModels(
           search: query,
           brandIds: searchController.selectedBrandIds.toList(),
           limit: 25,

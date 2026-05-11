@@ -102,6 +102,20 @@ class ConstantsService extends GetxService {
     return result.fold((_) => <ModelItem>[], (items) => items);
   }
 
+  /// Models that appear on published listings (same as web vehicle filters).
+  Future<List<ModelItem>> searchListingModels({
+    String? search,
+    List<int> brandIds = const [],
+    int limit = 25,
+  }) async {
+    final result = await _repository.searchListingModels(
+      search: search,
+      brandIds: brandIds,
+      limit: limit,
+    );
+    return result.fold((_) => <ModelItem>[], (items) => items);
+  }
+
   Future<List<VariantItem>> searchVariants({
     String? search,
     List<int> modelIds = const [],

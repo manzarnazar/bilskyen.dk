@@ -1,4 +1,4 @@
-package dk.bilskyen.app
+package dk.bilskyen
 
 import io.flutter.embedding.android.FlutterActivity
 

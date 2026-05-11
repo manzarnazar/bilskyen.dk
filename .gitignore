@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Release signing backup (passwords) — never commit
+/android/RELEASE_KEYSTORE_CREDENTIALS.txt

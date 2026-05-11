@@ -102,6 +102,29 @@ class ConstantsRepository {
     return left(response.message);
   }
 
+  Future<Either<String, List<ModelItem>>> searchListingModels({
+    String? search,
+    List<int> brandIds = const [],
+    int limit = 25,
+  }) async {
+    final query = <String, dynamic>{'limit': limit};
+    if (search != null && search.trim().isNotEmpty) {
+      query['search'] = search.trim();
+    }
+    if (brandIds.isNotEmpty) {
+      query['brand_ids'] = brandIds.join(',');
+    }
+
+    final response = await networkRepository.get(
+      url: ApiConfig.listingModels,
+      extraQuery: query,
+    );
+    if (!response.failed && response.success) {
+      return _parseLookupItems(response.data, ModelItem.fromJson);
+    }
+    return left(response.message);
+  }
+
   Future<Either<String, List<VariantItem>>> searchVariants({
     String? search,
     List<int> modelIds = const [],
